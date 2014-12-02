@@ -1,5 +1,6 @@
 var Case = require('../lib/child/case')
   , f = require('util').format
+  , ObjectId = require('mongodb').ObjectID
   , inherits = require('util').inherits;
 
 var Embedded = function(module, args) {
@@ -40,7 +41,28 @@ Embedded.prototype.teardown = function(options, callback) {
  */
 Embedded.prototype.embedded = function(options, callback) {  
   if(typeof options == 'function') callback = options, options = {};
-  callback();
+  var id = new ObjectId();
+
+  // Number of entries to push into the document
+  var number = 1000;
+  var self = this;
+
+  // Process all the updates
+  var pushToDoc = function(c, id, collection, callback) {
+    if(c == 0) return callback();
+
+    collection.updateOne({_id: id}, {$push: {b: {c: id}}}, {w:1}, function(err, r) {
+      if(err) return callback(err);
+      pushToDoc(c - 1, id, collection, callback);
+    });
+  }
+
+  // Insert an empty document
+  var doc = {_id: id, a:1, b: []};
+  this.collection.insert(doc, {w:1}, function(err, r) {
+    if(err) return callback(err);
+    pushToDoc(number, id, self.collection, callback);
+  });
 }
 
 /*

@@ -13,6 +13,14 @@ var yargs = require('yargs')
   // Method to run
   .describe('m', 'Method to run')
   .require('m')
+  // Method to run
+  .describe('d', 'Directory to put sampled data')
+  .require('d')
+  .default('d', './tmp')
+  // Method to run
+  .describe('x', 'Remove the sampled data directory')
+  .require('x')
+  .default('x', false)
   // List all available simulations
   .describe('l', 'List available examples')
   // List help
