@@ -1,4 +1,4 @@
-var Case = require('../lib/child/case')
+var Case = require('../../lib/child/case')
   , f = require('util').format
   , ObjectId = require('mongodb').ObjectID
   , inherits = require('util').inherits;
@@ -81,4 +81,25 @@ Embedded.prototype.preAllocated = function(options, callback) {
   callback();
 }
 
-module.exports = Embedded;
+// Export schema
+module.exports = {
+    abr: 'embedded_growing_list'
+  , description: 'Show case growing embedded documents'
+  , chapter: 2
+  , module: f('%s', __filename)
+  , entry: 'start'
+  , class: Embedded
+  , methods: [{
+      name: 'embedded'
+    , method: 'embedded'
+    , description: 'Growing embedded document array to fixed 1000 entries'
+  }, {
+      name: 'embedded-random'
+    , method: 'embeddedRandom'
+    , description: 'Growing embedded document array to random sized entries max of 1000'
+  }, {
+      name: 'pre-allocated'
+    , method: 'preAllocated'
+    , description: "Adding to pre-allocated embedded document array random sized entries max of 1000"
+  }]  
+}

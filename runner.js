@@ -1,6 +1,7 @@
 // // Parse arguments
 var f = require('util').format
   , Executor = require('./lib/parent/executor');
+
 var yargs = require('yargs')
   .usage('Count the lines in a file.\nUsage: $0')
   .example('$0 -u mongodb://localhost:27017/test -e embedded_growing_list', 'Run a specific example against MongoDB')
@@ -15,11 +16,9 @@ var yargs = require('yargs')
   .require('m')
   // Method to run
   .describe('d', 'Directory to put sampled data')
-  .require('d')
   .default('d', './tmp')
   // Method to run
   .describe('x', 'Remove the sampled data directory')
-  .require('x')
   .default('x', false)
   // List all available simulations
   .describe('l', 'List available examples')
@@ -40,29 +39,15 @@ var argv = yargs.argv
 // List help
 if(argv.h) return console.log(yargs.help())
 
-// All the modules available
-var modules = [
-  { 
-      abr: 'embedded_growing_list'
-    , description: 'Show case growing embedded documents'
-    , chapter: 2
-    , module: __dirname + '/chapter2/embedded.js'
-    , entry: 'start'
-    , methods: [{
-        name: 'embedded'
-      , method: 'embedded'
-      , description: 'Growing embedded document array to fixed 1000 entries'
-    }, {
-        name: 'embedded-random'
-      , method: 'embeddedRandom'
-      , description: 'Growing embedded document array to random sized entries max of 1000'
-    }, {
-        name: 'pre-allocated'
-      , method: 'preAllocated'
-      , description: "Adding to pre-allocated embedded document array random sized entries max of 1000"
-    }]
-  }
+// All the simulations available
+var moduleFiles = [
+  __dirname + '/chapters/chapter_2/embedded.js'
 ]
+
+// Resolve all the simulations
+var modules = moduleFiles.map(function(x) {
+  return require(x);
+});
 
 // List all the Modules available
 if(argv.l) {
