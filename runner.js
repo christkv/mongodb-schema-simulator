@@ -56,6 +56,8 @@ if(argv.l) {
       head: ["Example", "Method", "Description"] 
     , colWidths: [25, 25, 82]
   });
+
+  // Iterate over all the modules
   modules.forEach(function(x) {
     var displayed = false;
 
@@ -77,7 +79,7 @@ if(argv.l) {
 for(var i = 0; i < modules.length; i++) {
   if(modules[i].abr == argv.e) {
     // Create the executor
-    var executor = new Executor(argv, modules[i]);
+    var executor = new Executor(argv, modules[i], {debug:true});
     // Execute the module
     executor.execute();
   }
