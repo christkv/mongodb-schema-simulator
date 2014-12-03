@@ -26,6 +26,7 @@
     , "rimraf": "2.2.6"
     , "leveldown": "0.10.0"
     , "microtime": "1.0.1"
+    , "ejs": "1.0.0"
   },
   "author": "Christian Kvalheim",
   "license": "Apache 2.0",
