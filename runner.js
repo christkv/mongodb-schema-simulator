@@ -41,7 +41,9 @@ if(argv.h) return console.log(yargs.help())
 
 // All the simulations available
 var moduleFiles = [
-  __dirname + '/chapters/chapter_2/embedded.js'
+    __dirname + '/chapters/chapter_2/embedded.js'
+  , __dirname + '/chapters/chapter_5/metadata.js'
+  , __dirname + '/chapters/chapter_6/timeseries.js'
 ]
 
 // Resolve all the simulations
@@ -79,7 +81,7 @@ if(argv.l) {
 for(var i = 0; i < modules.length; i++) {
   if(modules[i].abr == argv.e) {
     // Create the executor
-    var executor = new Executor(argv, modules[i], {debug:true});
+    var executor = new Executor(argv, modules[i], {debug:false});
     // Execute the module
     executor.execute();
   }
