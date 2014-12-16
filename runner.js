@@ -33,6 +33,12 @@ var yargs = require('yargs')
   // Parallel execution
   .describe('c', 'Concurrency per process')
   .default('c', 5)
+  // The resolution for the monitor
+  .describe('t', 'Sample resolution for the mongod monitor')
+  .default('t', 1000)
+  // Tag the results
+  .describe('n', 'Tag the results, single word')
+  .default('n', 'mmap')
 
 // Get parsed arguments
 var argv = yargs.argv
