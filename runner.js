@@ -81,6 +81,7 @@ if(argv.l) {
   });
 
   console.log(table.toString());
+  process.exit(0)
 }
 
 // Load the module we wish to run

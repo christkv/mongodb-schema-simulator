@@ -27,7 +27,7 @@ for(var i = 0; i < 1000; i++) {
  */
 var preAllocate = function(self, callback) {
   // Total number of preallocations
-  self.totalPreallocations = self.args.p * self.args.r;
+  self.totalPreallocations = self.args.c * self.args.r;
   var counter = 0;
   var left = self.totalPreallocations;
   // Set the timestamp
@@ -45,6 +45,7 @@ var preAllocate = function(self, callback) {
       left = left - 1;
 
       if(left == 0) {
+        self.counter = 0;
         callback();
       }
     });

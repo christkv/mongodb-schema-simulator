@@ -23,7 +23,7 @@ inherits(TimeSeries, Case);
  */
 var preAllocate = function(self, callback) {
   // Total number of preallocations
-  self.totalPreallocations = self.args.p * self.args.r;
+  self.totalPreallocations = self.args.c * self.args.r;
   var counter = 0;
   var left = self.totalPreallocations;
   // Set the timestamp
@@ -50,6 +50,7 @@ var preAllocate = function(self, callback) {
       left = left - 1;
 
       if(left == 0) {
+        self.counter = 0;
         callback();
       }
     });
@@ -66,12 +67,16 @@ TimeSeries.prototype.setup = function(options, callback) {
   if(typeof options == 'function') callback = options, options = {};
   var self = this;
 
+  // Total number of preallocations
+  self.totalPreallocations = self.args.c * self.args.r;
+
   // Connect to the server
   this.connect(function(err, db) {
     if(err) return callback(err);
     // Set our collection
     self.collection = db.collection('timeseries');
 
+    // Drop the collection
     self.collection.drop(function() {
       // Return if trying with no index
       if(self.args.m == 'write_pre_allocated' || self.args.m == 'write_pre_allocated_serially') 
@@ -88,41 +93,8 @@ TimeSeries.prototype.teardown = function(options, callback) {
 }
 
 /*
- * Write time series data with no pre-allocated documents
- */
-TimeSeries.prototype.writeNoPrealloc = function(options, callback) {  
-  if(typeof options == 'function') callback = options, options = {};
-  callback();
-}
-
-/*
  * Execute updates in a specific pre-allocated document and second
  */
-var executeUpdates = function(collection, counter, second, callback) {
-  // Random number of updates in a particular second
-  var numberOfUpdates = Math.round(Math.random() * 100) + 1;
-  var numberLeft = numberOfUpdates;
-
-  // Update statement
-  var updateStatement = {$inc: {}};
-  updateStatement["$inc"]["seconds." + second] = 1;
-
-  // Select the right pre-alloc bucket
-  var id = "" + process.pid + "_" + counter;
-  for(var i = 0; i < numberOfUpdates; i++) {
-    collection.update({
-      _id: id
-    }, updateStatement, function() {
-      numberLeft = numberLeft - 1;
-
-      // Done doing updates
-      if(numberLeft == 0) {
-        callback();
-      }
-    });    
-  }
-}
-
 var executeUpdatesSerially = function(collection, counter, second, callback) {
   // Random number of updates in a particular second
   var numberOfUpdates = Math.round(Math.random() * 100) + 1;
@@ -140,7 +112,8 @@ var executeUpdatesSerially = function(collection, counter, second, callback) {
 
     collection.update({
       _id: id
-    }, updateStatement, function() {
+    }, updateStatement, {upsert:true}, function(err, r) {
+      // console.dir(r.result)
       next(collection, numberLeft - 1, counter, second, callback);
     });
   }
@@ -151,20 +124,6 @@ var executeUpdatesSerially = function(collection, counter, second, callback) {
 /*
  * Execute seconds in a specific pre-allocated document and second
  */
-var executeSeconds = function(collection, counter, callback) {
-  var numberLeft = 60;
-
-  for(var i = 0; i < 60; i++) {
-    executeUpdates(collection, counter, i, function(err) {
-      numberLeft = numberLeft - 1;
-
-      if(numberLeft == 0) {
-        callback();
-      }
-    });
-  }
-}
-
 var executeSecondsSerially = function(collection, counter, callback) {
   var numberLeft = 60;
 
@@ -180,40 +139,23 @@ var executeSecondsSerially = function(collection, counter, callback) {
 }
 
 /*
- * Write time series data with pre-allocated documents for each time series
+ * Write time series data with no pre-allocated documents
  */
-TimeSeries.prototype.writePreallocParallel = function(options, callback) {  
+TimeSeries.prototype.writeNoPrealloc = function(options, callback) {  
   if(typeof options == 'function') callback = options, options = {};
-  var self = this;
-  // State variables
-  var numberLeft = this.totalPreallocations;
-  // For each pre-allocation do x number of increments for each second
-  for(var j = 0; j < this.totalPreallocations; j++) {
-    executeSeconds(this.collection, j, function(err) {
-      numberLeft = numberLeft - 1;
-
-      if(numberLeft == 0) {
-        callback();
-      }
-    });
-  }
+  executeSecondsSerially(this.collection, this.counter++, function(err) {
+    callback();
+  });
 }
 
 /*
  * Write time series data with pre-allocated documents for each time series serially
  */
-TimeSeries.prototype.writePreallocSerially = function(options, callback) {  
+TimeSeries.prototype.writePrealloc = function(options, callback) {  
   if(typeof options == 'function') callback = options, options = {};
-
-  var executeNext = function(collection, numberLeft, allocation, callback) {
-    if(numberLeft == 0) return callback();
-
-    executeSecondsSerially(collection, allocation, function(err) {
-      executeNext(collection, numberLeft - 1, allocation + 1, callback);
-    });
-  }
-
-  executeNext(this.collection, this.totalPreallocations, 0, callback);
+  executeSecondsSerially(this.collection, this.counter++, function(err) {
+    callback();
+  });
 }
 
 // Export schema
@@ -230,11 +172,7 @@ module.exports = {
     , description: 'Write new random timeSeries documents to disk using growing documents'
   }, {
       name: 'write_pre_allocated'
-    , method: 'writePreallocParallel'
-    , description: 'Write new random timeSeries documents to disk using pre_allocated documents'
-  }, {
-      name: 'write_pre_allocated_serially'
-    , method: 'writePreallocSerially'
+    , method: 'writePrealloc'
     , description: 'Write new random timeSeries documents to disk using pre_allocated documents with serial execution of writes'
   }]  
 }
