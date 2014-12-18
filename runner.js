@@ -50,6 +50,9 @@ var moduleFiles = [
     __dirname + '/chapters/chapter_2/embedded.js'
   , __dirname + '/chapters/chapter_5/metadata.js'
   , __dirname + '/chapters/chapter_6/timeseries.js'
+  , __dirname + '/chapters/chapter_7/queues.js'
+  , __dirname + '/chapters/chapter_8/nested_categories.js'
+  , __dirname + '/chapters/chapter_9/accounts.js'
 ]
 
 // Resolve all the simulations
