@@ -28,6 +28,10 @@
     , "microtime": "1.0.1"
     , "ejs": "1.0.0"
   },
+  "devDependencies": {
+      "integra": "0.1.8"
+    , "optimist": "0.6.1"
+  },
   "author": "Christian Kvalheim",
   "license": "Apache 2.0",
   "bugs": {

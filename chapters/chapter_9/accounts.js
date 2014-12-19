@@ -1,6 +1,7 @@
 var Case = require('../../lib/child/case')
   , f = require('util').format
   , ObjectId = require('mongodb').ObjectID
+  , Transaction = require('./model')
   , crypto = require('crypto')
   , inherits = require('util').inherits;
 
@@ -12,6 +13,12 @@ var Accounts = function(module, args) {
   this.collection = null;
   // Used to fill in documents in time series fashion
   this.counter = 0;
+  // Accounts
+  this.accounts = [];
+  // Number of accounts to create
+  this.accountsToCreate = 1000;
+  // Current index in accounts
+  this.index = 0;
 }
 
 // Inherit from Case
@@ -29,11 +36,36 @@ Accounts.prototype.setup = function(options, callback) {
     if(err) return callback(err);
     
     // Set our collection
-    self.collection = db.collection('nested_categories');
+    var accounts = db.collection('accounts');
+    var transactions = db.collection('transactions');
 
-    // Drop the collection
-    self.collection.drop(function() {
-      callback();
+    // Drop the accounts
+    accounts.drop(function() {
+      
+      // Drop the transactions
+      transactions.drop(function() {
+      
+        // Setup indexes
+        if(self.args.m == 'transfer') {
+          accounts.ensureIndex({name:1}, function() {});
+        }
+
+        // The number of accounts left to create
+        var left = self.accountsToCreate;
+
+        // Create them
+        for(var i = 0; i < self.accountsToCreate; i++) {
+          var transaction = new Transaction(db);
+          // Push to available accounts for the process
+          self.accounts.push(transaction);
+
+          // Create an account
+          transaction.create(function() {
+            left = left - 1;
+            if(left == 0) callback();
+          });
+        }
+      });
     });
   });
 }
@@ -46,9 +78,23 @@ Accounts.prototype.teardown = function(options, callback) {
 /*
  * Perform transfer of money from one account to the other
  */
-Accounts.prototype.performTransfer = function(options, callback) {  
+Accounts.prototype.performTransfer = function(options, callback) {
   if(typeof options == 'function') callback = options, options = {};
-  callback();
+  // Get an index
+  this.index = (this.index + 1) % this.accounts.length;
+  // Get an account
+  this.accounts[this.index].transfer(callback);
+}
+
+/*
+ * Perform transfer of money from one account to the other no indexes
+ */
+Accounts.prototype.performTransferNoIndexes = function(options, callback) {
+  if(typeof options == 'function') callback = options, options = {};
+  // Get an index
+  this.index = (this.index + 1) % this.accounts.length;
+  // Get an account
+  this.accounts[this.index].transfer(callback);
 }
 
 /*
@@ -56,7 +102,10 @@ Accounts.prototype.performTransfer = function(options, callback) {
  */
 Accounts.prototype.performRollbacks = function(options, callback) {  
   if(typeof options == 'function') callback = options, options = {};
-  callback();
+  // Get an index
+  this.index = (this.index + 1) % this.accounts.length;
+  // Get an account
+  this.accounts[this.index].rollback(callback);
 }
 
 /*
@@ -71,14 +120,18 @@ Accounts.prototype.performMixed = function(options, callback) {
 module.exports = {
     abr: 'accounts'
   , description: 'Show Accounting/Transaction pattern'
-  , chapter: 2
+  , chapter: 9
   , module: f('%s', __filename)
   , entry: 'start'
   , class: Accounts
   , methods: [{
       name: 'transfer'
     , method: 'performTransfer'
-    , description: 'Perform transfer of money from one account to the other'
+    , description: 'Perform transfer of money from one account to the other'    
+  }, {
+      name: 'transfer_no_indexes'
+    , method: 'performTransferNoIndexes'
+    , description: 'Perform transfer of money from one account to the other no indexes'
   }, {
       name: 'rollback'
     , method: 'performRollbacks'
