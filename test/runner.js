@@ -19,9 +19,9 @@ var shallowClone = function(obj) {
 
 // Skipping parameters
 var startupOptions = {
-    skipStartup: false
-  , skipRestart: false
-  , skipShutdown: false
+    skipStartup: true
+  , skipRestart: true
+  , skipShutdown: true
   , skip: false
 }
 
@@ -183,7 +183,9 @@ var runner = new Runner({
 });
 
 var testFiles =[
-  '/test/tests/account_tests.js'
+    '/test/tests/account_tests.js'
+  , '/test/tests/cart_tests.js'
+  , '/test/tests/queue_tests.js'
 ]
 
 // Add all the tests to run
