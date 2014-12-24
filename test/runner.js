@@ -186,6 +186,7 @@ var testFiles =[
     '/test/tests/account_tests.js'
   , '/test/tests/cart_tests.js'
   , '/test/tests/queue_tests.js'
+  , '/test/tests/theater_tests.js'
 ]
 
 // Add all the tests to run
@@ -204,11 +205,11 @@ var config = createConfiguration();
 if(argv.f) runner.plugin(new FileFilter(argv.f));
 if(argv.n) runner.plugin(new TestNameFilter(argv.n));
 
-// Remove db directories
-try {
-  rimraf.sync('./data');
-  rimraf.sync('./db');
-} catch(err) {}
+// // Remove db directories
+// try {
+//   rimraf.sync('./data');
+//   rimraf.sync('./db');
+// } catch(err) {}
 
 // Run the configuration
 runner.run(config);
