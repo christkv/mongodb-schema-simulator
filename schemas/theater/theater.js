@@ -45,7 +45,7 @@ Theater.prototype.addSession = function(name, description, start, end, price, ca
   var self = this;
   
   // Create a new session
-  var session = new Session(this.db, this.id, name, description, start, end, price);
+  var session = new Session(this.db, new ObjectID(), this.id, name, description, start, end, price);
   session.create(function(err, session) {
     if(err) return callback(err);
     self.sessions.push(session);

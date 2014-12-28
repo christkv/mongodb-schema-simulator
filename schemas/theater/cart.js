@@ -106,10 +106,9 @@ Cart.prototype.checkout = function(callback) {
  */
 Cart.prototype.release = function(reservation, callback) {
   // Release all reservations in a specific reservation
-  Session.release(self.db
-    , reservation.sessionId, self.id, reservation.seats, function(err, session) {
-      if(err) return callback(err);
-      callback();
+  new Session(self.db, reservation.sessionId).release(self.id, reservation.seats, function(err, session) {
+    if(err) return callback(err);
+    callback();
   });
 }
 

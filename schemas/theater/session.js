@@ -3,8 +3,9 @@
 var f = require('util').format
   , ObjectID = require('mongodb').ObjectID;
 
-var Session = function(db, theaterId, name, description, start, end, price) {  
+var Session = function(db, id, theaterId, name, description, start, end, price) {  
   this.db = db;
+  this.id = id;
   this.theaterId = theaterId;
   this.name = name;
   this.description = description;
@@ -24,8 +25,6 @@ Session.prototype.create = function(callback) {
   this.theaters.findOne({_id: this.theaterId}, function(err, doc) {
     if(err) return callback(err);
     if(!doc) return callback(new Error(f("no theater instance found for id %s", this.theaterId)));
-    // Create a session id
-    self.id = new ObjectID();
 
     // Set current values
     self.seatsAvailable = doc.seatsAvailable;
@@ -93,7 +92,7 @@ Session.prototype.reserve = function(id, seats, callback) {
 /*
  *  Release a specific reservation and clear seats
  */
-Session.release = function(db, sessionId, id, seats, callback) {
+Session.prototype.release = function(id, seats, callback) {
   var setSeatsSelection = {};
   // Release all the seats
   for(var i = 0; i < seats.length; i++) {
@@ -101,8 +100,8 @@ Session.release = function(db, sessionId, id, seats, callback) {
   }
 
   // Remove the reservation
-  db.collection('sessions').updateOne({
-    _id: sessionId
+  this.sessions.updateOne({
+    _id: this.id
   }, {
       $set: setSeatsSelection
     , $pull: { reservations: { cartId: id }}
