@@ -13,6 +13,9 @@ var Theater = function(db, name, seats) {
   this.sessions = []; 
 }
 
+/*
+ *  Create a new theater instance
+ */
 Theater.prototype.create = function(callback) {
   var self = this;
   var seatsAvailable = 0;
@@ -35,6 +38,9 @@ Theater.prototype.create = function(callback) {
   });
 }
 
+/*
+ *  Add a new screening session to the theater
+ */
 Theater.prototype.addSession = function(name, description, start, end, price, callback) {
   var self = this;
   

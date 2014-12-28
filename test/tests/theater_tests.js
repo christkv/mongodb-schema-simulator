@@ -10,6 +10,38 @@ var drop = function(db, callback) {
   });
 }
 
+var validateSeats = function(db, test, session, seats, seatsLeft, callback) {
+  db.collection('sessions').findOne({_id: session.id}, function(err, doc) {
+    test.equal(null, err);
+    test.ok(doc != null);
+    test.equal(doc.seatsAvailable, seatsLeft);
+
+    for(var i = 0; i < seats.length; i++) {
+      var seat = seats[i];      
+      test.equal(doc.seats[seat[0]][seat[1]], 1);
+    }
+
+    callback();
+  });
+}
+
+var validateCart = function(db, test, cart, state, reservations, callback) {
+  db.collection('carts').findOne({_id: cart.id}, function(err, doc) {
+    test.equal(null, err);
+    test.ok(doc != null);
+    test.equal(reservations.length, doc.reservations.length);
+    test.equal(state, doc.state);
+
+    // Validate all the reservations in the cart
+    for(var i = 0; i < reservations.length; i++) {
+      test.equal(doc.reservations[i].total, reservations[i].total);
+      test.deepEqual(doc.reservations[i].seats, reservations[i].seats);
+    }
+
+    callback();
+  });
+}
+
 exports['Should correctly set up theater and session and buy tickets for some row seats'] = {
   metadata: { requires: { } },
   
@@ -63,14 +95,19 @@ exports['Should correctly set up theater and session and buy tickets for some ro
                   test.equal(null, err);
 
                   // Validate seat reservations
-                  validateSeats(session, seats, function(err) {
+                  validateSeats(db, test
+                    , session, seats, (session.seatsAvailable - seats.length), function(err) {
                     test.equal(null, err);
 
+                    // Our expected cart reservations
+                    var expectedReservations = [{
+                          seats: seats
+                        , total: seats.length * session.price
+                      }
+                    ];
+
                     // validateCart
-                    validateCart(cart
-                      , seats
-                      , seats.length * session.price
-                      , session.seatsAvailable - seats.length, function(err) {
+                    validateCart(db, test, cart, 'done', expectedReservations, function(err) {
                       test.equal(null, err);
 
                       db.close();

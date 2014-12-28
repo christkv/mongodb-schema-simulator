@@ -2,7 +2,8 @@
 
 var f = require('util').format
   , ObjectID = require('mongodb').ObjectID
-  , Receipt = require('./receipt');
+  , Receipt = require('./receipt')
+  , Session = require('./session');
 
 var Cart = function(db) {
   this.db = db;
@@ -14,6 +15,8 @@ var Cart = function(db) {
 
 Cart.ACTIVE = 'active';
 Cart.DONE = 'done';
+Cart.CANCELED = 'canceled';
+Cart.EXPIRED = 'expired';
 
 /*
  * Create a new cart
@@ -40,55 +43,28 @@ Cart.prototype.create = function(callback) {
  */
 Cart.prototype.reserve = function(theater, session, seats, callback) {
   var self = this;
-  var seatsQuery = [];
-  var setSeatsSelection = {};
-  
-  // Build the seats check
-  for(var i = 0; i < seats.length; i++) {
-    var seatSelector = {};
-    // Build the $and that ensures that we only reserve seats if they are all available
-    seatSelector[f('seats.%s.%s', seats[i][0], seats[i][1])] = 0;
-    seatsQuery.push(seatSelector)
-    // Set all the seats to occupied
-    setSeatsSelection[f('seats.%s.%s', seats[i][0], seats[i][1])] = 1;
-  }
 
-  // Put reservation in the cart
-  self.carts.updateOne({
-    _id: self.id
-  }, {
-      $push: { 
-        reservations: {
-            sessionId: session.id
-          , seats: seats
-          , price: session.price
-          , total: session.price * seats.length
-        }
-      }
-    , $inc: { total: session.price * seats.length }
-    , $set: { modifiedOn: new Date() }
-  }, function(err, r) {
+  // Reserve seats in the session
+  session.reserve(this.id, seats, function(err, session) {
     if(err) return callback(err);
-    if(r.nModified == 0) return callback(new Error('could not add seats to cart'));
 
-    // Attempt to reserve the seats
-    self.sessions.updateOne({
-        _id: session.id, theaterId: theater.id
-      , $and: seatsQuery
+    // Put reservation in the cart
+    self.carts.updateOne({
+      _id: self.id
     }, {
-        $set: setSeatsSelection
-      , $inc: { seatsAvailable: -seats.length }
-      , $push: { 
-        reservations: {
-            cartId: self.id
-          , seats: seats
-          , price: session.price
-          , total: session.price * seats.length
-        } 
-      }
+        $push: { 
+          reservations: {
+              sessionId: session.id
+            , seats: seats
+            , price: session.price
+            , total: session.price * seats.length
+          }
+        }
+      , $inc: { total: session.price * seats.length }
+      , $set: { modifiedOn: new Date() }
     }, function(err, r) {
       if(err) return callback(err);
-      if(r.nModified == 0) return callback(new Error(f('could not reserve seats %s', seats)));
+      if(r.nModified == 0) return callback(new Error('could not add seats to cart'));
       callback(null, self);
     });
   });
@@ -106,14 +82,10 @@ Cart.prototype.checkout = function(callback) {
     receipt.create(function(err, receipt) {
       if(err) return callback(err);
 
-      // Apply the cart by removing the cart from all sessions
-      self.sessions.updateMany({
-        'reservations.cartId': doc._id
-      }, {
-        $pull: { reservations: { cartId: doc._id }}
-      }, function(err, r) {
+      // Apply all reservations in the cart
+      Session.apply(self.db, doc._id, function(err) {
         if(err) return callback(err);
-
+        
         // Update state of Cart to DONE
         self.carts.updateOne({
           _id: self.id
@@ -133,24 +105,11 @@ Cart.prototype.checkout = function(callback) {
  * Release a reservation
  */
 Cart.prototype.release = function(reservation, callback) {
-  var self = this;
-  var setSeatsSelection = {};
-  var seats = reservation.seats;
-  
-  // Release all the seats
-  for(var i = 0; i < seats.length; i++) {
-    setSeatsSelection[f('seats.%s.%s', seats[i][0], seats[i][1])] = 0;
-  }
-
-  // Remove the reservation
-  self.sessions.updateOne({
-    _id: sessionId
-  }, {
-      $set: setSeatsSelection
-    , $pull: { reservations: { cartId: self.id }}
-  }, function(err, r) {
-    if(err) return callback(err);
-    callback();
+  // Release all reservations in a specific reservation
+  Session.release(self.db
+    , reservation.sessionId, self.id, reservation.seats, function(err, session) {
+      if(err) return callback(err);
+      callback();
   });
 }
 
