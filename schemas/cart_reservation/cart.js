@@ -16,6 +16,9 @@ Cart.ACTIVE = 'active';
 Cart.EXPIRED = 'expired';
 Cart.COMPLETED = 'completed';
 
+/*
+ * Create a new cart instance and save it to mongodb
+ */
 Cart.prototype.create = function(callback) {
   self.carts.updateOne({
       _id: self.id, 
@@ -37,6 +40,9 @@ var rollback = function(cart, product, quantity, callback) {
   });
 }
 
+/*
+ * Add product and quantity to cart if available in inventory
+ */
 Cart.prototype.add = function(product, quantity, callback) {
   var self = this;
 
@@ -68,6 +74,9 @@ Cart.prototype.add = function(product, quantity, callback) {
   });
 }
 
+/*
+ * Remove product from cart and return quantity to inventory
+ */
 Cart.prototype.remove = function(product, callback) {
   var self = this;
 
@@ -90,6 +99,9 @@ Cart.prototype.remove = function(product, callback) {
   })
 }
 
+/*
+ * Update the quantity of a product in the cart
+ */
 Cart.prototype.update = function(product, quantity, callback) {
   var self = this;
 
@@ -147,6 +159,9 @@ Cart.prototype.update = function(product, quantity, callback) {
   });
 }
 
+/*
+ * Perform the checkout of the products in the cart
+ */
 Cart.product.checkout = function(details, callback) {
   var self = this;
   // Create a new order instance

@@ -8,6 +8,9 @@ var Inventory = function(db, id) {
   this.inventories = db.collection('inventories';)
 }
 
+/*
+ * Reserve a specific quantity of a product for a cart
+ */
 Inventory.prototype.reserve = function(id, quantity, callback) {
   var self = this;
 
@@ -16,7 +19,9 @@ Inventory.prototype.reserve = function(id, quantity, callback) {
   }, {
       $inc: {quantity: -quantity}
     , $push: {
-      quantity: quantity, cartId: id, created_on: new Date()
+      reserved: {
+        quantity: quantity, cartId: id, created_on: new Date()
+      }
     }
   }, function(err, r) {
     if(err) return callback(err);
@@ -25,6 +30,9 @@ Inventory.prototype.reserve = function(id, quantity, callback) {
   });
 }
 
+/*
+ * Change the reservation quantity for a specific cart
+ */
 Inventory.prototype.adjust = function(id, quantity, delta, callback) {
   var self = this;
 
@@ -48,6 +56,9 @@ Inventory.prototype.adjust = function(id, quantity, delta, callback) {
   });
 }
 
+/*
+ * Release a reservation for a specific cart
+ */
 Inventory.prototype.release = function(id, callback) {
   var self = this;
   // Get the latest inventory view to retrieve the amount in the reservation
@@ -83,6 +94,9 @@ Inventory.prototype.release = function(id, callback) {
   });
 }
 
+/*
+ * Commit all the reservations by removing them from the reserved array
+ */
 Inventory.commit = function(db, id, callback) {
   db.collection('inventories').updateMany({
     'reserved._id': id
