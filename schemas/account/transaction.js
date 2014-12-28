@@ -3,8 +3,9 @@
 var ObjectID = require('mongodb').ObjectID
   , f = require('util').format;
 
-var Transaction = function(db, fromAccount, toAccount, amount) {  
+var Transaction = function(db, id, fromAccount, toAccount, amount) {  
   this.db = db;
+  this.id = id;
   this.transactions = db.collection('transactions');
   this.accounts = db.collection('accounts');
   this.fromAccount = fromAccount;
@@ -23,8 +24,6 @@ Transaction.CANCELED = 'canceled';
  */
 Transaction.prototype.create = function(callback) {
   var self = this;
-  // Create a new transaction id
-  this.id = new ObjectID();
   // Insert the initial transaction
   this.transactions.insertOne({
       _id : self.id

@@ -1,6 +1,7 @@
 "use strict";
 
-var Transaction = require('./transaction');
+var Transaction = require('./transaction')
+  , ObjectID = require('mongodb').ObjectID;
 
 var Account = function(db, name, balance) {  
   this.db = db;
@@ -30,7 +31,7 @@ Account.prototype.transfer = function(toAccount, amount, options, callback) {
   if(typeof options == 'function') callback = options, options = {};
 
   // Create a new transaction
-  var transaction = new Transaction(this.db, this, toAccount, amount);
+  var transaction = new Transaction(this.db, new ObjectID(), this, toAccount, amount);
   transaction.create(function(err) {
     if(err) return callback(err);
 

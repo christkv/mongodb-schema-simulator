@@ -15,7 +15,7 @@ exports['Should correctly perform transfer between account A and account B of 10
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Account = require('../../schemas/account');
+      , Account = require('../../schemas/account/account');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
@@ -74,7 +74,7 @@ exports['Should correctly roll back transfer that fails before any application o
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Account = require('../../schemas/account');
+      , Account = require('../../schemas/account/account');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
@@ -133,7 +133,7 @@ exports['Should correctly roll back transfer that fails with only a single accou
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Account = require('../../schemas/account');
+      , Account = require('../../schemas/account/account');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
@@ -192,7 +192,7 @@ exports['Should correctly roll back transfer that fails after application to acc
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Account = require('../../schemas/account');
+      , Account = require('../../schemas/account/account');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
@@ -251,7 +251,7 @@ exports['Should correctly roll back transfer that fails after transaction set to
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Account = require('../../schemas/account');
+      , Account = require('../../schemas/account/account');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
