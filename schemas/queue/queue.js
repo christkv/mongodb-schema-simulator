@@ -28,16 +28,17 @@ Work.prototype.done = function(callback) {
 /*
  * Represents a Queue
  */
-var Queue = function(db, name) {
+var Queue = function(db, collectionName, name) {
   this.db = db;
+  this.collectionName = collectionName;
   this.name = name;
-  this.queue = db.collection('queue');  
+  this.queue = db.collection(collectionName);  
 }
 
 /*
- * Push a new item on the queue with a specific priority
+ * Publish a new item on the queue with a specific priority
  */
-Queue.prototype.push = function(priority, object, callback) {
+Queue.prototype.publish = function(priority, object, callback) {
   var self = this;
   // Insert the new item into the queue
   this.queue.insertOne({
@@ -88,3 +89,5 @@ Queue.prototype.fetchFIFO = function(callback) {
     callback(null, new Work(self.queue, r.value));
   });
 }
+
+module.exports = Queue;
