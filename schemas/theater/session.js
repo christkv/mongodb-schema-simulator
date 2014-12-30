@@ -158,7 +158,7 @@ Session.prototype.release = function(id, seats, callback) {
  */
 Session.apply = function(db, id, callback) {
   // Apply the cart by removing the cart from all sessions
-  db.collection('sessisons').updateMany({
+  db.collection('sessions').updateMany({
     'reservations.cartId': id
   }, {
     $pull: { reservations: { cartId: id }}
@@ -166,6 +166,16 @@ Session.apply = function(db, id, callback) {
     if(err) return callback(err);
     callback();
   });  
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Session.createOptimalIndexes = function(db, callback) {
+  db.collection('sessions').ensureIndex({'reservations.cartId':1}, function(err, result) {
+    if(err) return callback(err);
+    callback();
+  });
 }
 
 module.exports = Session;

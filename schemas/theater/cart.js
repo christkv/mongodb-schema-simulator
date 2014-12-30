@@ -178,6 +178,13 @@ Cart.releaseExpired = function(db, callback) {
   });
 }
 
+/*
+ * Create the optimal indexes for the queries
+ */
+Cart.createOptimalIndexes = function(db, callback) {
+  callback();
+}
+
 module.exports = Cart;
 
 

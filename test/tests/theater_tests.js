@@ -1,9 +1,16 @@
-var drop = function(db, callback) {
+var setup = function(db, callback) {
+  var Session = require('../../schemas/theater/session')
+    , Cart = require('../../schemas/theater/cart');
+
   db.collection('theaters').drop(function() {
     db.collection('sessions').drop(function() {
       db.collection('carts').drop(function() {
         db.collection('orders').drop(function() {
-          callback();
+          Session.createOptimalIndexes(db, function(err) {
+            Cart.createOptimalIndexes(db, function(err) {
+              callback();
+            });
+          });
         });
       });
     });
@@ -21,6 +28,7 @@ var validateSeats = function(db, test, session, seats, seatsLeft, callback) {
       test.equal(doc.seats[seat[0]][seat[1]], 1);
     }
 
+    test.equal(0, doc.reservations.length);
     callback();
   });
 }
@@ -57,7 +65,7 @@ exports['Should correctly set up theater and session and buy tickets for some ro
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
 
         // Create a new Theater
         var theater = new Theater(db, 'The Royal', [
@@ -139,7 +147,7 @@ exports['Should correctly set up theater and session and book tickets but fail t
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
 
         // Create a new Theater
         var theater = new Theater(db, 'The Royal', [
@@ -222,7 +230,7 @@ exports['Should correctly set up theater and session and book tickets but fail t
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
 
         // Create a new Theater
         var theater = new Theater(db, 'The Royal', [
@@ -303,7 +311,7 @@ exports['Should correctly find expired carts and remove any reservations in them
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
 
         // Create a new Theater
         var theater = new Theater(db, 'The Royal', [
@@ -343,6 +351,8 @@ exports['Should correctly find expired carts and remove any reservations in them
 
                   // Release all the carts that are expired
                   Cart.releaseExpired(db, function(err) {
+                    test.done(err);
+
                     db.collection('sessions').findOne({_id: session.id}, function(err, doc) {
                       test.equal(null, err);
 
