@@ -62,4 +62,14 @@ Topic.prototype.listen = function(from, callback) {
   return cursor;
 }
 
+/*
+ * Create the optimal indexes for the queries
+ */
+Topic.createOptimalIndexes = function(db, callback) {
+  // db.collection('carts').ensureIndex({state:1}, function(err, result) {
+  //   if(err) return callback(err);
+    callback();
+  // });
+}
+
 module.exports = Topic;

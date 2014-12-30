@@ -5,7 +5,7 @@ var f = require('util').format;
  */
 var Work = function(queue, doc) {
   this.queue = queue;
-  this.doc;
+  this.doc = doc;
 }
 
 /*
@@ -63,7 +63,7 @@ Queue.prototype.fetchByPriority = function(callback) {
   this.queue.findOneAndUpdate({
     startTime: null
   }, {
-    $set: { startTime, new Date() }
+    $set: { startTime: new Date() }
   }, {
     sort: {priority: -1}
   }, function(err, r) {
@@ -81,12 +81,24 @@ Queue.prototype.fetchFIFO = function(callback) {
   this.queue.findOneAndUpdate({
     startTime: null
   }, {
-    $set: { startTime, new Date() }
+    $set: { startTime: new Date() }
   }, {
     sort: { createdOn: 1 }
   }, function(err, r) {
     if(err) return callback(err);
     callback(null, new Work(self.queue, r.value));
+  });
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Queue.createOptimalIndexes = function(db, collectionName, callback) {
+  if(typeof collectionName == 'function') callback = collectionName, collectionName = 'queues';
+
+  db.collection(collectionName).ensureIndex({startTime:1}, function(err, result) {
+    if(err) return callback(err);
+    callback();
   });
 }
 
