@@ -351,7 +351,7 @@ exports['Should correctly find expired carts and remove any reservations in them
 
                   // Release all the carts that are expired
                   Cart.releaseExpired(db, function(err) {
-                    test.done(err);
+                    test.equal(null, err);
 
                     db.collection('sessions').findOne({_id: session.id}, function(err, doc) {
                       test.equal(null, err);

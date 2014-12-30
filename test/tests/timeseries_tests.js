@@ -1,6 +1,10 @@
-var drop = function(db, callback) {
+var setup = function(db, callback) {
+  var TimeSeries = require('../../schemas/time_series/timeseries');
+
   db.collection('timeseries').drop(function() {
-    callback();
+    TimeSeries.createOptimalIndexes(db, function(err) {
+      callback();
+    });
   });
 }
 
@@ -18,7 +22,7 @@ exports['Correctly create and execute ten increments on a timeseries object'] = 
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
         // Create a fake range of one second
         var timestamp = new Date();
         timestamp.setHours(1);
@@ -79,7 +83,7 @@ exports['Correctly create and execute ten increments on a timeseries object that
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
         // Create a fake range of one second
         var timestamp = new Date();
         timestamp.setHours(1);
@@ -131,7 +135,7 @@ exports['Correctly create and execute ten increments on a timeseries object that
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
         // Create a fake range of one second
         var timestamp = new Date();
         timestamp.setHours(0);
@@ -184,7 +188,7 @@ exports['Correctly create and execute ten increments on a timeseries object that
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
         // Create a fake range of one second
         var timestamp = new Date();
         timestamp.setDate(10)
@@ -239,7 +243,7 @@ exports['Set up 1000 time slots and ensureIndex'] = {
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
         var left = 1000;
 
         TimeSeries.createOptimalIndexes(db, function(err, r) {

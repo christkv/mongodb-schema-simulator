@@ -182,7 +182,10 @@ Cart.releaseExpired = function(db, callback) {
  * Create the optimal indexes for the queries
  */
 Cart.createOptimalIndexes = function(db, callback) {
-  callback();
+  db.collection('carts').ensureIndex({state:1}, function(err, result) {
+    if(err) return callback(err);
+    callback();
+  });
 }
 
 module.exports = Cart;
