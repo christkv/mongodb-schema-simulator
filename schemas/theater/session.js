@@ -76,7 +76,7 @@ Session.prototype.reserve = function(id, seats, callback) {
     , $inc: { seatsAvailable: -seats.length }
     , $push: { 
       reservations: {
-          cartId: self.id
+          cartId: id
         , seats: seats
         , price: self.price
         , total: self.price * seats.length
@@ -84,13 +84,55 @@ Session.prototype.reserve = function(id, seats, callback) {
     }
   }, function(err, r) {
     if(err) return callback(err);
-    if(r.nModified == 0) return callback(new Error(f('could not reserve seats %s', seats)));  
+    if(r.result.nModified == 0) return callback(new Error(f('could not reserve seats %s', seats)));  
     callback(null, self);
   })
 }
 
 /*
- *  Release a specific reservation and clear seats
+ * Release all the reservations for a cart across all sessions
+ */
+Session.releaseAll = function(db, id, callback) {
+  db.collection('sessions').find({}).toArray(function(err, docs) {
+    if(err) return callback(err);
+    if(docs.length == 0) return callback();
+
+    // Reverses a specific reservation
+    var reverseReservation = function(doc, id, callback) {
+      // Locate the right cart id
+      var reservation = null;
+      
+      for(var i = 0; i < doc.reservations.length; i++) {
+        if(doc.reservations[i].cartId.equals(id)) {
+          reservation = doc.reservations[i];
+          break;
+        }
+      }
+
+      // No reservation found return
+      if(!reservation) return callback();
+      // Reverse the specific reservation
+      new Session(db, doc._id).release(reservation.cartId, reservation.seats, callback);
+    }
+
+    // Process all the entries
+    var left = docs.length;
+
+    // For each entry reverse the reservation for this cart
+    for(var i = 0; i < docs.length; i++) {
+      reverseReservation(docs[i], id, function(err) {
+        left = left - 1;
+
+        if(left == 0) {
+          callback();
+        }
+      });
+    }
+  });
+}
+
+/*
+ * Release a specific reservation and clear seats
  */
 Session.prototype.release = function(id, seats, callback) {
   var setSeatsSelection = {};

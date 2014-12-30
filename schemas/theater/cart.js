@@ -63,8 +63,18 @@ Cart.prototype.reserve = function(theater, session, seats, callback) {
       , $inc: { total: session.price * seats.length }
       , $set: { modifiedOn: new Date() }
     }, function(err, r) {
-      if(err) return callback(err);
-      if(r.nModified == 0) return callback(new Error('could not add seats to cart'));
+      // If we have an error or no modified documents
+      if(err || r.result.nModified == 0) {
+        // Release the seats in the session
+        session.release(self.id, seats, function(err, r) {
+          if(err) return callback(err);
+          if(r.result.nModified == 0) {
+            return callback(new Error('could not add seats to cart'));
+          }
+        });
+      }
+      
+      // Success in reserving the seats and putting them in the cart
       callback(null, self);
     });
   });
@@ -78,6 +88,13 @@ Cart.prototype.checkout = function(callback) {
   // Fetch the newest cart
   self.carts.findOne({_id: self.id}, function(err, doc) {
     if(err) return callback(err);
+    if(!doc) {
+      // Cart is gone force clean all sessions for this cart
+      return Session.releaseAll(self.db, self.id, function(err, result) {
+        callback(new Error(f('could not locate cart with id %s', self.id)));
+      })
+    }
+
     var receipt = new Receipt(self.db, doc.reservations);
     receipt.create(function(err, receipt) {
       if(err) return callback(err);
@@ -93,7 +110,7 @@ Cart.prototype.checkout = function(callback) {
           $set: {state: Cart.DONE }
         }, function(err, r) {
           if(err) return callback(err);
-          if(r.nModified == 0) return callback(new Error(f('could not find cart with id %s', self.id)))
+          if(r.result.nModified == 0) return callback(new Error(f('could not find cart with id %s', self.id)))
           callback();
         })
       })
@@ -137,6 +154,26 @@ Cart.prototype.destroy = function(callback) {
           callback();
         }
       })
+    }
+  });
+}
+
+/*
+ * Locate all expired carts and release all reservations
+ */
+Cart.releaseExpired = function(db, callback) {
+  db.collection('carts').find({state: Cart.EXPIRED}).toArray(function(err, carts) {
+    if(err) return callback(err);
+    if(carts.length == 0) return callback();
+    var left = carts.length;
+
+    // Release all the carts
+    for(var i = 0; i < carts.length; i++) {
+      Session.releaseAll(db, carts[i]._id, function(err) {
+        left = left - 1;
+
+        if(left == 0) callback();
+      });
     }
   });
 }
