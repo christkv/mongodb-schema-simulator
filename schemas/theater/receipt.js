@@ -1,3 +1,6 @@
+/*
+ * Create a new receipt instance
+ */
 var Receipt = function(db, reservations, total) {  
   this.db = db;
   this.reservations = reservations;
@@ -5,6 +8,9 @@ var Receipt = function(db, reservations, total) {
   this.receipts = db.collection('receipts');
 }
 
+/*
+ * Create a new receipt mongod document
+ */
 Receipt.prototype.create = function(callback) {
   var self = this;
   this.receipts.insertOne({

@@ -1,5 +1,8 @@
 "use strict";
 
+/*
+ * Create a new product instance
+ */
 var Product = function(db, id, name, cost, currency, categories) {
   this.db = db;
   this.id = id;

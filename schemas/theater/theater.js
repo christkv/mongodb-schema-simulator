@@ -4,6 +4,9 @@ var f = require('util').format
   , ObjectID = require('mongodb').ObjectID
   , Session = require('./session');
 
+/*
+ * Create a new theater instance
+ */
 var Theater = function(db, name, seats) {
   this.db = db;
   this.name = name;

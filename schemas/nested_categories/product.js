@@ -3,6 +3,9 @@
 var f = require('util').format
   , Category = require('./category');
 
+/*
+ * Create a product instance
+ */
 var Product = function(db, id, name, cost, currency, categories) {
   this.db = db;
   this.id = id;

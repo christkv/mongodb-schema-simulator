@@ -2,6 +2,9 @@
 
 var f = require('util').format;
 
+/*
+ * Create a new category instance
+ */
 var Category = function(db, id, names) {
   this.db = db;
   this.id = id;
@@ -118,10 +121,7 @@ Category.prototype.reload = function(callback) {
  * Create the optimal indexes for the queries
  */
 Category.createOptimalIndexes = function(db, callback) {
-  // db.collection(collectionName).ensureIndex({startTime:1}, function(err, result) {
-  //   if(err) return callback(err);
-    callback();
-  // });
+  callback();
 }
 
 module.exports = Category;

@@ -3,6 +3,9 @@
 var f = require('util').format
   , ObjectID = require('mongodb').ObjectID;
 
+/*
+ * Create a new session instance
+ */
 var Session = function(db, id, theaterId, name, description, start, end, price) {  
   this.db = db;
   this.id = id;

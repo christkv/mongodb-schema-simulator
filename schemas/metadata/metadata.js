@@ -2,6 +2,9 @@
 
 var f = require('util').format;
 
+/*
+ * Create a new metadata instance
+ */
 var MetaData = function(db, id, metadata) {
   this.db = db;
   this.id = id;
@@ -9,6 +12,9 @@ var MetaData = function(db, id, metadata) {
   this.metadata = metadata;
 }
 
+/*
+ * Create a new metadata document on mongodb
+ */
 MetaData.prototype.create = function(callback) {
   var self = this;
   // Insert the metadata

@@ -2,6 +2,9 @@
 
 var f = require('util').format;
 
+/*
+ * Create a new category instance
+ */
 var Category = function(db, id, name, category, parent) {
   this.db = db;
   this.id = id;
@@ -38,6 +41,9 @@ Category.prototype.create = function(callback) {
   });
 }
 
+/*
+ * Find all direct children categories of a provided category path
+ */
 Category.findAllDirectChildCategories = function(db, path, callback) {
   var self = this;
 
@@ -55,6 +61,9 @@ Category.findAllDirectChildCategories = function(db, path, callback) {
   });
 }
 
+/*
+ * Find all children categories below the provided category path
+ */
 Category.findAllChildCategories = function(db, path, callback) {
   var self = this;
   // Regular expression
@@ -71,6 +80,9 @@ Category.findAllChildCategories = function(db, path, callback) {
   });  
 }
 
+/*
+ * Find a specific category by it's path
+ */
 Category.findOne = function(db, path, callback) {
   // Locate all the categories
   db.collection('categories').findOne({category: path}, function(err, doc) {

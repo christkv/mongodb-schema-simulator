@@ -5,6 +5,9 @@ var f = require('util').format
   , Receipt = require('./receipt')
   , Session = require('./session');
 
+/*
+ * Create a new cart instance
+ */
 var Cart = function(db) {
   this.db = db;
   this.id = new ObjectID();
