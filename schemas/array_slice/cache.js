@@ -63,7 +63,7 @@ SliceCache.prototype.create = function(object, callback) {
       _id: self.id
     }, { $set: { data: [] } }, function(err, r) {
       if(err) return callback(err);
-      if(r.result.nModified == 0) return callback(new Error(f('failed to clear out pre-allocated array for object %s', self.id)));
+      if(r.modifiedCount == 0) return callback(new Error(f('failed to clear out pre-allocated array for object %s', self.id)));
       callback(null, self);
     });
   });
@@ -101,7 +101,7 @@ SliceCache.prototype.push = function(items, position, callback) {
     $push: pushOperation
   }, function(err, r) {
     if(err) return callback(err);
-    if(r.result.nModified == 0) return callback(new Error(f('failed to push items to cache object with id %s', self.id)));
+    if(r.modifiedCount == 0) return callback(new Error(f('failed to push items to cache object with id %s', self.id)));
     callback(null, self);
   });
 }

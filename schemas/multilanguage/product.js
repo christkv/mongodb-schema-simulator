@@ -21,7 +21,7 @@ Product.prototype.create = function(callback) {
     , name: this.name
     , cost: this.cost
     , currency: this.currency
-    , categories: categories
+    , categories: this.categories
   }, function(err, r) {
     if(err) return callback(err);
     callback(null, self);
@@ -35,11 +35,12 @@ Product.prototype.reload = function(callback) {
   var self = this;
 
   this.products.findOne({_id: this.id}, function(err, doc) {
-    console.dir(err)
-    console.dir(doc)
     if(err) return callback(err);
+    self.id = doc.id;
     self.name = doc.name;
     self.price = doc.price;
+    self.currency = doc.currency;
+    self.categories = doc.categories;
     callback(null, self);
   });
 }
@@ -48,12 +49,10 @@ Product.prototype.reload = function(callback) {
  * Create the optimal indexes for the queries
  */
 Product.createOptimalIndexes = function(db, callback) {
-  // if(typeof collectionName == 'function') callback = collectionName, collectionName = 'queues';
-
-  // db.collection(collectionName).ensureIndex({startTime:1}, function(err, result) {
-  //   if(err) return callback(err);
+  db.collection('products').ensureIndex({'categories._id':1}, function(err, result) {
+    if(err) return callback(err);
     callback();
-  // });
+  });
 }
 
 module.exports = Product;

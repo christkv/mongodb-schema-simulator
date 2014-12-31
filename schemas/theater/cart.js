@@ -64,11 +64,11 @@ Cart.prototype.reserve = function(theater, session, seats, callback) {
       , $set: { modifiedOn: new Date() }
     }, function(err, r) {
       // If we have an error or no modified documents
-      if(err || r.result.nModified == 0) {
+      if(err || r.modifiedCount == 0) {
         // Release the seats in the session
         session.release(self.id, seats, function(err, r) {
           if(err) return callback(err);
-          if(r.result.nModified == 0) {
+          if(r.modifiedCount == 0) {
             return callback(new Error('could not add seats to cart'));
           }
         });
@@ -110,7 +110,7 @@ Cart.prototype.checkout = function(callback) {
           $set: {state: Cart.DONE }
         }, function(err, r) {
           if(err) return callback(err);
-          if(r.result.nModified == 0) return callback(new Error(f('could not find cart with id %s', self.id)))
+          if(r.modifiedCount == 0) return callback(new Error(f('could not find cart with id %s', self.id)))
           callback();
         })
       })

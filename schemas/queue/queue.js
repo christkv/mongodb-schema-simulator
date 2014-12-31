@@ -22,7 +22,7 @@ Work.prototype.done = function(callback) {
     $set: { endTime: new Date() }
   }, function(err, r) {
     if(err) return callback(err);
-    if(r.result.nModified == 0) return callback(new Error(f('failed to set work item with id %s to done', self.doc._id)));
+    if(r.modifiedCount == 0) return callback(new Error(f('failed to set work item with id %s to done', self.doc._id)));
     callback(null, self);
   })
 }

@@ -41,7 +41,7 @@ Inventory.reserve = function(db, id, products, callback) {
         return callback(err);
       }
 
-      if(r.result.nModified == 0) {
+      if(r.modifiedCount == 0) {
         var err = new Error(f('failed to reserve product %s for cart %s', product._id, id));
         err.product = product;
         return callback(err);

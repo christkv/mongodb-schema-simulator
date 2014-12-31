@@ -84,7 +84,7 @@ Session.prototype.reserve = function(id, seats, callback) {
     }
   }, function(err, r) {
     if(err) return callback(err);
-    if(r.result.nModified == 0) return callback(new Error(f('could not reserve seats %s', seats)));  
+    if(r.modifiedCount == 0) return callback(new Error(f('could not reserve seats %s', seats)));  
     callback(null, self);
   })
 }

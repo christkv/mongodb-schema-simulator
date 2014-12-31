@@ -93,7 +93,7 @@ Cart.prototype.remove = function(product, callback) {
       $pull: { products: {_id: product.id }}
     }, function(err, r) {
       if(err) return callback(err);
-      if(r.result.nModified == 0) return callback(new Error(f('failed to remove product %s from cart %s', product.id, self.id)));
+      if(r.modifiedCount == 0) return callback(new Error(f('failed to remove product %s from cart %s', product.id, self.id)));
       callback(null, self);
     })
   })
@@ -134,7 +134,7 @@ Cart.prototype.update = function(product, quantity, callback) {
       }
     }, function(err, r) {
       if(err) return callback(err);
-      if(r.result.nModified == 0) return callback(new Error(f('could not locate the cart with id %s or product not found in cart', self.id)));
+      if(r.modifiedCount == 0) return callback(new Error(f('could not locate the cart with id %s or product not found in cart', self.id)));
 
       // Attempt to reserve the quantity from the product inventory
       new Inventory(self.db, product.id).adjust(id, quantity, delta, function(err, inventory) {
@@ -151,7 +151,7 @@ Cart.prototype.update = function(product, quantity, callback) {
           }
         }, function(err, r) {
           if(err) return callback(err);
-          if(r.result.nModified == 0) return callback(new Error(f('failed to rollback product quantity change of %s for cart %s', delta, self.id)));
+          if(r.modifiedCount == 0) return callback(new Error(f('failed to rollback product quantity change of %s for cart %s', delta, self.id)));
           callback(null, self);
         })
       });
@@ -181,7 +181,7 @@ Cart.product.checkout = function(details, callback) {
       $set: { state: Cart.COMPLETED }
     }, function(err, r) {
       if(err) return callback(err);
-      if(r.result.nModified == 0) return callback(new Error(f('failed to set cart %s to completed state', self.id)));
+      if(r.modifiedCount == 0) return callback(new Error(f('failed to set cart %s to completed state', self.id)));
 
       // Commit the change to the inventory
       Inventory.commit(self.db, self.id, function(err, inventory) {

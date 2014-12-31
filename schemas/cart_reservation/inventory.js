@@ -51,7 +51,7 @@ Inventory.prototype.adjust = function(id, quantity, delta, callback) {
     }
   }, function(err, r) {
     if(err) return callback(err);
-    if(r.result.nModified == 0) return callback(new Error(f('could not adjust the reservation for %s with the change of quantity %s', id, delta)));
+    if(r.modifiedCount == 0) return callback(new Error(f('could not adjust the reservation for %s with the change of quantity %s', id, delta)));
     callback(null, self);
   });
 }
@@ -88,7 +88,7 @@ Inventory.prototype.release = function(id, callback) {
       , $inc: { quantity: quantity }
     }, function(err, r) {
       if(err) return callback(err);
-      if(r.result.nModified == 0) return callback(new Error(f('failed to remove reservation for %s from inventory for product %s', id, self.id)));
+      if(r.modifiedCount == 0) return callback(new Error(f('failed to remove reservation for %s from inventory for product %s', id, self.id)));
       callback(null, self);
     });
   });

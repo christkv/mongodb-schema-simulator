@@ -72,7 +72,7 @@ Cart.prototype.remove = function(product, callback) {
     $pull: { products: {_id: product.id }}
   }, function(err, r) {
     if(err) return callback(err);
-    if(r.result.nModified == 0) return callback(new Error(f('failed to remove product %s from cart %s', product.id, self.id)));
+    if(r.modifiedCount == 0) return callback(new Error(f('failed to remove product %s from cart %s', product.id, self.id)));
     callback(null, self);
   });
 }
@@ -94,7 +94,7 @@ Cart.prototype.update = function(product, quantity, callback) {
     }
   }, function(err, r) {
     if(err) return callback(err);
-    if(r.result.nModified == 0) return callback(new Error(f('failed to set product quantity change of %s for cart %s', quantity, self.id)));
+    if(r.modifiedCount == 0) return callback(new Error(f('failed to set product quantity change of %s for cart %s', quantity, self.id)));
     callback(null, self);
   });
 }
@@ -134,7 +134,7 @@ Cart.product.checkout = function(details, callback) {
           $set: { state: Cart.COMPLETED }
         }, function(err, r) {
           if(err) return callback(err);
-          if(r.result.nModified == 0) return callback(new Error(f('failed to set cart %s to completed state', self.id)));
+          if(r.modifiedCount == 0) return callback(new Error(f('failed to set cart %s to completed state', self.id)));
 
           // Commit the change to the inventory
           Inventory.commit(self.db, self.id, function(err, inventory) {

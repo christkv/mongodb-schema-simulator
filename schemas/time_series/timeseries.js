@@ -105,7 +105,7 @@ TimeSeries.prototype.inc = function(time, measurement, callback) {
     , timestamp: timestampQuery
   }, updateStatement, { upsert:true }, function(err, r) {
     if(err) return callback(err);
-    if(r.result.nUpserted == 0 && r.result.nModified == 0) 
+    if(r.upsertedCount == 0 && r.modifiedCount == 0) 
       return callback(new Error(f('could not correctly update or upsert the timeseries document with id %s', self.id)));
     callback(null, self);
   })
