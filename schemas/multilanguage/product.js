@@ -1,45 +1,5 @@
 "use strict";
 
-var f = require('util').format;
-
-// {
-//     _id: ObjectId(""),
-//     name: "MyProduct",
-//     category: {
-//         Catid: ObjectId(""),
-//         names: {
-//            en: "MyCategory",
-//            es: "...",
-//            fr: "..."
-//         }
-//     }
-// }
-
-// Product {
-//   "_id" : ObjectID("..."),
-//   "name" : "MyProduct",
-//   "category" : ObjectID("..")
-// }
-
-// Category {
-//   "_id" : ObjectID("..."),
-//   "en-us" : "cheese",
-//   "de-de" : "Käse",
-//   "es-mx" : "queso"
-// }
-// Or, category could be stored with more structure to handle regional variances:
-
-// Category {
-//   "_id" : ObjectID("..."),
-//   "en" : { default: "cheese" }
-//   "de-de" : { default: "käse", "at": "käse2" }
-//   "es" : { default: "queso" }
-// }
-
-// Keep the category as the "main" location of the translation information
-// Keep the cached version in the product, invalidate the cached version when category
-// is refreshed by issuing an updateMany overwriting the category with the fresh one
-
 var Product = function(db, id, name, cost, currency, categories) {
   this.db = db;
   this.id = id;
@@ -67,3 +27,33 @@ Product.prototype.create = function(callback) {
     callback(null, self);
   });
 }
+
+/*
+ * Reload the product information
+ */
+Product.prototype.reload = function(callback) {
+  var self = this;
+
+  this.products.findOne({_id: this.id}, function(err, doc) {
+    console.dir(err)
+    console.dir(doc)
+    if(err) return callback(err);
+    self.name = doc.name;
+    self.price = doc.price;
+    callback(null, self);
+  });
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Product.createOptimalIndexes = function(db, callback) {
+  // if(typeof collectionName == 'function') callback = collectionName, collectionName = 'queues';
+
+  // db.collection(collectionName).ensureIndex({startTime:1}, function(err, result) {
+  //   if(err) return callback(err);
+    callback();
+  // });
+}
+
+module.exports = Product;

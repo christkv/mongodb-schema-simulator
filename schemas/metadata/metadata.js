@@ -1,3 +1,5 @@
+"use strict";
+
 var f = require('util').format;
 
 var MetaData = function(db, id, metadata) {

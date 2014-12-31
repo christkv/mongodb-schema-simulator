@@ -1,3 +1,5 @@
+"use strict";
+
 /*
   Uses $slice to keep the latest X number of items in the cache avoiding
   growing documents

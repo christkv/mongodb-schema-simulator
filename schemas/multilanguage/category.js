@@ -2,21 +2,93 @@
 
 var f = require('util').format;
 
-var Category = function(db, id, name, category, parent) {
+var Category = function(db, id, names) {
   this.db = db;
   this.id = id;
-  this.name = name;
-  this.category = category;  
-  this.categories = db.collection('categories');  
 
-  // If no parent was passed in
-  if(!parent) {
-    // Split up the category to locate the parent
-    var paths = category.split('/');
-    paths.pop();
-    // Merged all paths to get parent
-    this.parent = paths.join('/');    
+  // Hash of all the names by local ('en-us') etc
+  // { 'en-us': 'computers' }
+  this.names = names || {};
+  
+  // Collections used
+  this.categories = db.collection('categories');
+  this.products = db.collection('products');
+}
+
+/*
+ * Add a new name local to the category, update relevant products
+ */
+Category.prototype.addLocal = function(local, name, callback) {
+  var self = this;
+  // Build set statement
+  var setStatement = {
+    names: {}
   }
+
+  // Set the new local
+  setStatement[local] = name;
+
+  // Update the category with the new local for the name
+  this.categories.updateOne({
+    _id: id
+  }, {
+    $set: setStatement
+  }, function(err, r) {
+    if(err) return callback(err);
+    if(r.result.nModified == 0) return callback(new Error(f('could not modify category with id %s', self.id)));
+    
+    // Set up the update statement
+    var updateStatement = {};
+    updateStatement[f('categories.$.names.%s', local)] = name;
+
+    // Update all the products that have the category cached
+    self.products.updateMany({
+      'categories._id': self.id
+    }, {
+      $set: updateStatement
+    }, function(err, r) {
+      if(err) return callback(err);
+      callback();
+    });
+  });
+}
+
+/*
+ * Remove a new name local from the category, update relevant products
+ */
+Category.prototype.removeLocal = function(local, callback) {
+  var self = this;
+  // Build set statement
+  var setStatement = {
+    names: {}
+  }
+
+  // Set the new local
+  setStatement[local] = name;
+
+  // Update the category with the new local for the name
+  this.categories.updateOne({
+    _id: id
+  }, {
+    $unset: setStatement
+  }, function(err, r) {
+    if(err) return callback(err);
+    if(r.result.nModified == 0) return callback(new Error(f('could not modify category with id %s', self.id)));
+    
+    // Set up the update statement
+    var updateStatement = {};
+    updateStatement[f('categories.$.names.%s', local)] = name;
+
+    // Update all the products that have the category cached
+    self.products.updateMany({
+      'categories._id': self.id
+    }, {
+      $unset: updateStatement
+    }, function(err, r) {
+      if(err) return callback(err);
+      callback();
+    });
+  });
 }
 
 /*
@@ -27,11 +99,23 @@ Category.prototype.create = function(callback) {
   // Insert a new category
   this.categories.insertOne({
       _id: this.id
-    , name: this.name
-    , category: this.category
-    , parent: this.parent
+    , names: this.names
   }, function(err, r) {
     if(err) return callback(err);
     callback(null, self);
   });
 }
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Category.createOptimalIndexes = function(db, callback) {
+  // if(typeof collectionName == 'function') callback = collectionName, collectionName = 'queues';
+
+  // db.collection(collectionName).ensureIndex({startTime:1}, function(err, result) {
+  //   if(err) return callback(err);
+    callback();
+  // });
+}
+
+module.exports = Category;

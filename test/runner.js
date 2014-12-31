@@ -186,7 +186,8 @@ var testFiles =[
   //   '/test/tests/account_tests.js'
   // , '/test/tests/cart_tests.js'
 
-  , '/test/tests/queue_tests.js'
+  , '/test/tests/nested_categories_tests.js'
+  // , '/test/tests/queue_tests.js'
   // , '/test/tests/theater_tests.js'
   // , '/test/tests/timeseries_tests.js'
 ]

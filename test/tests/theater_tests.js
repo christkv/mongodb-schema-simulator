@@ -1,3 +1,5 @@
+"use strict";
+
 var setup = function(db, callback) {
   var Session = require('../../schemas/theater/session')
     , Cart = require('../../schemas/theater/cart');

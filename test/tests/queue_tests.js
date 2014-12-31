@@ -1,3 +1,5 @@
+"use strict";
+
 var setup = function(db, callback) {
   var Queue = require('../../schemas/queue/queue')
     , Topic = require('../../schemas/queue/topic');
@@ -19,7 +21,6 @@ exports['Should correctly insert job into queue'] = {
   // The actual test we wish to run
   test: function(configuration, test) {
     var Queue = require('../../schemas/queue/queue')
-      , Topic = require('../../schemas/queue/topic')
       , MongoClient = require('mongodb').MongoClient;
 
     // Connect to mongodb
@@ -31,7 +32,7 @@ exports['Should correctly insert job into queue'] = {
         // Create a queue
         var queue = new Queue(db, 'queues', 'work');
         // Add some items to queue
-        var addQueues = function(callback) {
+        var addToQueue = function(callback) {
           queue.publish(1, {work:1}, function(err) {
             test.equal(null, err);
 
@@ -47,7 +48,7 @@ exports['Should correctly insert job into queue'] = {
         }
 
         // Add the queues
-        addQueues(function() {
+        addToQueue(function() {
           queue.fetchByPriority(function(err, work) {
             test.equal(null, err)
             test.ok(work != null);
@@ -61,6 +62,58 @@ exports['Should correctly insert job into queue'] = {
               db.close();
               test.done();
             });
+          });
+        });
+      })
+    });
+  }
+}
+
+exports['Should correctly insert job into topic and listen to it'] = {
+  metadata: { requires: { } },
+  
+  // The actual test we wish to run
+  test: function(configuration, test) {
+    var Topic = require('../../schemas/queue/topic')
+      , MongoClient = require('mongodb').MongoClient;
+
+    // Connect to mongodb
+    MongoClient.connect(configuration.url(), function(err, db) {
+      test.equal(null, err);
+
+      // Cleanup
+      setup(db, function() {
+        // Create a queue
+        var topic = new Topic(db, 'queues', 'work', 10000);
+        // Add some items to queue
+        var addToTopic = function(callback) {
+          topic.publish({work:1}, function(err) {
+            test.equal(null, err);
+
+            topic.publish({work:2}, function(err) {
+              test.equal(null, err);
+                
+              topic.publish({work:3}, function(err) {
+                test.equal(null, err);
+                callback();
+              });
+            });
+          });
+        }
+
+        // Add the queues
+        addToTopic(function() {
+          var docs = [];
+          var cursor = topic.listen();
+          cursor.on('data', function(doc) {
+            docs.push(doc);
+          });
+
+          cursor.on('end', function() {
+            test.equal(3, docs.length);
+
+            db.close();
+            test.done();
           });
         });
       })

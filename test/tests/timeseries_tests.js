@@ -1,3 +1,5 @@
+"use strict";
+
 var setup = function(db, callback) {
   var TimeSeries = require('../../schemas/time_series/timeseries');
 

@@ -2,93 +2,23 @@
 
 var f = require('util').format;
 
-var Category = function(db, id, names) {
+var Category = function(db, id, name, category, parent) {
   this.db = db;
   this.id = id;
+  this.name = name;
+  this.category = category;  
+  this.categories = db.collection('categories');  
 
-  // Hash of all the names by local ('en-us') etc
-  // { 'en-us': 'computers' }
-  this.names = names || {};
-  
-  // Collections used
-  this.categories = db.collection('categories');
-  this.products = db.collection('products');
-}
-
-/*
- * Add a new name local to the category, update relevant products
- */
-Category.prototype.addLocal = function(local, name, callback) {
-  var self = this;
-  // Build set statement
-  var setStatement = {
-    names: {}
+  // If no parent was passed in
+  if(!parent) {
+    // Split up the category to locate the parent
+    var paths = category.split('/');
+    paths.pop();
+    // Merged all paths to get parent
+    this.parent = paths.join('/');    
+    // Special case of the root
+    if(this.parent == '' && category != '/') this.parent = '/';
   }
-
-  // Set the new local
-  setStatement[local] = name;
-
-  // Update the category with the new local for the name
-  this.categories.updateOne({
-    _id: id
-  }, {
-    $set: setStatement
-  }, function(err, r) {
-    if(err) return callback(err);
-    if(r.result.nModified == 0) return callback(new Error(f('could not modify category with id %s', self.id)));
-    
-    // Set up the update statement
-    var updateStatement = {};
-    updateStatement[f('categories.$.names.%s', local)] = name;
-
-    // Update all the products that have the category cached
-    self.products.updateMany({
-      'categories._id': self.id
-    }, {
-      $set: updateStatement
-    }, function(err, r) {
-      if(err) return callback(err);
-      callback();
-    });
-  });
-}
-
-/*
- * Remove a new name local from the category, update relevant products
- */
-Category.prototype.removeLocal = function(local, callback) {
-  var self = this;
-  // Build set statement
-  var setStatement = {
-    names: {}
-  }
-
-  // Set the new local
-  setStatement[local] = name;
-
-  // Update the category with the new local for the name
-  this.categories.updateOne({
-    _id: id
-  }, {
-    $unset: setStatement
-  }, function(err, r) {
-    if(err) return callback(err);
-    if(r.result.nModified == 0) return callback(new Error(f('could not modify category with id %s', self.id)));
-    
-    // Set up the update statement
-    var updateStatement = {};
-    updateStatement[f('categories.$.names.%s', local)] = name;
-
-    // Update all the products that have the category cached
-    self.products.updateMany({
-      'categories._id': self.id
-    }, {
-      $unset: updateStatement
-    }, function(err, r) {
-      if(err) return callback(err);
-      callback();
-    });
-  });
 }
 
 /*
@@ -99,10 +29,80 @@ Category.prototype.create = function(callback) {
   // Insert a new category
   this.categories.insertOne({
       _id: this.id
-    , names: this.names
+    , name: this.name
+    , category: this.category
+    , parent: this.parent
   }, function(err, r) {
     if(err) return callback(err);
     callback(null, self);
+  });
+}
+
+Category.findAllDirectChildCategories = function(db, path, callback) {
+  var self = this;
+
+  // Regular expression
+  var regexp = new RegExp(f('^%s$', path));
+  
+  // Locate all the categories
+  db.collection('categories').find({parent: regexp}).toArray(function(err, docs) {
+    if(err) return callback(err);
+
+    // Map all the docs to category instances
+    callback(null, docs.map(function(x) {
+      return new Category(db, x._id, x.name, x.category, x.parent);
+    }))
+  });
+}
+
+Category.findAllChildCategories = function(db, path, callback) {
+  var self = this;
+  // Regular expression
+  var regexp = new RegExp(f('^%s', path));
+  
+  // Locate all the categories
+  db.collection('categories').find({parent: regexp}).toArray(function(err, docs) {
+    if(err) return callback(err);
+
+    // Map all the docs to category instances
+    callback(null, docs.map(function(x) {
+      return new Category(db, x._id, x.name, x.category, x.parent);
+    }));
+  });  
+}
+
+Category.findOne = function(db, path, callback) {
+  // Locate all the categories
+  db.collection('categories').findOne({category: path}, function(err, doc) {
+    if(err) return callback(err);
+    if(!doc) return callback(new Error(f('could not locate category with path %s', path)));
+    callback(null, new Category(db, doc._id, doc.name, doc.category, doc.parent));
+  })  
+}
+
+/*
+ * Reload the product information
+ */
+Category.prototype.reload = function(callback) {
+  var self = this;
+
+  this.categories.findOne({_id: this.id}, function(err, doc) {
+    if(err) return callback(err);
+    callback(null, self);
+  });
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Category.createOptimalIndexes = function(db, callback) {
+  db.collection('categories').ensureIndex({category:1}, function(err, result) {
+    if(err) return callback(err);
+
+    db.collection('categories').ensureIndex({parent:1}, function(err, result) {
+      if(err) return callback(err);
+      callback();
+    });
   });
 }
 

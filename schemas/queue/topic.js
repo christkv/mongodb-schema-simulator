@@ -1,3 +1,5 @@
+"use strict";
+
 var f = require('util').format;
 
 /*
@@ -48,7 +50,7 @@ Topic.prototype.publish = function(object, callback) {
 /*
  * Simple cursor builder, does not try to deal with reconnect etc
  */
-Topic.prototype.listen = function(from, callback) {
+Topic.prototype.listen = function(from) {
   if(typeof from == 'function') callback = from, from = null;
   var query = {}
   // We provided a filter allowing us to skip ahead
@@ -57,7 +59,7 @@ Topic.prototype.listen = function(from, callback) {
   var cursor = this.topic.find(query);
   // Set the tailable cursor options
   cursor = cursor.addCursorFlag('tailable', true)
-    .addCursorFlag('awaidata', true);
+    .addCursorFlag('awaitData', true);
   // Return the cursor
   return cursor;
 }
@@ -66,10 +68,7 @@ Topic.prototype.listen = function(from, callback) {
  * Create the optimal indexes for the queries
  */
 Topic.createOptimalIndexes = function(db, callback) {
-  // db.collection('carts').ensureIndex({state:1}, function(err, result) {
-  //   if(err) return callback(err);
-    callback();
-  // });
+  callback();
 }
 
 module.exports = Topic;
