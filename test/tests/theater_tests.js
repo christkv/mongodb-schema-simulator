@@ -365,8 +365,13 @@ exports['Should correctly find expired carts and remove any reservations in them
                         }
                       }
 
-                      db.close();
-                      test.done();
+                      db.collection('carts').count({state:'expired'}, function(err, c) {
+                        test.equal(null, err);
+                        test.equal(0, c);
+
+                        db.close();
+                        test.done();
+                      });
                     });
                   });
                 });

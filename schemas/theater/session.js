@@ -79,7 +79,7 @@ Session.prototype.reserve = function(id, seats, callback) {
     , $inc: { seatsAvailable: -seats.length }
     , $push: { 
       reservations: {
-          cartId: id
+          _id: id
         , seats: seats
         , price: self.price
         , total: self.price * seats.length
@@ -96,7 +96,9 @@ Session.prototype.reserve = function(id, seats, callback) {
  * Release all the reservations for a cart across all sessions
  */
 Session.releaseAll = function(db, id, callback) {
-  db.collection('sessions').find({}).toArray(function(err, docs) {
+  db.collection('sessions').find({
+    'reservations._id': id
+  }).toArray(function(err, docs) {
     if(err) return callback(err);
     if(docs.length == 0) return callback();
 
@@ -106,7 +108,7 @@ Session.releaseAll = function(db, id, callback) {
       var reservation = null;
       
       for(var i = 0; i < doc.reservations.length; i++) {
-        if(doc.reservations[i].cartId.equals(id)) {
+        if(doc.reservations[i]._id.equals(id)) {
           reservation = doc.reservations[i];
           break;
         }
@@ -115,7 +117,7 @@ Session.releaseAll = function(db, id, callback) {
       // No reservation found return
       if(!reservation) return callback();
       // Reverse the specific reservation
-      new Session(db, doc._id).release(reservation.cartId, reservation.seats, callback);
+      new Session(db, doc._id).release(reservation._id, reservation.seats, callback);
     }
 
     // Process all the entries
@@ -149,7 +151,7 @@ Session.prototype.release = function(id, seats, callback) {
     _id: this.id
   }, {
       $set: setSeatsSelection
-    , $pull: { reservations: { cartId: id }}
+    , $pull: { reservations: { _id: id }}
   }, function(err, r) {
     if(err) return callback(err);
     callback();
@@ -162,9 +164,9 @@ Session.prototype.release = function(id, seats, callback) {
 Session.apply = function(db, id, callback) {
   // Apply the cart by removing the cart from all sessions
   db.collection('sessions').updateMany({
-    'reservations.cartId': id
+    'reservations._id': id
   }, {
-    $pull: { reservations: { cartId: id }}
+    $pull: { reservations: { _id: id }}
   }, function(err, r) {
     if(err) return callback(err);
     callback();
@@ -175,7 +177,7 @@ Session.apply = function(db, id, callback) {
  * Create the optimal indexes for the queries
  */
 Session.createOptimalIndexes = function(db, callback) {
-  db.collection('sessions').ensureIndex({'reservations.cartId':1}, function(err, result) {
+  db.collection('sessions').ensureIndex({'reservations._id':1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

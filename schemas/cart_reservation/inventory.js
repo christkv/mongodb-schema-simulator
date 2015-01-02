@@ -1,11 +1,12 @@
 "use strict";
 
-var f = require('util').format;
+var f = require('util').format
+  , ObjectID = require('mongodb').ObjectID;
 
 var Inventory = function(db, id) {  
   this.db = db;
-  this.id = id;
-  this.inventories = db.collection('inventories';)
+  this.id = id || new ObjectID();
+  this.inventories = db.collection('inventories');
 }
 
 /*
@@ -19,13 +20,13 @@ Inventory.prototype.reserve = function(id, quantity, callback) {
   }, {
       $inc: {quantity: -quantity}
     , $push: {
-      reserved: {
-        quantity: quantity, cartId: id, created_on: new Date()
+      reservations: {
+        quantity: quantity, _id: id, created_on: new Date()
       }
     }
   }, function(err, r) {
     if(err) return callback(err);
-    if(r.nUpdated == 0) return callback(new Error(f('could not add the reservation for %s with the quantity %s', id, quantity)));
+    if(r.modifiedCount == 0) return callback(new Error(f('could not add the reservation for %s with the quantity %s', id, quantity)));
     callback(null, self);
   });
 }
@@ -39,20 +40,63 @@ Inventory.prototype.adjust = function(id, quantity, delta, callback) {
   // Attempt to update a reservation of inventory
   self.inventories.updateOne({
       _id: self.id
-    , 'reserved._id': id
+    , 'reservations._id': id
     , quantity: {
       $gte: delta
     }
   }, {
       $inc: { quantity: -delta }
     , $set: {
-         'reserved.$.quantity': quantity
+         'reservations.$.quantity': quantity
       , modified_on: new Date()
     }
   }, function(err, r) {
     if(err) return callback(err);
     if(r.modifiedCount == 0) return callback(new Error(f('could not adjust the reservation for %s with the change of quantity %s', id, delta)));
     callback(null, self);
+  });
+}
+
+/*
+ * Release all the reservations for a cart across all products
+ */
+Inventory.releaseAll = function(db, id, callback) {
+  db.collection('inventories').find({
+    'reservations._id': id
+  }).toArray(function(err, docs) {
+    if(err) return callback(err);
+    if(docs.length == 0) return callback();
+
+    // Reverses a specific reservation
+    var reverseReservation = function(doc, id, callback) {
+      // Locate the right cart id
+      var reservation = null;
+      for(var i = 0; i < doc.reservations.length; i++) {
+        if(doc.reservations[i]._id.equals(id)) {
+          reservation = doc.reservations[i];
+          break;
+        }
+      }
+
+      // No reservation found return
+      if(!reservation) return callback();
+      // Reverse the specific reservation
+      new Inventory(db, doc._id).release(reservation._id, callback);
+    }
+
+    // Process all the entries
+    var left = docs.length;
+
+    // For each entry reverse the reservation for this cart
+    for(var i = 0; i < docs.length; i++) {
+      reverseReservation(docs[i], id, function(err) {
+        left = left - 1;
+
+        if(left == 0) {
+          callback();
+        }
+      });
+    }
   });
 }
 
@@ -67,24 +111,24 @@ Inventory.prototype.release = function(id, callback) {
   }, function(err, doc) {
     if(err) return callback(err);
 
-    // Keep the reserved quantity
+    // Keep the reservations quantity
     var quantity = 0;
 
-    // Locate the reserved quantity
-    for(var i = 0; i < doc.reserved.length; i++) {
-      if(doc.reserved[i]._id == id) {
-        quantity = doc.reserved[i].quantity;
+    // Locate the reservations quantity
+    for(var i = 0; i < doc.reservations.length; i++) {
+      if(doc.reservations[i]._id.equals(id)) {
+        quantity = doc.reservations[i].quantity;
         break;
       }
     }
 
-    // Update the inventory removing the reserved item and returning
+    // Update the inventory removing the reservations item and returning
     // the quantity
     self.inventories.updateOne({
         _id: self.id
-      , "reserved._id": id    
+      , "reservations._id": id    
     }, {
-        $pull : { reserved: {_id: id } }
+        $pull : { reservations: {_id: id } }
       , $inc: { quantity: quantity }
     }, function(err, r) {
       if(err) return callback(err);
@@ -95,14 +139,26 @@ Inventory.prototype.release = function(id, callback) {
 }
 
 /*
- * Commit all the reservations by removing them from the reserved array
+ * Commit all the reservations by removing them from the reservations array
  */
 Inventory.commit = function(db, id, callback) {
+  var self = this;
   db.collection('inventories').updateMany({
-    'reserved._id': id
+    'reservations._id': id
   }, {
-    $pull: { reserved: {_id: id } }
+    $pull: { reservations: {_id: id } }
   }, function(err, r) {
+    if(err) return callback(err);
+    if(r.modifiedCount == 0) return callback(new Error(f('no reservations for cart %s found in inventory', id)));
+    callback();
+  });
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Inventory.createOptimalIndexes = function(db, callback) {
+  db.collection('inventories').ensureIndex({"reservations._id": 1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

@@ -35,7 +35,6 @@ Category.prototype.addLocal = function(local, name, callback) {
     $set: setStatement
   }, function(err, r) {
     if(err) return callback(err);
-    console.dir(r)
     if(r.modifiedCount == 0) return callback(new Error(f('could not modify category with id %s', self.id)));
     
     // Set up the update statement

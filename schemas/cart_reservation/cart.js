@@ -7,7 +7,8 @@ var f = require('util').format
 
 var Cart = function(db, id) {  
   this.db = db;
-  this.id = id;
+  this.id = id || new ObjectID();
+  this.products = [];
   this.carts = db.collection('carts');
   this.inventories = db.collection('inventories');
 }
@@ -15,23 +16,28 @@ var Cart = function(db, id) {
 Cart.ACTIVE = 'active';
 Cart.EXPIRED = 'expired';
 Cart.COMPLETED = 'completed';
+Cart.CANCELED = 'canceled';
 
 /*
  * Create a new cart instance and save it to mongodb
  */
 Cart.prototype.create = function(callback) {
-  self.carts.updateOne({
-      _id: self.id, 
+  var self = this;
+  this.carts.updateOne({
+      _id: this.id, 
     }, {
         state: Cart.ACTIVE
       , modified_on: new Date()
       , products: []
-    }, {upsert:true}, callback);
+    }, {upsert:true}, function(err, r) {
+      if(err) return callback(err);
+      callback(null, self);
+    });
 }
 
 var rollback = function(cart, product, quantity, callback) {
   cart.carts.updateOne({
-    _id: self.id, state: Cart.ACTIVE, products._id: product.id
+    _id: cart.id, state: Cart.ACTIVE, 'products._id': product.id
   }, {
     $pull: { products: { _id: product.id } }
   }, function(err, r) {
@@ -62,13 +68,20 @@ Cart.prototype.add = function(product, quantity, callback) {
     }
   }, {upsert:true}, function(err, r) {
     if(err) return callback(err);
-    if(r.nUpdated == 0) return callback(new Error(f("failed to add product %s to the cart with id %s", product.id, self.id)))
+    if(r.modifiedCount == 0) return callback(new Error(f("failed to add product %s to the cart with id %s", product.id, self.id)))
 
     // Next update the inventory, if there is enough
     // quantity available, push the cart information to the
-    // list of reserved product quantities
+    // list of reservations product quantities
     new Inventory(self.db, product.id).reserve(self.id, quantity, function(err, inventory) {
       if(err) return rollback(self, product, quantity, callback);
+      self.products.push({
+          _id: product.id
+        , quantity: quantity
+        , name: product.name
+        , price: product.price
+      });
+      // return
       callback();
     });
   });
@@ -108,7 +121,7 @@ Cart.prototype.update = function(product, quantity, callback) {
   // Get the latest cart view
   self.carts.findOne({_id: self.id}, function(err, doc) {
     if(err) return callback(err);
-    if(!doc) return callback(new Error(f('could not locate cart with id %s', self.id))))
+    if(!doc) return callback(new Error(f('could not locate cart with id %s', self.id)));
 
     // Old quantity for the product
     var oldQuantity = 0;
@@ -137,8 +150,8 @@ Cart.prototype.update = function(product, quantity, callback) {
       if(r.modifiedCount == 0) return callback(new Error(f('could not locate the cart with id %s or product not found in cart', self.id)));
 
       // Attempt to reserve the quantity from the product inventory
-      new Inventory(self.db, product.id).adjust(id, quantity, delta, function(err, inventory) {
-        if(err == null) return callback(null, self);
+      new Inventory(self.db, product.id).adjust(self.id, quantity, delta, function(err1, inventory) {
+        if(err1 == null) return callback(null, self);
         // Rollback as we could not apply the adjustment in the reservation
         self.carts.updateOne({
             _id: self.id
@@ -152,7 +165,8 @@ Cart.prototype.update = function(product, quantity, callback) {
         }, function(err, r) {
           if(err) return callback(err);
           if(r.modifiedCount == 0) return callback(new Error(f('failed to rollback product quantity change of %s for cart %s', delta, self.id)));
-          callback(null, self);
+          // Return original error message from the inventory reservation attempt
+          callback(err1, null);
         })
       });
     })
@@ -162,33 +176,78 @@ Cart.prototype.update = function(product, quantity, callback) {
 /*
  * Perform the checkout of the products in the cart
  */
-Cart.product.checkout = function(details, callback) {
+Cart.prototype.checkout = function(details, callback) {
   var self = this;
-  // Create a new order instance
-  var order = new Order(self.db, new ObjectID()
-    , details.shipping
-    , details.payment
-    , cart.products);
-  // Create the document
-  order.create(function(err, order) {
+  self.carts.findOne({_id: self.id}, function(err, cart) {
     if(err) return callback(err);
-
-    // Set the state of the cart as completed
-    self.carts.updateOne({
-        _id: self.id
-      , state: Cart.ACTIVE
-    }, {
-      $set: { state: Cart.COMPLETED }
-    }, function(err, r) {
+    if(!cart) return callback(new Error(f('could not locate cart with id %s', self.id)));
+    // Create a new order instance
+    var order = new Order(self.db, new ObjectID()
+      , details.shipping
+      , details.payment
+      , cart.products);
+    // Create the document
+    order.create(function(err, order) {
       if(err) return callback(err);
-      if(r.modifiedCount == 0) return callback(new Error(f('failed to set cart %s to completed state', self.id)));
 
-      // Commit the change to the inventory
-      Inventory.commit(self.db, self.id, function(err, inventory) {
+      // Set the state of the cart as completed
+      self.carts.updateOne({
+          _id: self.id
+        , state: Cart.ACTIVE
+      }, {
+        $set: { state: Cart.COMPLETED }
+      }, function(err, r) {
         if(err) return callback(err);
-        callback();
+        if(r.modifiedCount == 0) return callback(new Error(f('failed to set cart %s to completed state', self.id)));
+
+        // Commit the change to the inventory
+        Inventory.commit(self.db, self.id, function(err, inventory) {
+          if(err) return callback(err);
+          callback();
+        });
+      })
+    });
+  });
+}
+
+/*
+ * Release any of the expired carts
+ */
+Cart.releaseExpired = function(db, callback) {
+  db.collection('carts').find({state: Cart.EXPIRED}).toArray(function(err, carts) {
+    if(err) return callback(err);
+    if(carts.length == 0) return callback();
+    var left = carts.length;
+
+    // Process each cart
+    var processCart = function(cart, callback) {
+      // Release all reservations for this cart
+      Inventory.releaseAll(db, cart._id, function(err) {
+        // Set cart to expired
+        db.collection('carts').updateOne(
+            { _id: cart._id }
+          , { $set: { state: Cart.CANCELED }}, callback);
       });
-    })
+    }
+
+    // Release all the carts
+    for(var i = 0; i < carts.length; i++) {
+      processCart(carts[i], function(err) {
+        left = left - 1;
+
+        if(left == 0) callback();
+      });
+    }
+  });
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Cart.createOptimalIndexes = function(db, callback) {
+  db.collection('carts').ensureIndex({state: 1}, function(err, result) {
+    if(err) return callback(err);
+    callback();
   });
 }
 

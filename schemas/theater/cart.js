@@ -170,9 +170,20 @@ Cart.releaseExpired = function(db, callback) {
     if(carts.length == 0) return callback();
     var left = carts.length;
 
+    // Process each cart
+    var processCart = function(cart, callback) {
+      // Release all reservations for this cart
+      Session.releaseAll(db, cart._id, function(err) {
+        // Set cart to expired
+        db.collection('carts').updateOne(
+            { _id: cart._id }
+          , { $set: { state: Cart.CANCELED }}, callback);
+      });
+    }
+
     // Release all the carts
     for(var i = 0; i < carts.length; i++) {
-      Session.releaseAll(db, carts[i]._id, function(err) {
+      processCart(carts[i], function(err) {
         left = left - 1;
 
         if(left == 0) callback();

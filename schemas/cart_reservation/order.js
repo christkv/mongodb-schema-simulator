@@ -1,10 +1,11 @@
 "use strict";
 
-var f = require('util').format;
+var f = require('util').format
+  , ObjectID = require('mongodb').ObjectID;
 
 var Order = function(db, id, shipping, payment, products) {  
   this.db = db;
-  this.id = id;
+  this.id = id || new ObjectID();
   this.shipping = shipping;
   this.payment = payment;
   this.products = products
@@ -36,6 +37,16 @@ Order.prototype.create = function(callback) {
     if(r.result.nInserted == 0) return callback(new Error(f('failed to insert order for cart %s', self.id)));
     callback();
   })
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Order.createOptimalIndexes = function(db, callback) {
+  // db.collection('inventories').ensureIndex({"reserved._id": 1}, function(err, result) {
+  //   if(err) return callback(err);
+    callback();
+  // });
 }
 
 module.exports = Order;

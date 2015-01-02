@@ -15,6 +15,7 @@ var Cart = function(db, id) {
 Cart.ACTIVE = 'active';
 Cart.EXPIRED = 'expired';
 Cart.COMPLETED = 'completed';
+Cart.CANCELED = 'canceled';
 
 /*
  * Create a new cart instance and save it to mongodb
