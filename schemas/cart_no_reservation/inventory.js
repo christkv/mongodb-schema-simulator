@@ -1,11 +1,12 @@
 "use strict";
 
-var f = require('util').format;
+var f = require('util').format
+  , ObjectID = require('mongodb').ObjectID;
 
 var Inventory = function(db, id) {  
   this.db = db;
-  this.id = id;
-  this.inventories = db.collection('inventories';)
+  this.id = id || new ObjectID();
+  this.inventories = db.collection('inventories');
 }
 
 /*
@@ -31,8 +32,8 @@ Inventory.reserve = function(db, id, products, callback) {
     }, {
         $inc: {quantity: -product.quantity}
       , $push: {
-        reserved: {
-          quantity: product.quantity, cartId: id, created_on: new Date()
+        reservations: {
+          quantity: product.quantity, _id: id, created_on: new Date()
         }
       }
     }, function(err, r) {
@@ -55,14 +56,16 @@ Inventory.reserve = function(db, id, products, callback) {
   var rollback = function(inventories, id, products, callback) {
     var left = products.length;
     var errors = [];
-
+    // If we have no products return
+    if(products.length == 0) return callback();
+    // Rollback all the products
     for(var i = 0; i < products.length; i++) {
       inventories.updateOne({
           _id: products[i]._id
-        ,  "reserved._id": id
+        ,  "reservations._id": id
       }, {
           $inc: { quantity: products[i].quantity }
-        , $pull : { reserved: {_id: id } }
+        , $pull : { reservations: {_id: id } }
       }, function(err) {
         if(err) errors.push(err);
         left = left - 1;
@@ -88,23 +91,39 @@ Inventory.reserve = function(db, id, products, callback) {
     reserveProduct(inventories, id, products[i], function(err, product) {
       left = left - 1;
       if(err) errors.push(err);
-      applied.puhs(product);
+      else applied.push(product);
 
       if(left == 0 && errors.length == 0) return callback();
-      if(left == 0) rollback(inventories, id, applied, callback);
+      if(left == 0) rollback(inventories, id, applied, function(err) {
+        if(err) return callback(err);
+        if(errors.length == 0) return callback(null, self);
+        var error = new Error(f('failed to checkout cart %s', id));
+        error.products = errors;
+        callback(error);
+      });
     });
   }
 }
 
 /*
- * Commit all the reservations by removing them from the reserved array
+ * Commit all the reservations by removing them from the reservations array
  */
 Inventory.commit = function(db, id, callback) {
   db.collection('inventories').updateMany({
-    'reserved._id': id
+    'reservations._id': id
   }, {
-    $pull: { reserved: {_id: id } }
+    $pull: { reservations: {_id: id } }
   }, function(err, r) {
+    if(err) return callback(err);
+    callback();
+  });
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Inventory.createOptimalIndexes = function(db, callback) {
+  db.collection('inventories').ensureIndex({"reservations._id": 1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

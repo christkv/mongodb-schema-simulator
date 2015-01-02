@@ -26,10 +26,7 @@ Product.prototype.reload = function(callback) {
  * Create the optimal indexes for the queries
  */
 Product.createOptimalIndexes = function(db, callback) {
-  // db.collection('inventories').ensureIndex({"reserved._id": 1}, function(err, result) {
-  //   if(err) return callback(err);
-    callback();
-  // });
+  callback();
 }
 
 module.exports = Product;

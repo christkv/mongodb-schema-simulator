@@ -82,7 +82,7 @@ Cart.prototype.add = function(product, quantity, callback) {
         , price: product.price
       });
       // return
-      callback();
+      callback(null, self);
     });
   });
 }

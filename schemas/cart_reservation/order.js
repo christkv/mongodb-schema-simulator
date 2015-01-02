@@ -43,10 +43,7 @@ Order.prototype.create = function(callback) {
  * Create the optimal indexes for the queries
  */
 Order.createOptimalIndexes = function(db, callback) {
-  // db.collection('inventories').ensureIndex({"reserved._id": 1}, function(err, result) {
-  //   if(err) return callback(err);
-    callback();
-  // });
+  callback();
 }
 
 module.exports = Order;

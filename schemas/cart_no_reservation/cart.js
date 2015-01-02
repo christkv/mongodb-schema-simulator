@@ -7,7 +7,8 @@ var f = require('util').format
 
 var Cart = function(db, id) {  
   this.db = db;
-  this.id = id;
+  this.id = id || new ObjectID();
+  this.products = [];
   this.carts = db.collection('carts');
   this.inventories = db.collection('inventories');
 }
@@ -21,13 +22,17 @@ Cart.CANCELED = 'canceled';
  * Create a new cart instance and save it to mongodb
  */
 Cart.prototype.create = function(callback) {
+  var self = this;
   self.carts.updateOne({
       _id: self.id, 
     }, {
         state: Cart.ACTIVE
       , modified_on: new Date()
       , products: []
-    }, {upsert:true}, callback);
+    }, {upsert:true}, function(err) {
+      if(err) return callback(err);
+      callback(null, self);
+    });
 }
 
 /*
@@ -53,8 +58,15 @@ Cart.prototype.add = function(product, quantity, callback) {
     }
   }, {upsert:true}, function(err, r) {
     if(err) return callback(err);
-    if(r.nUpdated == 0) return callback(new Error(f("failed to add product %s to the cart with id %s", product.id, self.id)))
-    callback();
+    if(r.modifiedCount == 0) return callback(new Error(f("failed to add product %s to the cart with id %s", product.id, self.id)))
+    self.products.push({
+        _id: product.id
+      , quantity: quantity
+      , name: product.name
+      , price: product.price
+    })
+    // Return the cart
+    callback(null, self);
   });
 }
 
@@ -103,15 +115,15 @@ Cart.prototype.update = function(product, quantity, callback) {
 /*
  * Attempt to checkout the products in the cart, late validation (like Amazon does)
  */
-Cart.product.checkout = function(details, callback) {
+Cart.prototype.checkout = function(details, callback) {
   var self = this;
 
   // Fetch latest cart view
   this.carts.findOne({
     _id: this.id
-  }, function(err, doc) {
+  }, function(err, cart) {
     if(err) return callback(err);
-    if(!doc) return callback(new Error(f('could not located cart with id %s', self.id)));
+    if(!cart) return callback(new Error(f('could not located cart with id %s', self.id)));
 
     // Reserve the quantities for all the products (rolling back if some are not possible to cover)
     Inventory.reserve(self.db, self.id, cart.products, function(err) {
@@ -145,6 +157,28 @@ Cart.product.checkout = function(details, callback) {
         })
       });
     });
+  });
+}
+
+/*
+ * Expired carts can just be set to canceled as there is no need to return inventory
+ */
+Cart.releaseExpired = function(db, callback) {
+  db.collection('carts').updateMany(
+      {state: Cart.EXPIRED}
+    , { $set: { state: Cart.CANCELED} }, function(err, r) {
+      if(err) return callback(err);
+      callback();
+    });
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Cart.createOptimalIndexes = function(db, callback) {
+  db.collection('carts').ensureIndex({state: 1}, function(err, result) {
+    if(err) return callback(err);
+    callback();
   });
 }
 
