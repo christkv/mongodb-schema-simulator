@@ -77,7 +77,6 @@ Transaction.prototype.apply = function(options, callback) {
     self.fromAccount.debit(self.id, self.amount, function(err) {
       // Fail after first application of transaction to accounts
       if(options.fail == 'failAfterFirstApply') err = new Error('failed to apply transaction to both accounts');
-      console.dir(err)
 
       // An error occurred, cancel the transaction
       if(err) return reverse(self, callback);
@@ -155,6 +154,13 @@ Transaction.prototype.cancel = function(callback) {
     if(r.result.nUpdated == 0) return callback(new Error(f('no transaction found for %s', self.id)));
     callback(new Error(f('transaction %d was canceled', self.id)));
   });      
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Transaction.createOptimalIndexes = function(db, callback) {
+  callback();
 }
 
 module.exports = Transaction;

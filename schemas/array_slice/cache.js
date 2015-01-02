@@ -1,5 +1,8 @@
 "use strict";
 
+var f = require('util').format
+  , ObjectID = require('mongodb').ObjectID;
+
 /*
   Uses $slice to keep the latest X number of items in the cache avoiding
   growing documents
@@ -21,7 +24,7 @@
 */
 var SliceCache = function(db, id, sliceAt) {
   this.db = db;
-  this.id = id;
+  this.id = id || new ObjectID();
   this.sliceAt = sliceAt;
   this.cache = this.db.collection('cache');
 }
@@ -58,8 +61,8 @@ SliceCache.prototype.create = function(object, callback) {
     // update leaving the document pre-allocated
     if(!object) return callback(null, self);
 
-    // Remove array
-    this.cache.updateOne({
+    // Remove array (keeps the document in place with pre-allocated space)
+    self.cache.updateOne({
       _id: self.id
     }, { $set: { data: [] } }, function(err, r) {
       if(err) return callback(err);
@@ -85,13 +88,13 @@ SliceCache.prototype.push = function(items, position, callback) {
   var pushOperation =  {
     data: {
         $each: items
-      , $slice: this.sliceAt
+      , $slice: -this.sliceAt
     }
   }
 
   // We provided a position for adding the items
   if(typeof position == 'number') {
-    pushOperation.data['$position'] position;
+    pushOperation.data['$position'] = position;
   }
 
   // Push and slice
@@ -104,6 +107,13 @@ SliceCache.prototype.push = function(items, position, callback) {
     if(r.modifiedCount == 0) return callback(new Error(f('failed to push items to cache object with id %s', self.id)));
     callback(null, self);
   });
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+SliceCache.createOptimalIndexes = function(db, callback) {
+  callback();
 }
 
 module.exports = SliceCache;

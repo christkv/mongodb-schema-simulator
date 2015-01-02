@@ -1,9 +1,13 @@
 "use strict";
 
-var drop = function(db, callback) {
+var setup = function(db, callback) {
+  var Account = require('../../schemas/account/account');
+
   db.collection('accounts').drop(function() {
     db.collection('transactions').drop(function() {
-      callback();
+      Account.createOptimalIndexes(db, function() {
+        callback();
+      });
     });
   });
 }
@@ -22,7 +26,7 @@ exports['Should correctly perform transfer between account A and account B of 10
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
         // Create the two accounts used for a transfer
         var accountA = new Account(db, "Joe", 1000);
         var accountB = new Account(db, "Paul", 1000);
@@ -81,7 +85,7 @@ exports['Should correctly roll back transfer that fails before any application o
       test.equal(null, err);
   
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
         // Create the two accounts used for a transfer
         var accountA = new Account(db, "Joe1", 1000);
         var accountB = new Account(db, "Paul1", 1000);
@@ -140,7 +144,7 @@ exports['Should correctly roll back transfer that fails with only a single accou
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
         // Create the two accounts used for a transfer
         var accountA = new Account(db, "Joe2", 1000);
         var accountB = new Account(db, "Paul2", 1000);
@@ -199,7 +203,7 @@ exports['Should correctly roll back transfer that fails after application to acc
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
         // Create the two accounts used for a transfer
         var accountA = new Account(db, "Joe3", 1000);
         var accountB = new Account(db, "Paul3", 1000);
@@ -258,7 +262,7 @@ exports['Should correctly roll back transfer that fails after transaction set to
       test.equal(null, err);
 
       // Cleanup
-      drop(db, function() {
+      setup(db, function() {
         // Create the two accounts used for a transfer
         var accountA = new Account(db, "Joe3", 1000);
         var accountB = new Account(db, "Paul3", 1000);

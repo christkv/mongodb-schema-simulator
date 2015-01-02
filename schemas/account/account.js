@@ -16,12 +16,12 @@ var Account = function(db, name, balance) {
  */
 Account.prototype.create = function(callback) {
   var self = this;
-  // Ensure we do not have duplicate accounts
-  self.accounts.ensureIndex({name:1}, {unique:true}, function() {
-    self.accounts.updateOne({name: self.name}
-      , {name: self.name, balance:self.balance, pendingTransactions:[]}
-      , {upsert:true}, callback);
-  });
+  self.accounts.updateOne({name: self.name}
+    , {name: self.name, balance:self.balance, pendingTransactions:[]}
+    , {upsert:true}, function(err, r) {
+      if(err) return callback(err);
+      callback(null, self);
+    });
 }
 
 /*
@@ -98,6 +98,17 @@ Account.prototype.reload = function(callback) {
     if(err) return callback(err);
     self.balance = result.balance;
     callback(null, self);
+  });
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Account.createOptimalIndexes = function(db, callback) {
+  // Ensure we do not have duplicate accounts
+  db.collection('accounts').ensureIndex({name:1}, {unique: true}, function(err, result) {
+    if(err) return callback(err);
+    callback();
   });
 }
 
