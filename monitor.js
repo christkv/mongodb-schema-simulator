@@ -1,6 +1,7 @@
 var f = require('util').format
   , dnode = require('dnode')
-  , Monitor = require('./lib/monitor/monitor');
+  , Monitor = require('./lib/monitor/monitor')
+  , ScenarioManager = require('./lib/child/scenario_manager');
 
 // Parse the passed in parameters
 var yargs = require('yargs')
@@ -25,10 +26,14 @@ var argv = yargs.argv
 // List help
 if(argv.h) return console.log(yargs.help())
 
+// Scenario manager
+var manager = new ScenarioManager();
+// Load the scenarios
+manager.load('./lib/scenarios');
 // Var clients
 var clients = [];
 // Monitor instance
-var monitor = new Monitor(argv, clients);
+var monitor = new Monitor(argv, manager, clients);
 
 // The actual server (handles clients reporting back)
 var server = dnode({
