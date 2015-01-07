@@ -32,16 +32,44 @@ var monitor = new Monitor(argv, clients);
 
 // The actual server (handles clients reporting back)
 var server = dnode({
+  // Registration call from the client process
   register: function(client, callback) {
-    // Save the client information
-    clients.push(client);
-
-    // Return the result
-    callback(null, true);
-
-    // Do we have enough clients ?
-    if(clients.length == argv.n) monitor.execute();
+    monitor.register(client)
+    callback();
+  },
+  // Error from the client process
+  error: function(err, callback) {
+    monitor.error(err);
+    callback();
+  },
+  // Results from a client process
+  done: function(results, callback) {
+    monitor.done(results);
+    callback();
   }
+});
+
+// Wait for all children to be setup
+monitor.on('registrationComplete', function() {
+  monitor.execute();
+});
+
+// Wait for the scenario to finish executing
+monitor.on('complete', function() {
+  console.log("[MONITOR] Executon finished, stopping child processes");
+  // Stop the monitor
+  monitor.stop(function() {
+    console.log("[MONITOR] Executon finished, stopping dnode server endpoint");
+    // Stop the dnode server
+    server.end();
+    // Stop the process
+    process.exit(0);
+  });
+});
+
+// In case the scenario failed to execute
+monitor.on('error', function() {
+
 });
 
 // Run the monitor listening point
