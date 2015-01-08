@@ -3,15 +3,14 @@
 var f = require('util').format
   , ObjectID = require('mongodb').ObjectID;
 
-var Order = function(db, id, shipping, payment, products) {  
-  this.db = db;
-  this.id = id || new ObjectID();
+var Order = function(collection, id, shipping, payment, products) {  
+  this.id = id == null ? new ObjectID() : id;
   this.shipping = shipping;
   this.payment = payment;
   this.products = products
 
   // Orders collection
-  this.orders = db.collection('orders');
+  this.orders = collection;
 }
 
 /*

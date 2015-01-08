@@ -40,10 +40,10 @@ var setup = function(db, callback) {
     db.collection('carts').drop(function() {
       db.collection('inventories').drop(function() {
         db.collection('orders').drop(function() {
-          Cart.createOptimalIndexes(db, function() {
-            Product.createOptimalIndexes(db, function() {
-              Inventory.createOptimalIndexes(db, function() {
-                Order.createOptimalIndexes(db, function() {
+          Cart.createOptimalIndexes(db.collection('carts'), function() {
+            Product.createOptimalIndexes(db.collection('products'), function() {
+              Inventory.createOptimalIndexes(db.collection('inventories'), function() {
+                Order.createOptimalIndexes(db.collection('orders'), function() {
                   createProducts(db, callback);
                 });
               });
@@ -73,12 +73,12 @@ exports['Should correctly add an item to the cart and checkout the cart successf
 
       // Cleanup
       setup(db, function() {
-        var cart = new Cart(db);
+        var cart = new Cart(db.collection('carts'), db.collection('inventories'), db.collection('orders'));
         cart.create(function(err, cart) {
           test.equal(null, err);
 
           // Fetch a product
-          var product = new Product(db, 1);
+          var product = new Product(db.collection('products'), 1);
           product.reload(function(err, product) {
             test.equal(null, err);
 
@@ -89,9 +89,8 @@ exports['Should correctly add an item to the cart and checkout the cart successf
 
               // Checkout the cart
               cart.checkout({
-                  shipping: {}
-                , payment: {}}
-                , function(err, r) {
+                  shipping: {}, payment: {}
+                }, function(err, r) {
                   test.equal(null, err);
 
                   // Validate the state of the cart and product
@@ -136,12 +135,12 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
 
       // Cleanup
       setup(db, function() {
-        var cart = new Cart(db);
+        var cart = new Cart(db.collection('carts'), db.collection('inventories'), db.collection('orders'));
         cart.create(function(err, cart) {
           test.equal(null, err);
 
           // Fetch a product
-          var product = new Product(db, 1);
+          var product = new Product(db.collection('products'), 1);
           product.reload(function(err, product) {
             test.equal(null, err);
 
@@ -184,12 +183,12 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
 
       // Cleanup
       setup(db, function() {
-        var cart = new Cart(db);
+        var cart = new Cart(db.collection('carts'), db.collection('inventories'), db.collection('orders'));
         cart.create(function(err, cart) {
           test.equal(null, err);
 
           // Fetch a product
-          var product = new Product(db, 1);
+          var product = new Product(db.collection('products'), 1);
           product.reload(function(err, product) {
             test.equal(null, err);
 
@@ -314,12 +313,12 @@ exports['Should correctly find expired carts and remove any reservations in them
       // Cleanup
       setup(db, function() {
 
-        var cart = new Cart(db);
+        var cart = new Cart(db.collection('carts'), db.collection('inventories'), db.collection('orders'));
         cart.create(function(err, cart) {
           test.equal(null, err);
 
           // Fetch a product
-          var product = new Product(db, 1);
+          var product = new Product(db.collection('products'), 1);
           product.reload(function(err, product) {
             test.equal(null, err);
 
@@ -352,7 +351,7 @@ exports['Should correctly find expired carts and remove any reservations in them
                 test.equal(1, r.modifiedCount);
 
                 // Expire the cart
-                Cart.releaseExpired(db, function(err) {
+                Cart.releaseExpired(db.collection('carts'), db.collection('inventories'), function(err) {
                   test.equal(null, err);
 
                   // Validate cart and inventory
