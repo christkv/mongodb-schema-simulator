@@ -1,5 +1,7 @@
 var f = require('util').format
+  , fs = require('fs')
   , dnode = require('dnode')
+  , mkdirp = require('mkdirp')
   , Monitor = require('./lib/monitor/monitor')
   , ScenarioManager = require('./lib/child/scenario_manager');
 
@@ -7,24 +9,36 @@ var f = require('util').format
 var yargs = require('yargs')
   .usage('Start a the main process.\nUsage: $0')
   .example('$0 -p 5100', 'Run client on port 5100')
+  // The Monitor process port
   .describe('p', 'Port process is running on')
   .default('p', 5100)
+  // Number of processes to use in the execution
   .describe('n', 'Number of processes running')
   .default('n', 2)
+  // Run all the processes locally
   .describe('l', 'Run all client processes locally')
   .default('l', true)
+  // Local process starting port
   .describe('local-process-port', 'Local process start port')
   .default('local-process-port', 5200)
+  // Local MongoDB process url
   .describe('local-process-url', 'Local process MongoDB url')
   .default('local-process-url', 'mongodb://localhost:27017/schema')
+  // The scenario file to execute
   .describe('s', 'Path to scenario file to execute')
   .require('s')
+  // Output directory of the processes
+  .describe('o', 'Results output directory')
+  .default('o', './out')
 
 // Get parsed arguments
 var argv = yargs.argv
 
 // List help
 if(argv.h) return console.log(yargs.help())
+
+// Create the output directory
+mkdirp.sync(argv.o);
 
 // Scenario manager
 var manager = new ScenarioManager();
@@ -60,8 +74,14 @@ monitor.on('registrationComplete', function() {
 });
 
 // Wait for the scenario to finish executing
-monitor.on('complete', function() {
+monitor.on('complete', function(logEntries) {
   console.log("[MONITOR] Executon finished, stopping child processes");
+  // Split out the scenario name
+  var scenarioFile = argv.s.split('/').pop();
+  var outputFile = f('%s/%s.output.json', argv.o, scenarioFile);
+  // Write out the file
+  fs.writeFileSync(outputFile, JSON.stringify(logEntries, null, 2));
+
   // Stop the monitor
   monitor.stop(function() {
     console.log("[MONITOR] Executon finished, stopping dnode server endpoint");
