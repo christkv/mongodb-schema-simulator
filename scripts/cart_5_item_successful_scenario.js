@@ -6,6 +6,7 @@ module.exports = {
     schema: {
       // Name of the schema
       name: 'cart_reservation_successful',
+      
       // Set the collection name for the carts
       collections: {
           carts: 'carts'
@@ -13,6 +14,7 @@ module.exports = {
         , inventories: 'inventories'
         , order: 'orders'
       },
+
       // Parameters
       params: {
           numberOfItems: 5
@@ -29,7 +31,7 @@ module.exports = {
       // Typeo
       type: 'iterations',
       // Number of iterations to execute
-      iterations: 1000,
+      iterations: 1500,
       // Distribution over time 
       distribution: 'none',
       // Concurrency
