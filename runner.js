@@ -1,125 +1,137 @@
-// // Parse arguments
 var f = require('util').format
-  , Executor = require('./lib/parent/executor');
+  , fs = require('fs')
+  , dnode = require('dnode')
+  , mkdirp = require('mkdirp')
+  , Monitor = require('./lib/monitor/monitor')
+  , ScenarioManager = require('./lib/child/scenario_manager')
+  , ProgressBar = require('progress');
 
+// Parse the passed in parameters
 var yargs = require('yargs')
-  .usage('Count the lines in a file.\nUsage: $0')
-  .example('$0 -u mongodb://localhost:27017/test -e embedded_growing_list', 'Run a specific example against MongoDB')
-  // URI Setting
-  .describe('u', 'MongoDB connection URI')
-  .default('u', 'mongodb://localhost:27017/benchmark')
-  // Example to run
-  .describe('e', 'MongoDB example to run')
-  .require('e')
-  // Method to run
-  .describe('m', 'Method to run')
-  .require('m')
-  // Method to run
-  .describe('d', 'Directory to put sampled data')
-  .default('d', './tmp')
-  // Method to run
-  .describe('x', 'Remove the sampled data directory')
-  .default('x', false)
-  // List all available simulations
-  .describe('l', 'List available examples')
-  // List help
-  .describe('h', 'List help screen')
-  // Number of concurrent node processes to run
-  .describe('p', 'Number of processes running')
-  .default('p', 1)
-  // Number of runs of the method
-  .describe('r', 'Number of runs')
-  .default('r', 1000)
-  // Parallel execution
-  .describe('c', 'Concurrency per process')
-  .default('c', 5)
-  // The resolution for the monitor
-  .describe('t', 'Sample resolution for the mongod monitor')
-  .default('t', 1000)
-  // Tag the results
-  .describe('n', 'Tag the results, single word')
-  .default('n', 'mmap')
+  .usage('Start a the main process.\nUsage: $0')
+  .example('$0 -p 5100', 'Run client on port 5100')
+  // The Monitor process port
+  .describe('p', 'Port process is running on')
+  .default('p', 5100)
+  // Number of processes to use in the execution
+  .describe('n', 'Number of processes running')
+  .default('n', 2)
+  // Run all the processes locally
+  .describe('l', 'Run all client processes locally')
+  .default('l', true)
+  // Local process starting port
+  .describe('local-process-port', 'Local process start port')
+  .default('local-process-port', 5200)
+  // Local MongoDB process url
+  .describe('local-process-url', 'Local process MongoDB url')
+  .default('local-process-url', 'mongodb://localhost:27017/schema')
+  // The scenario file to execute
+  .describe('s', 'Path to scenario file to execute')
+  .require('s')
+  // The scenario file to execute
+  .describe('debug', 'Run with debug enables')
+  .default('debug', false)
+  // Output directory of the processes
+  .describe('o', 'Results output directory')
+  .default('o', './out')
 
 // Get parsed arguments
 var argv = yargs.argv
+
 // List help
 if(argv.h) return console.log(yargs.help())
 
-// All the simulations available
-var moduleFiles = [
-    __dirname + '/chapters/chapter_2/embedded.js'
-  , __dirname + '/chapters/chapter_5/metadata.js'
-  , __dirname + '/chapters/chapter_6/timeseries.js'
-  , __dirname + '/chapters/chapter_7/queues.js'
-  , __dirname + '/chapters/chapter_8/nested_categories.js'
-  , __dirname + '/chapters/chapter_9/accounts.js'
-]
+// Create the output directory
+mkdirp.sync(argv.o);
 
-// Resolve all the simulations
-var modules = moduleFiles.map(function(x) {
-  return require(x);
+// Scenario manager
+var manager = new ScenarioManager();
+// Load the scenarios
+manager.load('./lib/scenarios');
+// Var clients
+var clients = [];
+// Monitor instance
+var monitor = new Monitor(argv, manager, clients);
+// Get the total amount of work needed
+var totalExecutions = 0;
+var executionsLeft = 0;
+var bar = null;
+
+// The actual server (handles clients reporting back)
+var server = dnode({
+  // Registration call from the client process
+  register: function(client, callback) {
+    monitor.register(client)
+    callback();
+  },
+  // Error from the client process
+  error: function(err, callback) {
+    monitor.error(err);
+    callback();
+  },  
+  // Results from a client process
+  done: function(results, callback) {
+    monitor.done(results);
+    callback();
+  },
+  // Reports the number of items we are executing for all jobs
+  setup: function(data, callback) {
+    // Setup the number of executions left to perform
+    totalExecutions = totalExecutions + data.totalExecutions;
+    executionsLeft = totalExecutions;
+    // Finish
+    callback();
+  },
+  // A work unit was finished
+  tick: function(callback) {
+    if(bar == null) bar = new ProgressBar('  executing [:bar] [:current/:total] :etas', { 
+          complete: '='
+        , incomplete: ' '
+        , width: 60
+        , total: totalExecutions 
+      }
+    );
+    executionsLeft = executionsLeft - 1;
+    bar.tick();
+    // console.log(f('%s of %s left', executionsLeft, totalExecutions));
+    callback();
+  } 
 });
 
-// List all the Modules available
-if(argv.l) {
-  var Table = require('cli-table');
-  var table = new Table({ 
-      head: ["Example", "Method", "Description"] 
-    , colWidths: [25, 25, 82]
+// Wait for all children to be setup
+monitor.on('registrationComplete', function() {
+  monitor.execute();
+});
+
+// Wait for the scenario to finish executing
+monitor.on('complete', function(logEntries) {
+  console.log("[MONITOR] Executon finished, stopping child processes");
+  // Split out the scenario name
+  var scenarioFile = argv.s.split('/').pop();
+  var outputFile = f('%s/%s.output.json', argv.o, scenarioFile);
+  // Write out the file
+  fs.writeFileSync(outputFile, JSON.stringify(logEntries, null, 2));
+
+  // Stop the monitor
+  monitor.stop(function() {
+    console.log("[MONITOR] Executon finished, stopping dnode server endpoint");
+    // Stop the dnode server
+    server.end();
+    // Stop the process
+    process.exit(0);
   });
+});
 
-  // Iterate over all the modules
-  modules.forEach(function(x) {
-    var displayed = false;
+// In case the scenario failed to execute
+monitor.on('error', function() {
 
-    x.methods.forEach(function(m) {
-      var name = !displayed ? x.abr : '';
-      displayed = true;
-      var row = {};
-      row[name] = [];
-      row[name].push(m.name)
-      row[name].push(m.description)
-      table.push(row)
-    });
+});
+
+// Run the monitor listening point
+server.listen(argv.p, function() {
+  // Start the monitor
+  monitor.start(function(err) {
+    if(err) throw err;
   });
-
-  console.log(table.toString());
-  process.exit(0)
-}
-
-// Load the module we wish to run
-for(var i = 0; i < modules.length; i++) {
-  if(modules[i].abr == argv.e) {
-    // Create the executor
-    var executor = new Executor(argv, modules[i], {debug:false});
-    // Execute the module
-    executor.execute();
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+});
 
