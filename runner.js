@@ -105,7 +105,7 @@ monitor.on('registrationComplete', function() {
 
 // Wait for the scenario to finish executing
 monitor.on('complete', function(logEntries) {
-  console.log("[MONITOR] Executon finished, stopping child processes");
+  if(argv.debug) console.log("[MONITOR] Execution finished, stopping child processes");
   // Split out the scenario name
   var scenarioFile = argv.s.split('/').pop();
   var outputFile = f('%s/%s.output.json', argv.o, scenarioFile);
@@ -114,7 +114,7 @@ monitor.on('complete', function(logEntries) {
 
   // Stop the monitor
   monitor.stop(function() {
-    console.log("[MONITOR] Executon finished, stopping dnode server endpoint");
+    if(argv.debug) console.log("[MONITOR] Executon finished, stopping dnode server endpoint");
     // Stop the dnode server
     server.end();
     // Stop the process
