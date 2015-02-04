@@ -3,7 +3,8 @@ var f = require('util').format
   , dnode = require('dnode')
   , mkdirp = require('mkdirp')
   , Monitor = require('./lib/monitor/monitor')
-  , ScenarioManager = require('./lib/child/scenario_manager');
+  , ScenarioManager = require('./lib/child/scenario_manager')
+  , ProgressBar = require('progress');
 
 // Parse the passed in parameters
 var yargs = require('yargs')
@@ -27,6 +28,9 @@ var yargs = require('yargs')
   // The scenario file to execute
   .describe('s', 'Path to scenario file to execute')
   .require('s')
+  // The scenario file to execute
+  .describe('debug', 'Run with debug enables')
+  .default('debug', false)
   // Output directory of the processes
   .describe('o', 'Results output directory')
   .default('o', './out')
@@ -48,6 +52,10 @@ manager.load('./lib/scenarios');
 var clients = [];
 // Monitor instance
 var monitor = new Monitor(argv, manager, clients);
+// Get the total amount of work needed
+var totalExecutions = 0;
+var executionsLeft = 0;
+var bar = null;
 
 // The actual server (handles clients reporting back)
 var server = dnode({
@@ -60,12 +68,34 @@ var server = dnode({
   error: function(err, callback) {
     monitor.error(err);
     callback();
-  },
+  },  
   // Results from a client process
   done: function(results, callback) {
     monitor.done(results);
     callback();
-  }
+  },
+  // Reports the number of items we are executing for all jobs
+  setup: function(data, callback) {
+    // Setup the number of executions left to perform
+    totalExecutions = totalExecutions + data.totalExecutions;
+    executionsLeft = totalExecutions;
+    // Finish
+    callback();
+  },
+  // A work unit was finished
+  tick: function(callback) {
+    if(bar == null) bar = new ProgressBar('  executing [:bar] [:current/:total] :etas', { 
+          complete: '='
+        , incomplete: ' '
+        , width: 60
+        , total: totalExecutions 
+      }
+    );
+    executionsLeft = executionsLeft - 1;
+    bar.tick();
+    // console.log(f('%s of %s left', executionsLeft, totalExecutions));
+    callback();
+  } 
 });
 
 // Wait for all children to be setup

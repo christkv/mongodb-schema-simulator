@@ -26,16 +26,24 @@ module.exports = {
     // Run against specific db
     db: 'shop',
 
-    // Execution plan
-    plan: {
-      // Typeo
-      type: 'iterations',
-      // Number of iterations to execute
-      iterations: 1500,
-      // Distribution over time 
-      distribution: 'none',
-      // Concurrency
-      maxConcurrency: 5
+    //
+    // Execution plan is run using all the process.openStdin();
+    execution: {
+      //
+      // Distribution of interactions starting (per process)
+      distribution: {
+        // Any specific distribution used
+          type: 'linear'
+        // The resolution of the incoming interactions
+        , resolution: 1000
+        // Number of ticks/iterations we are running
+        , iterations: 100
+        // Number of users starting the op at every tick
+        , numberOfUsers: 100
+        // How to execute the 20 users inside of the tick
+        // slicetime/atonce
+        , tickExecutionStrategy: 'slicetime'
+      }
     }
   }],
 
