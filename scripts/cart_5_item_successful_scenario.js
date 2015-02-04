@@ -39,7 +39,7 @@ module.exports = {
         // Number of ticks/iterations we are running
         , iterations: 100
         // Number of users starting the op at every tick
-        , numberOfUsers: 100
+        , numberOfUsers: 500
         // How to execute the 20 users inside of the tick
         // slicetime/atonce
         , tickExecutionStrategy: 'slicetime'
