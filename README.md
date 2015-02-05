@@ -1,4 +1,4 @@
-wlearnmongodbthehardway
+learnmongodbthehardway
 ======================
 
-Learn MongoDB The Hardway code and other related content
+A tool to let you simulate the schemas that are described in the little book of mongodb schema patters.
