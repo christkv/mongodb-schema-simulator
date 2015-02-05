@@ -5,6 +5,7 @@ var Runner = require('integra').Runner
   , FileFilter = require('integra').FileFilter
   , TestNameFilter = require('integra').TestNameFilter
   , rimraf = require('rimraf')
+  , m = require('mongodb-version-manager')
   , f = require('util').format;
 
 var argv = require('optimist')
@@ -19,9 +20,9 @@ var shallowClone = function(obj) {
 
 // Skipping parameters
 var startupOptions = {
-    skipStartup: true
+    skipStartup: false
   , skipRestart: true
-  , skipShutdown: true
+  , skipShutdown: false
   , skip: false
 }
 
@@ -37,7 +38,7 @@ var createConfiguration = function(options) {
     var Db = mongo.Db;
     var Server = mongo.Server;
     var Logger = mongo.Logger;
-    var ServerManager = require('mongodb-core').ServerManager;
+    var ServerManager = require('mongodb-tools').ServerManager;
     var database = "integration_tests";
     var url = options.url || "mongodb://%slocalhost:27017/" + database;
     var port = options.port || 27017;
@@ -211,11 +212,15 @@ var config = createConfiguration();
 if(argv.f) runner.plugin(new FileFilter(argv.f));
 if(argv.n) runner.plugin(new TestNameFilter(argv.n));
 
-// // Remove db directories
-// try {
-//   rimraf.sync('./data');
-//   rimraf.sync('./db');
-// } catch(err) {}
+// Kill any running MongoDB processes and
+// `install $MONGODB_VERSION` || `use existing installation` || `install stable`
+m(function(err){
+  if(err) return console.error(err) && process.exit(1);
 
-// Run the configuration
-runner.run(config);
+  m.current(function(err, version){
+    if(err) return console.error(err) && process.exit(1);
+    console.log('Running tests against MongoDB version `%s`', version);
+    // Run the configuration
+    runner.run(config);
+  });
+});

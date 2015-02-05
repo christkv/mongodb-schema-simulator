@@ -5,10 +5,10 @@ var f = require('util').format
   , Inventory = require('./inventory')
   , Order = require('./order');
 
-var Cart = function(productsCollection, inventoryCollection, ordersCollection, id) {  
+var Cart = function(cartsCollection, inventoryCollection, ordersCollection, id) {  
   this.id = id == null ? new ObjectID() : id;
   this.products = [];
-  this.carts = productsCollection;
+  this.carts = cartsCollection;
   this.inventories = inventoryCollection;
   this.orders = ordersCollection;
 }

@@ -36,14 +36,20 @@ var setup = function(db, callback) {
     , Inventory = require('../../schemas/cart_reservation/inventory')
     , Order = require('../../schemas/cart_reservation/order');
 
-  db.collection('products').drop(function() {
-    db.collection('carts').drop(function() {
-      db.collection('inventories').drop(function() {
-        db.collection('orders').drop(function() {
-          Cart.createOptimalIndexes(db.collection('carts'), function() {
-            Product.createOptimalIndexes(db.collection('products'), function() {
-              Inventory.createOptimalIndexes(db.collection('inventories'), function() {
-                Order.createOptimalIndexes(db.collection('orders'), function() {
+  // Collections
+  var carts = db.collection('carts');
+  var products = db.collection('products');
+  var orders = db.collection('orders');
+  var inventories = db.collection('inventories');
+
+  products.drop(function() {
+    carts.drop(function() {
+      inventories.drop(function() {
+        orders.drop(function() {
+          Cart.createOptimalIndexes(carts, function() {
+            Product.createOptimalIndexes(products, function() {
+              Inventory.createOptimalIndexes(inventories, function() {
+                Order.createOptimalIndexes(orders, function() {
                   createProducts(db, callback);
                 });
               });
