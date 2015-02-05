@@ -35,7 +35,6 @@ Product.prototype.reload = function(callback) {
   this.products.findOne({_id: this.id}, function(err, doc) {    
     if(err) return callback(err);
     if(!doc) {
-      console.dir("-------------------- did not find :: " + self.id)
       return callback(null, self)
     }
     self.name = doc.name;

@@ -3,10 +3,9 @@
 var f = require('util').format
   , ObjectID = require('mongodb').ObjectID;
 
-var Inventory = function(db, id) {  
-  this.db = db;
-  this.id = id || new ObjectID();
-  this.inventories = db.collection('inventories');
+var Inventory = function(collection, id) {  
+  this.id = id == null ? new ObjectID() : id;
+  this.inventories = collection;
 }
 
 /*
@@ -14,7 +13,7 @@ var Inventory = function(db, id) {
  * rolls back if if it cannot satisfy all the product reservations and
  * returns the list of the ones that could not be covered
  */
-Inventory.reserve = function(db, id, products, callback) {
+Inventory.reserve = function(collection, id, products, callback) {
   var self = this;
   if(products.length == 0) return callback();
   // Gather any errors
@@ -84,7 +83,7 @@ Inventory.reserve = function(db, id, products, callback) {
   }
 
   // Get inventories collection
-  var inventories = db.collection('inventories');
+  var inventories = collection;
 
   // Attempt to reserve all the products for the cart in parallel
   for(var i = 0; i < products.length; i++) {
@@ -108,8 +107,8 @@ Inventory.reserve = function(db, id, products, callback) {
 /*
  * Commit all the reservations by removing them from the reservations array
  */
-Inventory.commit = function(db, id, callback) {
-  db.collection('inventories').updateMany({
+Inventory.commit = function(collection, id, callback) {
+  collection.updateMany({
     'reservations._id': id
   }, {
     $pull: { reservations: {_id: id } }
@@ -122,8 +121,8 @@ Inventory.commit = function(db, id, callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Inventory.createOptimalIndexes = function(db, callback) {
-  db.collection('inventories').ensureIndex({"reservations._id": 1}, function(err, result) {
+Inventory.createOptimalIndexes = function(collection, callback) {
+  collection.ensureIndex({"reservations._id": 1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

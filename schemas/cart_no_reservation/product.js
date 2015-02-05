@@ -2,10 +2,9 @@
 
 var ObjectID = require('mongodb').ObjectID;
 
-var Product = function(db, id) {
-  this.db = db;
-  this.id = id || new ObjectID();
-  this.products = db.collection('products');  
+var Product = function(collection, id) {
+  this.id = id == null ? new ObjectID() : id;
+  this.products = collection;
 }
 
 /*

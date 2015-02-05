@@ -5,12 +5,12 @@ var f = require('util').format
   , Inventory = require('./inventory')
   , Order = require('./order');
 
-var Cart = function(db, id) {  
-  this.db = db;
-  this.id = id || new ObjectID();
+var Cart = function(productsCollection, inventoryCollection, ordersCollection, id) {  
+  this.id = id == null ? new ObjectID() : id;
   this.products = [];
-  this.carts = db.collection('carts');
-  this.inventories = db.collection('inventories');
+  this.carts = productsCollection;
+  this.inventories = inventoryCollection;
+  this.orders = ordersCollection;
 }
 
 Cart.ACTIVE = 'active';
@@ -126,11 +126,11 @@ Cart.prototype.checkout = function(details, callback) {
     if(!cart) return callback(new Error(f('could not located cart with id %s', self.id)));
 
     // Reserve the quantities for all the products (rolling back if some are not possible to cover)
-    Inventory.reserve(self.db, self.id, cart.products, function(err) {
+    Inventory.reserve(self.inventories, self.id, cart.products, function(err) {
       if(err) return callback(err);
     
       // Create a new order instance
-      var order = new Order(self.db, new ObjectID()
+      var order = new Order(self.orders, new ObjectID()
         , details.shipping
         , details.payment
         , cart.products);
@@ -150,7 +150,7 @@ Cart.prototype.checkout = function(details, callback) {
           if(r.modifiedCount == 0) return callback(new Error(f('failed to set cart %s to completed state', self.id)));
 
           // Commit the change to the inventory
-          Inventory.commit(self.db, self.id, function(err, inventory) {
+          Inventory.commit(self.inventories, self.id, function(err, inventory) {
             if(err) return callback(err);
             callback();
           });
@@ -175,8 +175,8 @@ Cart.releaseExpired = function(db, callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Cart.createOptimalIndexes = function(db, callback) {
-  db.collection('carts').ensureIndex({state: 1}, function(err, result) {
+Cart.createOptimalIndexes = function(cartCollection, callback) {
+  cartCollection.ensureIndex({state: 1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

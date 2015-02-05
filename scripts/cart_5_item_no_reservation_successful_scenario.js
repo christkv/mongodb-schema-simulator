@@ -5,7 +5,7 @@ module.exports = {
     // Schema we are executing
     schema: {
       // Name of the schema
-      name: 'cart_reservation_successful',
+      name: 'cart_no_reservation_successful',
       
       // Set the collection name for the carts
       collections: {
@@ -37,7 +37,7 @@ module.exports = {
         // The resolution of the incoming interactions
         , resolution: 1000
         // Number of ticks/iterations we are running
-        , iterations: 10
+        , iterations: 1
         // Number of users starting the op at every tick
         , numberOfUsers: 5
         // How to execute the 20 users inside of the tick
