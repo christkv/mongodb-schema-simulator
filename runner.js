@@ -22,9 +22,9 @@ var yargs = require('yargs')
   // Local process starting port
   .describe('local-process-port', 'Local process start port')
   .default('local-process-port', 5200)
-  // Local MongoDB process url
-  .describe('local-process-url', 'Local process MongoDB url')
-  .default('local-process-url', 'mongodb://localhost:27017/schema')
+  // // Local MongoDB process url
+  // .describe('local-process-url', 'Local process MongoDB url')
+  // .default('local-process-url', 'mongodb://localhost:27017/schema')
   // The scenario file to execute
   .describe('s', 'Path to scenario file to execute')
   .require('s')
