@@ -22,11 +22,10 @@ var f = require('util').format
     var items = [ 100, 20 ]
     var result = [  89,  90,  100 ]
 */
-var SliceCache = function(db, id, sliceAt) {
-  this.db = db;
-  this.id = id || new ObjectID();
+var SliceCache = function(cache, id, sliceAt) {
+  this.id = id == null ? new ObjectID() : id;
   this.sliceAt = sliceAt;
-  this.cache = this.db.collection('cache');
+  this.cache = cache;
 }
 
 /*
@@ -112,7 +111,7 @@ SliceCache.prototype.push = function(items, position, callback) {
 /*
  * Create the optimal indexes for the queries
  */
-SliceCache.createOptimalIndexes = function(db, callback) {
+SliceCache.createOptimalIndexes = function(cachesCollection, callback) {
   callback();
 }
 
