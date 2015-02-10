@@ -25,7 +25,8 @@ exports['Should correctly a 5 line cache no pre-allocation'] = {
 
       // Cleanup
       setup(db, function() {
-        var cache = new SliceCache(db, new ObjectID(), 5);
+        var collection = db.collection('cache');
+        var cache = new SliceCache(collection, new ObjectID(), 5);
         cache.create(function(err, cache) {
           test.equal(null, err);
 
@@ -37,7 +38,7 @@ exports['Should correctly a 5 line cache no pre-allocation'] = {
             test.equal(null, err);
 
             // Fetch the cache
-            db.collection('cache').findOne({_id: cache.id}, function(err, doc) {
+            collection.findOne({_id: cache.id}, function(err, doc) {
               test.equal(null, err);
               test.equal(5, doc.data.length);
               test.equal(2, doc.data[0].a);
@@ -68,7 +69,8 @@ exports['Should correctly a 5 line cache with pre-allocation'] = {
 
       // Cleanup
       setup(db, function() {
-        var cache = new SliceCache(db, new ObjectID(), 5);
+        var collection = db.collection('cache');
+        var cache = new SliceCache(collection, new ObjectID(), 5);
         cache.create({a:1}, function(err, cache) {
           test.equal(null, err);
 
@@ -79,7 +81,7 @@ exports['Should correctly a 5 line cache with pre-allocation'] = {
             test.equal(null, err);
 
             // Fetch the cache
-            db.collection('cache').findOne({_id: cache.id}, function(err, doc) {
+            collection.findOne({_id: cache.id}, function(err, doc) {
               test.equal(null, err);
               test.equal(3, doc.data.length);
               test.equal(1, doc.data[0].a);
