@@ -3,9 +3,13 @@
 var setup = function(db, callback) {
   var Account = require('../../schemas/account/account');
 
-  db.collection('accounts').drop(function() {
-    db.collection('transactions').drop(function() {
-      Account.createOptimalIndexes(db, function() {
+  // Collections
+  var accounts = db.collection('accounts');
+  var transactions = db.collection('transactions');
+
+  accounts.drop(function() {
+    transactions.drop(function() {
+      Account.createOptimalIndexes(accounts, function() {
         callback();
       });
     });
@@ -27,9 +31,13 @@ exports['Should correctly perform transfer between account A and account B of 10
 
       // Cleanup
       setup(db, function() {
+        // Collections
+        var accounts = db.collection('accounts');
+        var transactions = db.collection('transactions');
+
         // Create the two accounts used for a transfer
-        var accountA = new Account(db, "Joe", 1000);
-        var accountB = new Account(db, "Paul", 1000);
+        var accountA = new Account(accounts, transactions, "Joe", 1000);
+        var accountB = new Account(accounts, transactions, "Paul", 1000);
 
         // Instantiate First account
         accountA.create(function(err) {
@@ -54,7 +62,7 @@ exports['Should correctly perform transfer between account A and account B of 10
                   test.equal(1100, accountB.balance);
 
                   // Get the transaction
-                  db.collection('transactions').findOne({_id: transaction.id}, function(err, doc) {
+                  transactions.findOne({_id: transaction.id}, function(err, doc) {
                     test.equal(null, err);
                     test.equal('done', doc.state);
 
@@ -86,9 +94,13 @@ exports['Should correctly roll back transfer that fails before any application o
   
       // Cleanup
       setup(db, function() {
+        // Collections
+        var accounts = db.collection('accounts');
+        var transactions = db.collection('transactions');
+
         // Create the two accounts used for a transfer
-        var accountA = new Account(db, "Joe1", 1000);
-        var accountB = new Account(db, "Paul1", 1000);
+        var accountA = new Account(accounts, transactions, "Joe1", 1000);
+        var accountB = new Account(accounts, transactions, "Paul1", 1000);
 
         // Instantiate First account
         accountA.create(function(err) {
@@ -113,7 +125,7 @@ exports['Should correctly roll back transfer that fails before any application o
                   test.equal(1000, accountA.balance);
 
                   // Get the transaction
-                  db.collection('transactions').findOne({_id: transaction.id}, function(err, doc) {
+                  transactions.findOne({_id: transaction.id}, function(err, doc) {
                     test.equal(null, err);
                     test.equal('canceled', doc.state);
 
@@ -145,9 +157,13 @@ exports['Should correctly roll back transfer that fails with only a single accou
 
       // Cleanup
       setup(db, function() {
+        // Collections
+        var accounts = db.collection('accounts');
+        var transactions = db.collection('transactions');
+
         // Create the two accounts used for a transfer
-        var accountA = new Account(db, "Joe2", 1000);
-        var accountB = new Account(db, "Paul2", 1000);
+        var accountA = new Account(accounts, transactions, "Joe2", 1000);
+        var accountB = new Account(accounts, transactions, "Paul2", 1000);
 
         // Instantiate First account
         accountA.create(function(err) {
@@ -172,7 +188,7 @@ exports['Should correctly roll back transfer that fails with only a single accou
                   test.equal(1000, accountB.balance);
 
                   // Get the transaction
-                  db.collection('transactions').findOne({_id: transaction.id}, function(err, doc) {
+                  transactions.findOne({_id: transaction.id}, function(err, doc) {
                     test.equal(null, err);
                     test.equal('canceled', doc.state);
 
@@ -204,9 +220,13 @@ exports['Should correctly roll back transfer that fails after application to acc
 
       // Cleanup
       setup(db, function() {
+        // Collections
+        var accounts = db.collection('accounts');
+        var transactions = db.collection('transactions');
+
         // Create the two accounts used for a transfer
-        var accountA = new Account(db, "Joe3", 1000);
-        var accountB = new Account(db, "Paul3", 1000);
+        var accountA = new Account(accounts, transactions, "Joe3", 1000);
+        var accountB = new Account(accounts, transactions, "Paul3", 1000);
 
         // Instantiate First account
         accountA.create(function(err) {
@@ -231,7 +251,7 @@ exports['Should correctly roll back transfer that fails after application to acc
                   test.equal(1000, accountB.balance);
 
                   // Get the transaction
-                  db.collection('transactions').findOne({_id: transaction.id}, function(err, doc) {
+                  transactions.findOne({_id: transaction.id}, function(err, doc) {
                     test.equal(null, err);
                     test.equal('canceled', doc.state);
 
@@ -263,9 +283,13 @@ exports['Should correctly roll back transfer that fails after transaction set to
 
       // Cleanup
       setup(db, function() {
+        // Collections
+        var accounts = db.collection('accounts');
+        var transactions = db.collection('transactions');
+
         // Create the two accounts used for a transfer
-        var accountA = new Account(db, "Joe3", 1000);
-        var accountB = new Account(db, "Paul3", 1000);
+        var accountA = new Account(accounts, transactions, "Joe3", 1000);
+        var accountB = new Account(accounts, transactions, "Paul3", 1000);
 
         // Instantiate First account
         accountA.create(function(err) {
@@ -290,7 +314,7 @@ exports['Should correctly roll back transfer that fails after transaction set to
                   test.equal(1100, accountB.balance);
 
                   // Get the transaction
-                  db.collection('transactions').findOne({_id: transaction.id}, function(err, doc) {
+                  transactions.findOne({_id: transaction.id}, function(err, doc) {
                     test.equal(null, err);
                     test.equal('committed', doc.state);
 

@@ -26,7 +26,8 @@ Cart.prototype.create = function(callback) {
   self.carts.updateOne({
       _id: self.id, 
     }, {
-        state: Cart.ACTIVE
+        _id: self.id
+      , state: Cart.ACTIVE
       , modified_on: new Date()
       , products: []
     }, {upsert:true}, function(err) {

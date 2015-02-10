@@ -5,7 +5,7 @@ module.exports = {
     // Schema we are executing
     schema: {
       // Name of the schema
-      name: 'cart_no_reservation_successful',
+      name: 'cart_reservation_successful',
       
       // Set the collection name for the carts
       collections: {
@@ -25,6 +25,27 @@ module.exports = {
 
     // Run against specific db
     db: 'shop',
+
+    // Setup function (run before the scenario is executed)
+    // used to allow doing stuff like setting up the sharded collection
+    // etc.
+    setup: function(db, callback) {
+      // Drop the database
+      db.dropDatabase(function(err, r) {
+        if(err) return callback(err);
+
+        // Enable the sharding of the database
+        db.admin().command({enableSharding:'shop'}, function(err, r) {
+          if(err) return callback(err);
+
+          // Shard the collections we want
+          db.admin().command({shardCollection: 'shop.carts', key: {_id:'hashed'}}, function(err, r) {
+            if(err) return callback(err);
+            callback();
+          });
+        });
+      });
+    },
 
     //
     // Execution plan is run using all the process.openStdin();
@@ -50,5 +71,5 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:50000/benchmark'
+  url: 'mongodb://localhost:50000/shop'
 }

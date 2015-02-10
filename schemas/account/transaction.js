@@ -3,11 +3,10 @@
 var ObjectID = require('mongodb').ObjectID
   , f = require('util').format;
 
-var Transaction = function(db, id, fromAccount, toAccount, amount) {  
-  this.db = db;
-  this.id = id;
-  this.transactions = db.collection('transactions');
-  this.accounts = db.collection('accounts');
+var Transaction = function(transactions, accounts, id, fromAccount, toAccount, amount) {  
+  this.id = id == null ? new ObjectID() : id;
+  this.transactions = transactions;
+  this.accounts = accounts;
   this.fromAccount = fromAccount;
   this.toAccount = toAccount;
   this.amount = amount;
@@ -159,7 +158,7 @@ Transaction.prototype.cancel = function(callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Transaction.createOptimalIndexes = function(db, callback) {
+Transaction.createOptimalIndexes = function(transactionCollection, callback) {
   callback();
 }
 
