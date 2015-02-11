@@ -5,7 +5,7 @@ module.exports = {
     // Schema we are executing
     schema: {
       // Name of the schema
-      name: 'multilanguage_add_new_local',
+      name: 'multilanguage_remove_local',
       
       // Set the collection name for the carts
       collections: {
