@@ -5,17 +5,16 @@ var f = require('util').format;
 /*
  * Create a new category instance
  */
-var Category = function(db, id, names) {
-  this.db = db;
-  this.id = id;
+var Category = function(categories, products, id, names) {
+  this.id = id == null ? new ObjectID() : id;
 
   // Hash of all the names by local ('en-us') etc
   // { 'en-us': 'computers' }
   this.names = names || {};
   
   // Collections used
-  this.categories = db.collection('categories');
-  this.products = db.collection('products');
+  this.categories = categories;
+  this.products = products;
 }
 
 /*

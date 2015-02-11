@@ -4,10 +4,13 @@ var setup = function(db, callback) {
   var Category = require('../../schemas/multilanguage/category')
     , Product = require('../../schemas/multilanguage/product');
 
-  db.collection('products').drop(function() {
-    db.collection('categories').drop(function() {
-      Category.createOptimalIndexes(db, function(err) {
-        Product.createOptimalIndexes(db, function(err) {
+  var products = db.collection('products');
+  var categories = db.collection('categories');
+
+  products.drop(function() {
+    categories.drop(function() {
+      Category.createOptimalIndexes(categories, function(err) {
+        Product.createOptimalIndexes(products, function(err) {
           callback();
         });
       });
@@ -20,9 +23,13 @@ var setupCategories = function(db, categories, callback) {
     , ObjectId = require('mongodb').ObjectId;
   var left = categories.length;
 
+  // Get collections
+  var productsCol = db.collection('products');
+  var categoriesCol = db.collection('categories');
+
   // Iterate over all the categories
   for(var i = 0; i < categories.length; i++) {
-    var category = new Category(db, categories[i][0], categories[i][1]);
+    var category = new Category(categoriesCol, productsCol, categories[i][0], categories[i][1]);
     category.create(function() {
       left = left - 1;
 
@@ -36,9 +43,13 @@ var setupProducts = function(db, products, callback) {
     , ObjectId = require('mongodb').ObjectId;
   var left = products.length;
 
+  // Get collections
+  var productsCol = db.collection('products');
+  var categoriesCol = db.collection('categories');
+
   // Iterate over all the categories
   for(var i = 0; i < products.length; i++) {
-    var product = new Product(db, new ObjectId(), products[i][0], products[i][1], products[i][2], products[i][3]);
+    var product = new Product(productsCol, new ObjectId(), products[i][0], products[i][1], products[i][2], products[i][3]);
     product.create(function() {
       left = left - 1;
 
@@ -61,6 +72,10 @@ exports['Correctly add new local for a category and see it reflected in the prod
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // Get collections
+      var productsCol = db.collection('products');
+      var categoriesCol = db.collection('categories');
+
       // Cleanup
       setup(db, function() {
 
@@ -73,16 +88,16 @@ exports['Correctly add new local for a category and see it reflected in the prod
         setupCategories(db, categories, function() {
           
           // Locate the categories
-          db.collection('categories').find().toArray(function(err, categories) {
+          categoriesCol.find().toArray(function(err, categories) {
             test.equal(null, err);
 
             // Create a product
-            var product = new Product(db, 1, 'car', 100, 'usd', categories);
+            var product = new Product(productsCol, 1, 'car', 100, 'usd', categories);
             product.create(function(err, product) {
               test.equal(null, err);              
 
               // Let's attempt to add a local to the category
-              var cat = new Category(db, 1);
+              var cat = new Category(categoriesCol, productsCol, 1);
               cat.addLocal('es-es', 'coche', function(err) {
                 test.equal(null, err);
 
@@ -125,6 +140,10 @@ exports['Correctly remove a local for a category and see it reflected in the pro
       // Cleanup
       setup(db, function() {
 
+        // Get collections
+        var productsCol = db.collection('products');
+        var categoriesCol = db.collection('categories');
+
         // Setup a bunch of categories
         var categories = [
           [1, {'en-us': 'car', 'de-de': 'auto'}]
@@ -134,16 +153,16 @@ exports['Correctly remove a local for a category and see it reflected in the pro
         setupCategories(db, categories, function() {
           
           // Locate the categories
-          db.collection('categories').find().toArray(function(err, categories) {
+          categoriesCol.find().toArray(function(err, categories) {
             test.equal(null, err);
 
             // Create a product
-            var product = new Product(db, 1, 'car', 100, 'usd', categories);
+            var product = new Product(productsCol, 1, 'car', 100, 'usd', categories);
             product.create(function(err, product) {
               test.equal(null, err);              
 
               // Let's attempt to add a local to the category
-              var cat = new Category(db, 1);
+              var cat = new Category(categoriesCol, productsCol, 1);
               cat.removeLocal('de-de', function(err) {
                 test.equal(null, err);
 
