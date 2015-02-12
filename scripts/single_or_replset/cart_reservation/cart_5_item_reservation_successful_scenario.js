@@ -26,6 +26,13 @@ module.exports = {
     // Run against specific db
     db: 'shop',
 
+    // Setup function (run before the scenario is executed)
+    // used to allow doing stuff like setting up the sharded collection
+    // etc.
+    setup: function(db, callback) {
+      db.dropDatabase(callback);
+    },
+
     //
     // Execution plan is run using all the process.openStdin();
     execution: {
@@ -50,5 +57,5 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:27017/benchmark'
+  url: 'mongodb://localhost:27017/shop'
 }

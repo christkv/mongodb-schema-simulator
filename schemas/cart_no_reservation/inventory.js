@@ -3,9 +3,25 @@
 var f = require('util').format
   , ObjectID = require('mongodb').ObjectID;
 
-var Inventory = function(collections, id) {  
+var Inventory = function(collections, id, quantity) {  
   this.id = id == null ? new ObjectID() : id;
+  this.quantity = quantity;
   this.inventories = collections['inventories'];
+}
+
+/*
+ * Create an inventory mongodb document
+ */
+Inventory.prototype.create = function(callback) {
+  var self = this;
+  self.inventories.insertOne({
+      _id: this.id
+    , quantity: this.quantity
+    , reservations: []
+  }, function(err) {
+    if(err) return callback(err);
+    callback(null, self);
+  });
 }
 
 /*

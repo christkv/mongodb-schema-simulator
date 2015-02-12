@@ -2,9 +2,27 @@
 
 var ObjectID = require('mongodb').ObjectID;
 
-var Product = function(collections, id) {
+var Product = function(collections, id, name, properties) {
   this.id = id == null ? new ObjectID() : id;
-  this.products = collections['products'];
+  this.name = name;
+  this.properties = properties;
+  this.products = collections['products'];  
+}
+
+/*
+ * Create a new product MongoDB document
+ */
+Product.prototype.create = function(callback) {
+  var self = this;
+  // Insert a product
+  this.products.insertOne({
+      _id: this.id
+    , name: this.name
+    , properties: this.properties
+  }, function(err, r) {
+    if(err) return callback(err);
+    callback(null, self);
+  });
 }
 
 /*
@@ -13,8 +31,12 @@ var Product = function(collections, id) {
 Product.prototype.reload = function(callback) {
   var self = this;
 
-  this.products.findOne({_id: this.id}, function(err, doc) {
+  // Find a product
+  this.products.findOne({_id: this.id}, function(err, doc) {    
     if(err) return callback(err);
+    if(!doc) {
+      return callback(null, self)
+    }
     self.name = doc.name;
     self.price = doc.price;
     callback(null, self);

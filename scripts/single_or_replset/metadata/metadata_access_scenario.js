@@ -9,7 +9,7 @@ module.exports = {
       
       // Set the collection name for the carts
       collections: {
-        metadata: 'metadata'
+        metadatas: 'metadatas'
       },
 
       // Parameters
