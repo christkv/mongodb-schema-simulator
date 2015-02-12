@@ -2,9 +2,9 @@
 
 var ObjectID = require('mongodb').ObjectID;
 
-var Product = function(collection, id) {
+var Product = function(collections, id) {
   this.id = id == null ? new ObjectID() : id;
-  this.products = collection;
+  this.products = collections['products'];
 }
 
 /*
@@ -24,7 +24,7 @@ Product.prototype.reload = function(callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Product.createOptimalIndexes = function(db, callback) {
+Product.createOptimalIndexes = function(collections, callback) {
   callback();
 }
 

@@ -3,9 +3,10 @@
 var Transaction = require('./transaction')
   , ObjectID = require('mongodb').ObjectID;
 
-var Account = function(accounts, transactions, name, balance) {  
-  this.accounts = accounts;
-  this.transactions = transactions;
+var Account = function(collections, name, balance) {  
+  this.collections = collections;
+  this.accounts = collections['accounts'];
+  this.transactions = collections['transactions'];
   this.name = name;
   this.balance = balance;
 }
@@ -30,7 +31,7 @@ Account.prototype.transfer = function(toAccount, amount, options, callback) {
   if(typeof options == 'function') callback = options, options = {};
 
   // Create a new transaction
-  var transaction = new Transaction(this.transactions, this.accounts, new ObjectID(), this, toAccount, amount);
+  var transaction = new Transaction(this.collections, new ObjectID(), this, toAccount, amount);
   transaction.create(function(err) {
     if(err) return callback(err);
 
@@ -103,9 +104,9 @@ Account.prototype.reload = function(callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Account.createOptimalIndexes = function(accounts, callback) {
+Account.createOptimalIndexes = function(collections, callback) {
   // Ensure we do not have duplicate accounts
-  accounts.ensureIndex({name:1}, {unique: true}, function(err, result) {
+  collections['accounts'].ensureIndex({name:1}, {unique: true}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

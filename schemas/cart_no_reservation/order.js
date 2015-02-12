@@ -3,14 +3,14 @@
 var f = require('util').format
   , ObjectID = require('mongodb').ObjectID;
 
-var Order = function(collection, id, shipping, payment, products) {  
+var Order = function(collections, id, shipping, payment, products) {  
   this.id = id == null ? new ObjectID() : id;
   this.shipping = shipping;
   this.payment = payment;
   this.products = products
 
   // Orders collection
-  this.orders = collection;
+  this.orders = collections['orders'];
 }
 
 /*
@@ -41,7 +41,7 @@ Order.prototype.create = function(callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Order.createOptimalIndexes = function(db, callback) {
+Order.createOptimalIndexes = function(collections, callback) {
   callback();
 }
 

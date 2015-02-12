@@ -7,12 +7,12 @@ var f = require('util').format
 /*
  * Create a new theater instance
  */
-var Theater = function(db, name, seats) {
-  this.db = db;
+var Theater = function(collections, id, name, seats) {
+  this.id = id == null ? new ObjectID() : id;
+  this.collections = collections;
   this.name = name;
   this.seats = seats;
-  this.theaters = db.collection('theaters');
-  this.id = new ObjectID();
+  this.theaters = collections['theaters'];
   this.sessions = []; 
 }
 
@@ -48,7 +48,7 @@ Theater.prototype.addSession = function(name, description, start, end, price, ca
   var self = this;
   
   // Create a new session
-  var session = new Session(this.db, new ObjectID(), this.id, name, description, start, end, price);
+  var session = new Session(this.collections, new ObjectID(), this.id, name, description, start, end, price);
   session.create(function(err, session) {
     if(err) return callback(err);
     self.sessions.push(session);

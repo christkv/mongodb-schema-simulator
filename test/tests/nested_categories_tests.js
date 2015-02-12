@@ -4,10 +4,16 @@ var setup = function(db, callback) {
   var Category = require('../../schemas/nested_categories/category')
     , Product = require('../../schemas/nested_categories/product');
 
-  db.collection('products').drop(function() {
-    db.collection('categories').drop(function() {
-      Category.createOptimalIndexes(db, function(err) {
-        Product.createOptimalIndexes(db, function(err) {
+  // All the collections used
+  var collections = {
+      products: db.collection('products')
+    , categories: db.collection('categories')
+  }
+
+  collections['products'].drop(function() {
+    collections['categories'].drop(function() {
+      Category.createOptimalIndexes(collections, function(err) {
+        Product.createOptimalIndexes(collections, function(err) {
           callback();
         });
       });
@@ -20,9 +26,15 @@ var setupCategories = function(db, categories, callback) {
     , ObjectId = require('mongodb').ObjectId;
   var left = categories.length;
 
+  // All the collections used
+  var collections = {
+      products: db.collection('products')
+    , categories: db.collection('categories')
+  }
+
   // Iterate over all the categories
   for(var i = 0; i < categories.length; i++) {
-    var category = new Category(db, new ObjectId(), categories[i][0], categories[i][1]);
+    var category = new Category(collections, new ObjectId(), categories[i][0], categories[i][1]);
     category.create(function() {
       left = left - 1;
 
@@ -36,9 +48,15 @@ var setupProducts = function(db, products, callback) {
     , ObjectId = require('mongodb').ObjectId;
   var left = products.length;
 
+  // All the collections used
+  var collections = {
+      products: db.collection('products')
+    , categories: db.collection('categories')
+  }
+
   // Iterate over all the categories
   for(var i = 0; i < products.length; i++) {
-    var product = new Product(db, new ObjectId(), products[i][0], products[i][1], products[i][2], products[i][3]);
+    var product = new Product(collections, new ObjectId(), products[i][0], products[i][1], products[i][2], products[i][3]);
     product.create(function() {
       left = left - 1;
 
@@ -61,6 +79,12 @@ exports['Correctly category and fetch all immediate children of root node'] = {
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , categories: db.collection('categories')
+      }
+
       // Cleanup
       setup(db, function() {
 
@@ -75,9 +99,8 @@ exports['Correctly category and fetch all immediate children of root node'] = {
 
         // Create all the categories
         setupCategories(db, categories, function() {
-          
           // Get all the immediate children of the root
-          Category.findAllDirectChildCategories(db, '/', function(err, categories) {
+          Category.findAllDirectChildCategories(collections, '/', function(err, categories) {
             test.equal(null, err);
             test.equal(3, categories.length);
             test.equal('/1', categories[0].category);
@@ -107,6 +130,12 @@ exports['Correctly fetch Category tree under a specific path'] = {
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , categories: db.collection('categories')
+      }
+
       // Cleanup
       setup(db, function() {
 
@@ -123,7 +152,7 @@ exports['Correctly fetch Category tree under a specific path'] = {
         setupCategories(db, categories, function() {
 
           // Get all the immediate children of the root
-          Category.findAllChildCategories(db, '/1', function(err, categories) {
+          Category.findAllChildCategories(collections, '/1', function(err, categories) {
             test.equal(null, err);
             test.equal(2, categories.length);
             test.equal('/1/1', categories[0].category);
@@ -152,6 +181,12 @@ exports['Correctly fetch specific category'] = {
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , categories: db.collection('categories')
+      }
+
       // Cleanup
       setup(db, function() {
 
@@ -168,7 +203,7 @@ exports['Correctly fetch specific category'] = {
         setupCategories(db, categories, function() {
 
           // Get all the immediate children of the root
-          Category.findOne(db, '/1/1', function(err, category) {
+          Category.findOne(collections, '/1/1', function(err, category) {
             test.equal(null, err);
             test.equal('/1/1', category.category);
 
@@ -194,6 +229,12 @@ exports['Correctly fetch all products of a specific category'] = {
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , categories: db.collection('categories')
+      }
+
       // Cleanup
       setup(db, function() {
 
@@ -211,7 +252,7 @@ exports['Correctly fetch all products of a specific category'] = {
         setupProducts(db, products, function() {
           
           // Get all the immediate children of the root
-          Product.findByCategory(db, '/', function(err, products) {
+          Product.findByCategory(collections, '/', function(err, products) {
             test.equal(null, err);
             test.equal(1, products.length);
             test.equal('/', products[0].categories[0]);
@@ -237,6 +278,12 @@ exports['Correctly fetch all products of a specific categories direct children']
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
+
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , categories: db.collection('categories')
+      }
 
       // Cleanup
       setup(db, function() {
@@ -266,7 +313,7 @@ exports['Correctly fetch all products of a specific categories direct children']
           setupProducts(db, products, function() {
             
             // Get all the immediate children of the root
-            Product.findByDirectCategoryChildren(db, '/', function(err, products) {
+            Product.findByDirectCategoryChildren(collections, '/', function(err, products) {
               test.equal(null, err);
               test.equal(3, products.length);
               test.equal('/1', products[0].categories[0]);
@@ -296,6 +343,12 @@ exports['Correctly fetch all products of a specific categories tree'] = {
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , categories: db.collection('categories')
+      }
+
       // Cleanup
       setup(db, function() {
 
@@ -324,7 +377,7 @@ exports['Correctly fetch all products of a specific categories tree'] = {
           setupProducts(db, products, function() {
             
             // Get all the immediate children of the root
-            Product.findByCategoryTree(db, '/1', function(err, products) {
+            Product.findByCategoryTree(collections, '/1', function(err, products) {
               test.equal(null, err);
               test.equal(2, products.length);
               test.equal('/1/1', products[0].categories[0]);

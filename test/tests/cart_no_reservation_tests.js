@@ -1,6 +1,6 @@
 "use strict";
 
-var createProducts = function(db, callback) {
+var createProducts = function(collections, callback) {
   var products = [
       { _id: 1, name: 'product 1', price: 100}
     , { _id: 2, name: 'product 2', price: 200}
@@ -21,10 +21,16 @@ var createProducts = function(db, callback) {
     , { _id: 7, quantity: 0}
   ]
 
+  // All the collections used
+  var collections = {
+      products: collections['products']
+    , inventories: collections['inventories']
+  }
+
   // Insert all the products
-  db.collection('products').insertMany(products, function(err, r) {
+  collections['products'].insertMany(products, function(err, r) {
     // Insert all the associated product inventories
-    db.collection('inventories').insertMany(inventories, function(err, r) {
+    collections['inventories'].insertMany(inventories, function(err, r) {
       callback();
     });
   });
@@ -36,21 +42,24 @@ var setup = function(db, callback) {
     , Inventory = require('../../schemas/cart_no_reservation/inventory')
     , Order = require('../../schemas/cart_no_reservation/order');
 
-  // Collections
-  var carts = db.collection('carts');
-  var products = db.collection('products');
-  var orders = db.collection('orders');
-  var inventories = db.collection('inventories');
 
-  products.drop(function() {
-    carts.drop(function() {
-      inventories.drop(function() {
-        orders.drop(function() {
-          Cart.createOptimalIndexes(carts, function() {
-            Product.createOptimalIndexes(products, function() {
-              Inventory.createOptimalIndexes(inventories, function() {
-                Order.createOptimalIndexes(orders, function() {
-                  createProducts(db, callback);
+  // All the collections used
+  var collections = {
+      products: db.collection('products')
+    , orders: db.collection('orders')
+    , carts: db.collection('carts')
+    , inventories: db.collection('inventories')
+  }
+
+  collections['products'].drop(function() {
+    collections['carts'].drop(function() {
+      collections['inventories'].drop(function() {
+        collections['orders'].drop(function() {
+          Cart.createOptimalIndexes(collections, function() {
+            Product.createOptimalIndexes(collections, function() {
+              Inventory.createOptimalIndexes(collections, function() {
+                Order.createOptimalIndexes(collections, function() {
+                  createProducts(collections, callback);
                 });
               });
             });
@@ -77,21 +86,23 @@ exports['Should correctly add an item to the cart and checkout the cart successf
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
-      // Collections
-      var carts = db.collection('carts');
-      var products = db.collection('products');
-      var orders = db.collection('orders');
-      var inventories = db.collection('inventories');
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , orders: db.collection('orders')
+        , carts: db.collection('carts')
+        , inventories: db.collection('inventories')
+      }
 
       // Cleanup
       setup(db, function() {
         // Create a cart
-        var cart = new Cart(carts, inventories, orders);
+        var cart = new Cart(collections);
         cart.create(function(err, cart) {
           test.equal(null, err);
 
           // Fetch a product
-          var product = new Product(products, 1);
+          var product = new Product(collections, 1);
           product.reload(function(err, product) {
             test.equal(null, err);
 
@@ -108,13 +119,13 @@ exports['Should correctly add an item to the cart and checkout the cart successf
                   test.equal(null, err);
 
                   // Validate the state of the cart and product
-                  inventories.findOne({_id: 1}, function(err, doc) {
+                  collections['inventories'].findOne({_id: 1}, function(err, doc) {
                     test.equal(null, err);
                     test.equal(99, doc.quantity);
                     test.equal(0, doc.reservations);
 
                     // Validate the state of the cart
-                    carts.findOne({_id: cart.id}, function(err, doc) {
+                    collections['carts'].findOne({_id: cart.id}, function(err, doc) {
                       test.equal(null, err);
                       test.equal('completed', doc.state);
 
@@ -147,20 +158,22 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
-      // Collections
-      var carts = db.collection('carts');
-      var products = db.collection('products');
-      var orders = db.collection('orders');
-      var inventories = db.collection('inventories');
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , orders: db.collection('orders')
+        , carts: db.collection('carts')
+        , inventories: db.collection('inventories')
+      }
 
       // Cleanup
       setup(db, function() {
-        var cart = new Cart(carts, inventories, orders);
+        var cart = new Cart(collections);
         cart.create(function(err, cart) {
           test.equal(null, err);
 
           // Fetch a product
-          var product = new Product(products, 1);
+          var product = new Product(collections, 1);
           product.reload(function(err, product) {
             test.equal(null, err);
 
@@ -176,12 +189,12 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
                   test.ok(err != null);
 
                   // Validate the state of the cart and product
-                  inventories.findOne({_id: 1}, function(err, doc) {
+                  collections['inventories'].findOne({_id: 1}, function(err, doc) {
                     test.equal(null, err);
                     test.equal(100, doc.quantity);
 
                     // Validate the state of the cart
-                    carts.findOne({_id: cart.id}, function(err, doc) {
+                    collections['carts'].findOne({_id: cart.id}, function(err, doc) {
                       test.equal(null, err);
                       test.equal('active', doc.state);
 
@@ -214,23 +227,25 @@ exports['Should correctly add multiple items to the cart but fail to reserve the
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
-      // Collections
-      var carts = db.collection('carts');
-      var products = db.collection('products');
-      var orders = db.collection('orders');
-      var inventories = db.collection('inventories');
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , orders: db.collection('orders')
+        , carts: db.collection('carts')
+        , inventories: db.collection('inventories')
+      }
 
       // Cleanup
       setup(db, function() {
-        var cart = new Cart(carts, inventories, orders);
+        var cart = new Cart(collections);
         cart.create(function(err, cart) {
           test.equal(null, err);
 
           // Fetch a product
-          var product = new Product(products, 1);
+          var product = new Product(collections, 1);
           product.reload(function(err, product) {
             // Fetch a product
-            var product1 = new Product(products, 2);
+            var product1 = new Product(collections, 2);
             product1.reload(function(err, product) {
               test.equal(null, err);
 
@@ -251,12 +266,12 @@ exports['Should correctly add multiple items to the cart but fail to reserve the
                       test.equal(1, err.products.length);
 
                       // Validate the state of the cart and product
-                      inventories.findOne({_id: 1}, function(err, doc) {
+                      collections['inventories'].findOne({_id: 1}, function(err, doc) {
                         test.equal(null, err);
                         test.equal(100, doc.quantity);
 
                         // Validate the state of the cart
-                        carts.findOne({_id: cart.id}, function(err, doc) {
+                        collections['carts'].findOne({_id: cart.id}, function(err, doc) {
                           test.equal(null, err);
                           test.equal('active', doc.state);
 

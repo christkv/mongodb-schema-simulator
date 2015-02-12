@@ -1,6 +1,6 @@
 "use strict";
 
-var createProducts = function(db, callback) {
+var createProducts = function(collections, callback) {
   var products = [
       { _id: 1, name: 'product 1', price: 100}
     , { _id: 2, name: 'product 2', price: 200}
@@ -21,10 +21,16 @@ var createProducts = function(db, callback) {
     , { _id: 7, quantity: 0}
   ]
 
+  // All the collections used
+  var collections = {
+      products: collections['products']
+    , inventories: collections['inventories']
+  }
+
   // Insert all the products
-  db.collection('products').insertMany(products, function(err, r) {
+  collections['products'].insertMany(products, function(err, r) {
     // Insert all the associated product inventories
-    db.collection('inventories').insertMany(inventories, function(err, r) {
+    collections['inventories'].insertMany(inventories, function(err, r) {
       callback();
     });
   });
@@ -36,21 +42,23 @@ var setup = function(db, callback) {
     , Inventory = require('../../schemas/cart_reservation/inventory')
     , Order = require('../../schemas/cart_reservation/order');
 
-  // Collections
-  var carts = db.collection('carts');
-  var products = db.collection('products');
-  var orders = db.collection('orders');
-  var inventories = db.collection('inventories');
+  // All the collections used
+  var collections = {
+      products: db.collection('products')
+    , orders: db.collection('orders')
+    , carts: db.collection('carts')
+    , inventories: db.collection('inventories')
+  }
 
-  products.drop(function() {
-    carts.drop(function() {
-      inventories.drop(function() {
-        orders.drop(function() {
-          Cart.createOptimalIndexes(carts, function() {
-            Product.createOptimalIndexes(products, function() {
-              Inventory.createOptimalIndexes(inventories, function() {
-                Order.createOptimalIndexes(orders, function() {
-                  createProducts(db, callback);
+  collections['products'].drop(function() {
+    collections['carts'].drop(function() {
+      collections['inventories'].drop(function() {
+        collections['orders'].drop(function() {
+          Cart.createOptimalIndexes(collections, function() {
+            Product.createOptimalIndexes(collections, function() {
+              Inventory.createOptimalIndexes(collections, function() {
+                Order.createOptimalIndexes(collections, function() {
+                  createProducts(collections, callback);
                 });
               });
             });
@@ -77,14 +85,22 @@ exports['Should correctly add an item to the cart and checkout the cart successf
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , orders: db.collection('orders')
+        , carts: db.collection('carts')
+        , inventories: db.collection('inventories')
+      }
+
       // Cleanup
       setup(db, function() {
-        var cart = new Cart(db.collection('carts'), db.collection('inventories'), db.collection('orders'));
+        var cart = new Cart(collections);
         cart.create(function(err, cart) {
           test.equal(null, err);
 
           // Fetch a product
-          var product = new Product(db.collection('products'), 1);
+          var product = new Product(collections, 1);
           product.reload(function(err, product) {
             test.equal(null, err);
 
@@ -100,13 +116,13 @@ exports['Should correctly add an item to the cart and checkout the cart successf
                   test.equal(null, err);
 
                   // Validate the state of the cart and product
-                  db.collection('inventories').findOne({_id: 1}, function(err, doc) {
+                  collections['inventories'].findOne({_id: 1}, function(err, doc) {
                     test.equal(null, err);
                     test.equal(99, doc.quantity);
                     test.equal(0, doc.reservations);
 
                     // Validate the state of the cart
-                    db.collection('carts').findOne({_id: cart.id}, function(err, doc) {
+                    collections['carts'].findOne({_id: cart.id}, function(err, doc) {
                       test.equal(null, err);
                       test.equal('completed', doc.state);
 
@@ -139,14 +155,22 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , orders: db.collection('orders')
+        , carts: db.collection('carts')
+        , inventories: db.collection('inventories')
+      }
+
       // Cleanup
       setup(db, function() {
-        var cart = new Cart(db.collection('carts'), db.collection('inventories'), db.collection('orders'));
+        var cart = new Cart(collections);
         cart.create(function(err, cart) {
           test.equal(null, err);
 
           // Fetch a product
-          var product = new Product(db.collection('products'), 1);
+          var product = new Product(collections, 1);
           product.reload(function(err, product) {
             test.equal(null, err);
 
@@ -155,7 +179,7 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
               test.ok(err != null);
 
               // Retrieve the cart
-              db.collection('carts').findOne({_id: cart.id}, function(err, doc) {
+              collections['carts'].findOne({_id: cart.id}, function(err, doc) {
                 test.equal(null, err);
                 test.equal(0, doc.products.length);
                 test.equal('active', doc.state);
@@ -187,14 +211,22 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , orders: db.collection('orders')
+        , carts: db.collection('carts')
+        , inventories: db.collection('inventories')
+      }
+
       // Cleanup
       setup(db, function() {
-        var cart = new Cart(db.collection('carts'), db.collection('inventories'), db.collection('orders'));
+        var cart = new Cart(collections);
         cart.create(function(err, cart) {
           test.equal(null, err);
 
           // Fetch a product
-          var product = new Product(db.collection('products'), 1);
+          var product = new Product(collections, 1);
           product.reload(function(err, product) {
             test.equal(null, err);
 
@@ -204,12 +236,12 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
                 test.equal(null, err);
 
                 // Validate cart and inventory
-                db.collection('carts').findOne({_id: cart.id}, function(err, doc) {
+                collections['carts'].findOne({_id: cart.id}, function(err, doc) {
                   test.equal(null, err);
                   test.equal(1, doc.products.length);
                   test.equal(2, doc.products[0].quantity);
 
-                  db.collection('inventories').findOne({_id: product.id}, function(err, doc) {
+                  collections['inventories'].findOne({_id: product.id}, function(err, doc) {
                     test.equal(null, err);
                     test.equal(1, doc.reservations.length);
                     test.equal(98, doc.quantity);
@@ -227,12 +259,12 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
                 test.equal(null, err);
 
                 // Validate cart and inventory
-                db.collection('carts').findOne({_id: cart.id}, function(err, doc) {
+                collections['carts'].findOne({_id: cart.id}, function(err, doc) {
                   test.equal(null, err);
                   test.equal(1, doc.products.length);
                   test.equal(4, doc.products[0].quantity);
 
-                  db.collection('inventories').findOne({_id: product.id}, function(err, doc) {
+                  collections['inventories'].findOne({_id: product.id}, function(err, doc) {
                     test.equal(null, err);
                     test.equal(1, doc.reservations.length);
                     test.equal(96, doc.quantity);
@@ -251,12 +283,12 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
                 test.ok(err != null);
 
                 // Validate cart and inventory
-                db.collection('carts').findOne({_id: cart.id}, function(err, doc) {
+                collections['carts'].findOne({_id: cart.id}, function(err, doc) {
                   test.equal(null, err);
                   test.equal(1, doc.products.length);
                   test.equal(4, doc.products[0].quantity);
 
-                  db.collection('inventories').findOne({_id: product.id}, function(err, doc) {
+                  collections['inventories'].findOne({_id: product.id}, function(err, doc) {
                     test.equal(null, err);
                     test.equal(1, doc.reservations.length);
                     test.equal(cart.id.toString(), doc.reservations[0]._id.toString());
@@ -274,11 +306,11 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
                 test.equal(null, err);
 
                 // Validate cart and inventory
-                db.collection('carts').findOne({_id: cart.id}, function(err, doc) {
+                collections['carts'].findOne({_id: cart.id}, function(err, doc) {
                   test.equal(null, err);
                   test.equal(0, doc.products.length);
 
-                  db.collection('inventories').findOne({_id: product.id}, function(err, doc) {
+                  collections['inventories'].findOne({_id: product.id}, function(err, doc) {
                     test.equal(null, err);
                     test.equal(0, doc.reservations.length);
                     test.equal(100, doc.quantity);
@@ -316,15 +348,23 @@ exports['Should correctly find expired carts and remove any reservations in them
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , orders: db.collection('orders')
+        , carts: db.collection('carts')
+        , inventories: db.collection('inventories')
+      }
+
       // Cleanup
       setup(db, function() {
 
-        var cart = new Cart(db.collection('carts'), db.collection('inventories'), db.collection('orders'));
+        var cart = new Cart(collections);
         cart.create(function(err, cart) {
           test.equal(null, err);
 
           // Fetch a product
-          var product = new Product(db.collection('products'), 1);
+          var product = new Product(collections, 1);
           product.reload(function(err, product) {
             test.equal(null, err);
 
@@ -334,12 +374,12 @@ exports['Should correctly find expired carts and remove any reservations in them
                 test.equal(null, err);
 
                 // Validate cart and inventory
-                db.collection('carts').findOne({_id: cart.id}, function(err, doc) {
+                collections['carts'].findOne({_id: cart.id}, function(err, doc) {
                   test.equal(null, err);
                   test.equal(1, doc.products.length);
                   test.equal(2, doc.products[0].quantity);
 
-                  db.collection('inventories').findOne({_id: product.id}, function(err, doc) {
+                  collections['inventories'].findOne({_id: product.id}, function(err, doc) {
                     test.equal(null, err);
                     test.equal(1, doc.reservations.length);
                     test.equal(98, doc.quantity);
@@ -352,12 +392,12 @@ exports['Should correctly find expired carts and remove any reservations in them
 
             addProductAndValidate(function() {
               // Set cart to expired
-              db.collection('carts').updateOne({_id: cart.id}, {$set: {state: 'expired'}}, function(err, r) {
+              collections['carts'].updateOne({_id: cart.id}, {$set: {state: 'expired'}}, function(err, r) {
                 test.equal(null, err);
                 test.equal(1, r.modifiedCount);
 
                 // Expire the cart
-                Cart.releaseExpired(db.collection('carts'), db.collection('inventories'), function(err) {
+                Cart.releaseExpired(collections, function(err) {
                   test.equal(null, err);
 
                   // Validate cart and inventory

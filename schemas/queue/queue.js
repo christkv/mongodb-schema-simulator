@@ -5,8 +5,8 @@ var f = require('util').format;
 /*
  * Represents a work item from the queue
  */
-var Work = function(queue, doc) {
-  this.queue = queue;
+var Work = function(collections, doc) {
+  this.queue = collections['queues'];
   this.doc = doc;
 }
 
@@ -30,11 +30,9 @@ Work.prototype.done = function(callback) {
 /*
  * Represents a Queue
  */
-var Queue = function(db, collectionName, name) {
-  this.db = db;
-  this.collectionName = collectionName;
+var Queue = function(collections, name) {
   this.name = name;
-  this.queue = db.collection(collectionName);  
+  this.queue = collections['queues'];
 }
 
 /*
@@ -95,10 +93,8 @@ Queue.prototype.fetchFIFO = function(callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Queue.createOptimalIndexes = function(db, collectionName, callback) {
-  if(typeof collectionName == 'function') callback = collectionName, collectionName = 'queues';
-
-  db.collection(collectionName).ensureIndex({startTime:1}, function(err, result) {
+Queue.createOptimalIndexes = function(collections, callback) {
+  collections['queues'].ensureIndex({startTime:1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

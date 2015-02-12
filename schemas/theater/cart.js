@@ -8,12 +8,13 @@ var f = require('util').format
 /*
  * Create a new cart instance
  */
-var Cart = function(db) {
-  this.db = db;
-  this.id = new ObjectID();
-  this.carts = db.collection('carts');
-  this.sessions = db.collection('sessions');
-  this.theaters = db.collection('theaters');
+var Cart = function(collections, id) {
+  this.id = id == null ? new ObjectID() : id;
+  this.collections = collections;
+  this.carts = collections['carts'];
+  this.sessions = collections['sessions'];
+  this.theaters = collections['theaters'];
+  this.receipts = collections['receipts'];
 }
 
 Cart.ACTIVE = 'active';
@@ -93,17 +94,17 @@ Cart.prototype.checkout = function(callback) {
     if(err) return callback(err);
     if(!doc) {
       // Cart is gone force clean all sessions for this cart
-      return Session.releaseAll(self.db, self.id, function(err, result) {
+      return Session.releaseAll(self.collections, self.id, function(err, result) {
         callback(new Error(f('could not locate cart with id %s', self.id)));
       })
     }
 
-    var receipt = new Receipt(self.db, doc.reservations);
+    var receipt = new Receipt(self.collections, doc.reservations);
     receipt.create(function(err, receipt) {
       if(err) return callback(err);
 
       // Apply all reservations in the cart
-      Session.apply(self.db, doc._id, function(err) {
+      Session.apply(self.collections, doc._id, function(err) {
         if(err) return callback(err);
         
         // Update state of Cart to DONE
@@ -126,7 +127,7 @@ Cart.prototype.checkout = function(callback) {
  */
 Cart.prototype.release = function(reservation, callback) {
   // Release all reservations in a specific reservation
-  new Session(self.db, reservation.sessionId).release(self.id, reservation.seats, function(err, session) {
+  new Session(collections, reservation.sessionId).release(self.id, reservation.seats, function(err, session) {
     if(err) return callback(err);
     callback();
   });
@@ -164,8 +165,8 @@ Cart.prototype.destroy = function(callback) {
 /*
  * Locate all expired carts and release all reservations
  */
-Cart.releaseExpired = function(db, callback) {
-  db.collection('carts').find({state: Cart.EXPIRED}).toArray(function(err, carts) {
+Cart.releaseExpired = function(collections, callback) {
+  collections['carts'].find({state: Cart.EXPIRED}).toArray(function(err, carts) {
     if(err) return callback(err);
     if(carts.length == 0) return callback();
     var left = carts.length;
@@ -173,9 +174,9 @@ Cart.releaseExpired = function(db, callback) {
     // Process each cart
     var processCart = function(cart, callback) {
       // Release all reservations for this cart
-      Session.releaseAll(db, cart._id, function(err) {
+      Session.releaseAll(collections, cart._id, function(err) {
         // Set cart to expired
-        db.collection('carts').updateOne(
+        collections['carts'].updateOne(
             { _id: cart._id }
           , { $set: { state: Cart.CANCELED }}, callback);
       });
@@ -195,8 +196,8 @@ Cart.releaseExpired = function(db, callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Cart.createOptimalIndexes = function(db, callback) {
-  db.collection('carts').ensureIndex({state:1}, function(err, result) {
+Cart.createOptimalIndexes = function(collections, callback) {
+  collections['carts'].ensureIndex({state:1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

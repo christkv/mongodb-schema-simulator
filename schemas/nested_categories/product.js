@@ -6,14 +6,13 @@ var f = require('util').format
 /*
  * Create a product instance
  */
-var Product = function(db, id, name, cost, currency, categories) {
-  this.db = db;
+var Product = function(collections, id, name, cost, currency, categories) {
   this.id = id;
   this.name = name;
   this.cost = cost;
   this.currency = currency;
   this.categories = categories;
-  this.products = db.collection('products');  
+  this.products = collections['products'];
 }
 
 /*
@@ -37,14 +36,14 @@ Product.prototype.create = function(callback) {
 /*
  * Find all products for a specific category
  */
-Product.findByCategory = function(db, path, callback) {
+Product.findByCategory = function(collections, path, callback) {
   // Get all the products
-  db.collection('products').find({
+  collections['products'].find({
     categories: path
   }).toArray(function(err, products) {
     if(err) return callback(err);
     callback(null, products.map(function(x) {
-      return new Product(db, x._id, x.name, x.cost, x.currency, x.categories);
+      return new Product(collections, x._id, x.name, x.cost, x.currency, x.categories);
     }));
   });
 }
@@ -52,11 +51,11 @@ Product.findByCategory = function(db, path, callback) {
 /*
  * Find all products for a categories direct children
  */
-Product.findByDirectCategoryChildren = function(db, path, callback) {
+Product.findByDirectCategoryChildren = function(collections, path, callback) {
   var self = this;
 
   // Locate all the categories
-  Category.findAllDirectChildCategories(db, path, function(err, categories) {
+  Category.findAllDirectChildCategories(collections, path, function(err, categories) {
     if(err) return callback(err);
 
     // Convert to paths
@@ -65,12 +64,12 @@ Product.findByDirectCategoryChildren = function(db, path, callback) {
     });
 
     // Get all the products
-    db.collection('products').find({
+    collections['products'].find({
       categories: { $in: paths }
     }).toArray(function(err, products) {
       if(err) return callback(err);
       callback(null, products.map(function(x) {
-        return new Product(db, x._id, x.name, x.cost, x.currency, x.categories);
+        return new Product(collections, x._id, x.name, x.cost, x.currency, x.categories);
       }));
     });
   });
@@ -79,9 +78,9 @@ Product.findByDirectCategoryChildren = function(db, path, callback) {
 /*
  * Find all products for a specific category tree
  */
-Product.findByCategoryTree = function(db, path, callback) {
+Product.findByCategoryTree = function(collections, path, callback) {
   // Locate all the categories
-  Category.findAllChildCategories(db, path, function(err, categories) {
+  Category.findAllChildCategories(collections, path, function(err, categories) {
     if(err) return callback(err);
 
     // Convert to paths
@@ -90,12 +89,12 @@ Product.findByCategoryTree = function(db, path, callback) {
     });
 
     // Get all the products
-    db.collection('products').find({
+    collections['products'].find({
       categories: { $in: paths }
     }).toArray(function(err, products) {
       if(err) return callback(err);
       callback(null, products.map(function(x) {
-        return new Product(db, x._id, x.name, x.cost, x.currency, x.categories);
+        return new Product(collections, x._id, x.name, x.cost, x.currency, x.categories);
       }));
     });
   });
@@ -104,8 +103,8 @@ Product.findByCategoryTree = function(db, path, callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Product.createOptimalIndexes = function(db, callback) {
-  db.collection('products').ensureIndex({categories:1}, function(err, result) {
+Product.createOptimalIndexes = function(collections, callback) {
+  collections['products'].ensureIndex({categories:1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

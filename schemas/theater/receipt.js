@@ -1,11 +1,10 @@
 /*
  * Create a new receipt instance
  */
-var Receipt = function(db, reservations, total) {  
-  this.db = db;
+var Receipt = function(collections, reservations, total) {  
   this.reservations = reservations;
   this.total = total
-  this.receipts = db.collection('receipts');
+  this.receipts = collections['receipts'];
 }
 
 /*

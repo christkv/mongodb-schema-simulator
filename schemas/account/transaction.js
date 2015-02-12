@@ -3,10 +3,11 @@
 var ObjectID = require('mongodb').ObjectID
   , f = require('util').format;
 
-var Transaction = function(transactions, accounts, id, fromAccount, toAccount, amount) {  
+var Transaction = function(collections, id, fromAccount, toAccount, amount) {  
   this.id = id == null ? new ObjectID() : id;
-  this.transactions = transactions;
-  this.accounts = accounts;
+  this.collections = collections;
+  this.transactions = collections['transactions'];
+  this.accounts = collections['accounts'];
   this.fromAccount = fromAccount;
   this.toAccount = toAccount;
   this.amount = amount;

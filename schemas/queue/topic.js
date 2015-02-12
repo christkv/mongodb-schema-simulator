@@ -5,31 +5,10 @@ var f = require('util').format;
 /*
  * Represents a topic
  */
-var Topic = function(db, name, sizeInBytes, maxMessages) {
-  this.db = db;
-  this.name = name;
+var Topic = function(collections, sizeInBytes, maxMessages) {
   this.sizeInBytes = sizeInBytes;
   this.maxMessages = maxMessages;
-  this.topic = db.collection(name);
-}
-
-/*
- * Create a topic
- */
-Topic.prototype.create = function(callback) {
-  // Collection options
-  var options = {
-      capped:true
-    , size: this.sizeInBytes
-  }
-
-  var self = this;
-  // Create the capped collection
-  this.db.createCollection(this.name, options, function(err, collection) {
-    if(err) return callback(err);
-    self.topic = collection;
-    callback(null, self);
-  });
+  this.topic = collections['topics'];
 }
 
 /*
@@ -65,9 +44,32 @@ Topic.prototype.listen = function(from) {
 }
 
 /*
+ * Create a topic
+ */
+Topic.prototype.create = function(callback) {
+  // Collection options
+  var options = {
+      capped:true
+    , size: this.sizeInBytes
+  }
+  // Get reference to self
+  var self = this;
+  // Get the collection name
+  var collectionName = this.topic.collectionName;
+  // Get the db object associated with the collection
+  var db = this.topic.s.db;
+  // Create the capped collection
+  db.createCollection(collectionName, options, function(err, collection) {
+    if(err) return callback(err);
+    self.topic = collection;
+    callback(null, self);
+  });
+}
+
+/*
  * Create the optimal indexes for the queries
  */
-Topic.createOptimalIndexes = function(db, callback) {
+Topic.createOptimalIndexes = function(collections, callback) {
   callback();
 }
 

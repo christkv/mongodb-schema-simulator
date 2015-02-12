@@ -4,10 +4,16 @@ var setup = function(db, callback) {
   var Queue = require('../../schemas/queue/queue')
     , Topic = require('../../schemas/queue/topic');
 
-  db.collection('queues').drop(function() {
-    db.collection('topics').drop(function() {
-      Queue.createOptimalIndexes(db, function(err) {
-        Topic.createOptimalIndexes(db, function(err) {
+  // All the collections used
+  var collections = {
+      queues: db.collection('queues')
+    , topics: db.collection('topics')
+  }
+
+  collections['queues'].drop(function() {
+    collections['topics'].drop(function() {
+      Queue.createOptimalIndexes(collections, function(err) {
+        Topic.createOptimalIndexes(collections, function(err) {
           callback();
         });
       });
@@ -27,10 +33,16 @@ exports['Should correctly insert job into queue'] = {
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          queues: db.collection('queues')
+        , topics: db.collection('topics')
+      }
+
       // Cleanup
       setup(db, function() {
         // Create a queue
-        var queue = new Queue(db, 'queues', 'work');
+        var queue = new Queue(collections, 'work');
         // Add some items to queue
         var addToQueue = function(callback) {
           queue.publish(1, {work:1}, function(err) {
@@ -81,42 +93,53 @@ exports['Should correctly insert job into topic and listen to it'] = {
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          queues: db.collection('queues')
+        , topics: db.collection('topics')
+      }
+
       // Cleanup
       setup(db, function() {
         // Create a queue
-        var topic = new Topic(db, 'queues', 'work', 10000);
-        // Add some items to queue
-        var addToTopic = function(callback) {
-          topic.publish({work:1}, function(err) {
-            test.equal(null, err);
-
-            topic.publish({work:2}, function(err) {
+        var topic = new Topic(collections, 10000, 10000);
+        topic.create(function(err, topic) {
+          test.equal(null, err);
+          test.ok(topic != null);
+          
+          // Add some items to queue
+          var addToTopic = function(callback) {
+            topic.publish({work:1}, function(err) {
               test.equal(null, err);
-                
-              topic.publish({work:3}, function(err) {
+
+              topic.publish({work:2}, function(err) {
                 test.equal(null, err);
-                callback();
+                  
+                topic.publish({work:3}, function(err) {
+                  test.equal(null, err);
+                  callback();
+                });
               });
             });
-          });
-        }
+          }
 
-        // Add the queues
-        addToTopic(function() {
-          var docs = [];
-          var cursor = topic.listen();
-          cursor.on('data', function(doc) {
-            docs.push(doc);
-          });
+          // Add the queues
+          addToTopic(function() {
+            var docs = [];
+            var cursor = topic.listen();
+            cursor.on('data', function(doc) {
+              docs.push(doc);
+            });
 
-          cursor.on('end', function() {
-            test.equal(3, docs.length);
+            cursor.on('end', function() {
+              test.equal(3, docs.length);
 
-            db.close();
-            test.done();
+              db.close();
+              test.done();
+            });
           });
         });
-      })
+      });
     });
   }
 }

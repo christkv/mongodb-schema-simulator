@@ -22,10 +22,11 @@ var f = require('util').format
     var items = [ 100, 20 ]
     var result = [  89,  90,  100 ]
 */
-var SliceCache = function(cache, id, sliceAt) {
+var SliceCache = function(collections, id, sliceAt) {
   this.id = id == null ? new ObjectID() : id;
+  this.collections = collections;
   this.sliceAt = sliceAt;
-  this.cache = cache;
+  this.cache = collections['cache'];
 }
 
 /*

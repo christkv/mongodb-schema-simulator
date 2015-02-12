@@ -3,8 +3,13 @@
 var setup = function(db, callback) {
   var TimeSeries = require('../../schemas/time_series/timeseries');
 
-  db.collection('timeseries').drop(function() {
-    TimeSeries.createOptimalIndexes(db, function(err) {
+  // All the collections used
+  var collections = {
+    timeseries: db.collection('timeseries')
+  }
+
+  collections['timeseries'].drop(function() {
+    TimeSeries.createOptimalIndexes(collections, function(err) {
       callback();
     });
   });
@@ -23,6 +28,11 @@ exports['Correctly create and execute ten increments on a timeseries object'] = 
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+        timeseries: db.collection('timeseries')
+      }
+
       // Cleanup
       setup(db, function() {
         // Create a fake range of one second
@@ -32,7 +42,7 @@ exports['Correctly create and execute ten increments on a timeseries object'] = 
         timestamp.setSeconds(0);
 
         // Create a new TimeSeries instance
-        var timeSeries = new TimeSeries(db, new ObjectId(), 'device1', {}, timestamp, 'minute');
+        var timeSeries = new TimeSeries(collections, new ObjectId(), 'device1', {}, timestamp, 'minute');
         timeSeries.create(function(err, r) {
           test.equal(null, err);
           // Left to do
@@ -51,7 +61,7 @@ exports['Correctly create and execute ten increments on a timeseries object'] = 
 
               if(left == 0) {
                 // Grab the document and validate correctness
-                db.collection('timeseries').findOne({_id: timeSeries.id}, function(err, doc) {
+                collections['timeseries'].findOne({_id: timeSeries.id}, function(err, doc) {
                   test.equal(null, err);
                   test.ok(doc != null);
 
@@ -84,6 +94,11 @@ exports['Correctly create and execute ten increments on a timeseries object that
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+        timeseries: db.collection('timeseries')
+      }
+
       // Cleanup
       setup(db, function() {
         // Create a fake range of one second
@@ -93,7 +108,7 @@ exports['Correctly create and execute ten increments on a timeseries object that
         timestamp.setSeconds(0);
 
         // Create a new pre-allocated TimeSeries instance
-        TimeSeries.preAllocateMinute(db, new ObjectId(), 'device1', timestamp, function(err, timeSeries) {
+        TimeSeries.preAllocateMinute(collections, new ObjectId(), 'device1', timestamp, function(err, timeSeries) {
           test.equal(null, err);
           test.ok(timeSeries != null);
 
@@ -107,7 +122,7 @@ exports['Correctly create and execute ten increments on a timeseries object that
             test.equal(null, err);
 
             // Grab the document and validate correctness
-            db.collection('timeseries').findOne({_id: timeSeries.id}, function(err, doc) {
+            collections['timeseries'].findOne({_id: timeSeries.id}, function(err, doc) {
               test.equal(null, err);
               test.ok(doc != null);
               test.equal(1, doc.series[1]);
@@ -136,6 +151,11 @@ exports['Correctly create and execute ten increments on a timeseries object that
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+        timeseries: db.collection('timeseries')
+      }
+
       // Cleanup
       setup(db, function() {
         // Create a fake range of one second
@@ -145,7 +165,7 @@ exports['Correctly create and execute ten increments on a timeseries object that
         timestamp.setSeconds(0);
 
         // Create a new pre-allocated TimeSeries instance
-        TimeSeries.preAllocateHour(db, new ObjectId(), 'device1', timestamp, function(err, timeSeries) {
+        TimeSeries.preAllocateHour(collections, new ObjectId(), 'device1', timestamp, function(err, timeSeries) {
           test.equal(null, err);
           test.ok(timeSeries != null);
 
@@ -159,7 +179,7 @@ exports['Correctly create and execute ten increments on a timeseries object that
             test.equal(null, err);
 
             // Grab the document and validate correctness
-            db.collection('timeseries').findOne({_id: timeSeries.id}, function(err, doc) {
+            collections['timeseries'].findOne({_id: timeSeries.id}, function(err, doc) {
               test.equal(null, err);
               test.ok(doc != null);
 
@@ -189,6 +209,11 @@ exports['Correctly create and execute ten increments on a timeseries object that
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+        timeseries: db.collection('timeseries')
+      }
+
       // Cleanup
       setup(db, function() {
         // Create a fake range of one second
@@ -199,7 +224,7 @@ exports['Correctly create and execute ten increments on a timeseries object that
         timestamp.setSeconds(0);
 
         // Create a new pre-allocated TimeSeries instance
-        TimeSeries.preAllocateDay(db, new ObjectId(), 'device1', timestamp, function(err, timeSeries) {
+        TimeSeries.preAllocateDay(collections, new ObjectId(), 'device1', timestamp, function(err, timeSeries) {
           test.equal(null, err);
           test.ok(timeSeries != null);
 
@@ -214,7 +239,7 @@ exports['Correctly create and execute ten increments on a timeseries object that
             test.equal(null, err);
 
             // Grab the document and validate correctness
-            db.collection('timeseries').findOne({_id: timeSeries.id}, function(err, doc) {
+            collections['timeseries'].findOne({_id: timeSeries.id}, function(err, doc) {
               test.equal(null, err);
               test.ok(doc != null);
 
@@ -244,11 +269,16 @@ exports['Set up 1000 time slots and ensureIndex'] = {
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+        timeseries: db.collection('timeseries')
+      }
+
       // Cleanup
       setup(db, function() {
         var left = 1000;
 
-        TimeSeries.createOptimalIndexes(db, function(err, r) {
+        TimeSeries.createOptimalIndexes(collections, function(err, r) {
           test.equal(null, err);
 
           for(var i = 0; i < 1000; i++) {
@@ -257,7 +287,7 @@ exports['Set up 1000 time slots and ensureIndex'] = {
             timestamp.setSeconds(0);
 
             // Create a new minute allocation
-            TimeSeries.preAllocateMinute(db, new ObjectId(), 'device1', timestamp, function(err, r) {
+            TimeSeries.preAllocateMinute(collections, new ObjectId(), 'device1', timestamp, function(err, r) {
               test.equal(null, err);
               left = left - 1;
 

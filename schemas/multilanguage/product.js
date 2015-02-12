@@ -3,13 +3,13 @@
 /*
  * Create a new product instance
  */
-var Product = function(products, id, name, cost, currency, categories) {
+var Product = function(collections, id, name, cost, currency, categories) {
   this.id = id == null ? new ObjectID() : id;
   this.name = name;
   this.cost = cost;
   this.currency = currency;
   this.categories = categories;
-  this.products = products;  
+  this.products = collections['products'];
 }
 
 /*
@@ -50,8 +50,8 @@ Product.prototype.reload = function(callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Product.createOptimalIndexes = function(products, callback) {
-  products.ensureIndex({'categories._id':1}, function(err, result) {
+Product.createOptimalIndexes = function(collections, callback) {
+  collections['products'].ensureIndex({'categories._id':1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

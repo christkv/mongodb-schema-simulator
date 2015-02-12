@@ -5,12 +5,11 @@ var f = require('util').format
   , Inventory = require('./inventory')
   , Order = require('./order');
 
-var Cart = function(cartsCollection, inventoryCollection, ordersCollection, id) {  
+var Cart = function(collections, id) {  
   this.id = id == null ? new ObjectID() : id;
   this.products = [];
-  this.carts = cartsCollection;
-  this.inventories = inventoryCollection;
-  this.orders = ordersCollection;
+  this.collections = collections;
+  this.carts = collections['carts'];
 }
 
 Cart.ACTIVE = 'active';
@@ -127,11 +126,11 @@ Cart.prototype.checkout = function(details, callback) {
     if(!cart) return callback(new Error(f('could not located cart with id %s', self.id)));
 
     // Reserve the quantities for all the products (rolling back if some are not possible to cover)
-    Inventory.reserve(self.inventories, self.id, cart.products, function(err) {
+    Inventory.reserve(self.collections, self.id, cart.products, function(err) {
       if(err) return callback(err);
     
       // Create a new order instance
-      var order = new Order(self.orders, new ObjectID()
+      var order = new Order(self.collections, new ObjectID()
         , details.shipping
         , details.payment
         , cart.products);
@@ -151,7 +150,7 @@ Cart.prototype.checkout = function(details, callback) {
           if(r.modifiedCount == 0) return callback(new Error(f('failed to set cart %s to completed state', self.id)));
 
           // Commit the change to the inventory
-          Inventory.commit(self.inventories, self.id, function(err, inventory) {
+          Inventory.commit(self.collections, self.id, function(err, inventory) {
             if(err) return callback(err);
             callback();
           });
@@ -164,8 +163,8 @@ Cart.prototype.checkout = function(details, callback) {
 /*
  * Expired carts can just be set to canceled as there is no need to return inventory
  */
-Cart.releaseExpired = function(db, callback) {
-  db.collection('carts').updateMany(
+Cart.releaseExpired = function(collections, callback) {
+  collections['carts'].updateMany(
       {state: Cart.EXPIRED}
     , { $set: { state: Cart.CANCELED} }, function(err, r) {
       if(err) return callback(err);
@@ -176,8 +175,8 @@ Cart.releaseExpired = function(db, callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Cart.createOptimalIndexes = function(cartCollection, callback) {
-  cartCollection.ensureIndex({state: 1}, function(err, result) {
+Cart.createOptimalIndexes = function(collections, callback) {
+  collections['carts'].ensureIndex({state: 1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

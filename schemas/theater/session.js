@@ -6,17 +6,16 @@ var f = require('util').format
 /*
  * Create a new session instance
  */
-var Session = function(db, id, theaterId, name, description, start, end, price) {  
-  this.db = db;
-  this.id = id;
+var Session = function(collections, id, theaterId, name, description, start, end, price) {  
+  this.id = id == null ? new ObjectID() : id;
   this.theaterId = theaterId;
   this.name = name;
   this.description = description;
   this.start = start;
   this.end = end;
   this.price = price;
-  this.sessions = db.collection('sessions');
-  this.theaters = db.collection('theaters');
+  this.sessions = collections['sessions'];
+  this.theaters = collections['theaters'];
 }
 
 /*
@@ -95,8 +94,8 @@ Session.prototype.reserve = function(id, seats, callback) {
 /*
  * Release all the reservations for a cart across all sessions
  */
-Session.releaseAll = function(db, id, callback) {
-  db.collection('sessions').find({
+Session.releaseAll = function(collections, id, callback) {
+  collections['sessions'].find({
     'reservations._id': id
   }).toArray(function(err, docs) {
     if(err) return callback(err);
@@ -108,7 +107,7 @@ Session.releaseAll = function(db, id, callback) {
       var reservation = null;
       
       for(var i = 0; i < doc.reservations.length; i++) {
-        if(doc.reservations[i]._id.equals(id)) {
+        if(doc.reservations[i]._id.toString() == id.toString()) {
           reservation = doc.reservations[i];
           break;
         }
@@ -117,7 +116,7 @@ Session.releaseAll = function(db, id, callback) {
       // No reservation found return
       if(!reservation) return callback();
       // Reverse the specific reservation
-      new Session(db, doc._id).release(reservation._id, reservation.seats, callback);
+      new Session(collections, doc._id).release(reservation._id, reservation.seats, callback);
     }
 
     // Process all the entries
@@ -161,9 +160,9 @@ Session.prototype.release = function(id, seats, callback) {
 /*
  * Apply all the reservations for a specific id across all sessions
  */
-Session.apply = function(db, id, callback) {
+Session.apply = function(collections, id, callback) {
   // Apply the cart by removing the cart from all sessions
-  db.collection('sessions').updateMany({
+  collections['sessions'].updateMany({
     'reservations._id': id
   }, {
     $pull: { reservations: { _id: id }}
@@ -176,8 +175,8 @@ Session.apply = function(db, id, callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Session.createOptimalIndexes = function(db, callback) {
-  db.collection('sessions').ensureIndex({'reservations._id':1}, function(err, result) {
+Session.createOptimalIndexes = function(collections, callback) {
+  collections['sessions'].ensureIndex({'reservations._id':1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

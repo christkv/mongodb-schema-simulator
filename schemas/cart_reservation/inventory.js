@@ -3,10 +3,10 @@
 var f = require('util').format
   , ObjectID = require('mongodb').ObjectID;
 
-var Inventory = function(collection, id, quantity) {  
+var Inventory = function(collections, id, quantity) {  
   this.id = id == null ? new ObjectID() : id;
   this.quantity = quantity;
-  this.inventories = collection;
+  this.inventories = collections['inventories'];
 }
 
 /*
@@ -75,8 +75,8 @@ Inventory.prototype.adjust = function(id, quantity, delta, callback) {
 /*
  * Release all the reservations for a cart across all products
  */
-Inventory.releaseAll = function(collection, id, callback) {
-  collection.find({
+Inventory.releaseAll = function(collections, id, callback) {
+  collections['inventories'].find({
     'reservations._id': id
   }).toArray(function(err, docs) {
     if(err) return callback(err);
@@ -96,7 +96,7 @@ Inventory.releaseAll = function(collection, id, callback) {
       // No reservation found return
       if(!reservation) return callback();
       // Reverse the specific reservation
-      new Inventory(collection, doc._id).release(reservation._id, callback);
+      new Inventory(collections, doc._id).release(reservation._id, callback);
     }
 
     // Process all the entries
@@ -156,9 +156,9 @@ Inventory.prototype.release = function(id, callback) {
 /*
  * Commit all the reservations by removing them from the reservations array
  */
-Inventory.commit = function(collection, id, callback) {
+Inventory.commit = function(collections, id, callback) {
   var self = this;
-  collection.updateMany({
+  collections['inventories'].updateMany({
     'reservations._id': id
   }, {
     $pull: { reservations: {_id: id } }
@@ -172,8 +172,8 @@ Inventory.commit = function(collection, id, callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Inventory.createOptimalIndexes = function(collection, callback) {
-  collection.ensureIndex({"reservations._id": 1}, function(err, result) {
+Inventory.createOptimalIndexes = function(collections, callback) {
+  collections['inventories'].ensureIndex({"reservations._id": 1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

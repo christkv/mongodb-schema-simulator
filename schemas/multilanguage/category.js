@@ -5,7 +5,7 @@ var f = require('util').format;
 /*
  * Create a new category instance
  */
-var Category = function(categories, products, id, names) {
+var Category = function(collections, id, names) {
   this.id = id == null ? new ObjectID() : id;
 
   // Hash of all the names by local ('en-us') etc
@@ -13,8 +13,8 @@ var Category = function(categories, products, id, names) {
   this.names = names || {};
   
   // Collections used
-  this.categories = categories;
-  this.products = products;
+  this.categories = collections['categories'];
+  this.products = collections['products'];
 }
 
 /*
@@ -118,7 +118,7 @@ Category.prototype.reload = function(callback) {
 /*
  * Create the optimal indexes for the queries
  */
-Category.createOptimalIndexes = function(db, callback) {
+Category.createOptimalIndexes = function(collections, callback) {
   callback();
 }
 

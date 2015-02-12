@@ -5,9 +5,9 @@ var f = require('util').format;
 /*
  * Create a new metadata instance
  */
-var MetaData = function(metadatas, id, metadata) {
+var MetaData = function(collections, id, metadata) {
   this.id = id;
-  this.metadatas = metadatas;
+  this.metadatas = collections['metadatas'];
   this.metadata = metadata;
 }
 
@@ -29,7 +29,7 @@ MetaData.prototype.create = function(callback) {
 /*
  * Search using metadata fields
  */
-MetaData.findByFields = function(metadatas, fields, callback) {
+MetaData.findByFields = function(collections, fields, callback) {
   var queryParts = [];
 
   for(var name in fields) {
@@ -41,10 +41,10 @@ MetaData.findByFields = function(metadatas, fields, callback) {
     ? { metadata: queryParts[0] } 
     : { metadata: { $all: queryParts } };
   // Execute the query
-  metadatas.find(finalQuery).toArray(function(err, docs) {
+  collections['metadatas'].find(finalQuery).toArray(function(err, docs) {
     if(err) return callback(err);
     callback(null, docs.map(function(x) {
-      return new MetaData(metadatas, x._id, x.metadata);
+      return new MetaData(collections, x._id, x.metadata);
     }));
   });
 }
@@ -52,8 +52,8 @@ MetaData.findByFields = function(metadatas, fields, callback) {
 /*
  * Create the optimal indexes for the queries
  */
-MetaData.createOptimalIndexes = function(metadatas, callback) {
-  metadatas.ensureIndex({"metadata.key": 1, "metadata.value": 1}, function(err, result) {
+MetaData.createOptimalIndexes = function(collections, callback) {
+  collections['metadatas'].ensureIndex({"metadata.key": 1, "metadata.value": 1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

@@ -5,14 +5,14 @@ var f = require('util').format;
 /*
  * Create a new Timeseries instance
  */
-var TimeSeries = function(db, id, tag, series, timestamp, resolution) {
-  this.db = db;
-  this.id = id;
+var TimeSeries = function(collections, id, tag, series, timestamp, resolution) {
+  this.collections = collections;
+  this.id = id == null ? new ObjectID() : id;
   this.series = series;
   this.timestamp = timestamp;
   this.tag = tag;
   this.resolution = resolution;
-  this.timeseries = this.db.collection('timeseries');
+  this.timeseries = collections['timeseries'];
 }
 
 /*
@@ -114,20 +114,20 @@ TimeSeries.prototype.inc = function(time, measurement, callback) {
 /*
  * Pre allocate a minute worth of measurements in a document
  */
-TimeSeries.preAllocateMinute = function(db, id, tag, timestamp, callback) {
+TimeSeries.preAllocateMinute = function(collections, id, tag, timestamp, callback) {
   var series = {};
 
   for(var i = 0; i < 60; i++) {
     series[i] = 0
   }
 
-  new TimeSeries(db, id, tag, series, timestamp, 'minute').create(callback);
+  new TimeSeries(collections, id, tag, series, timestamp, 'minute').create(callback);
 }
 
 /*
  * Pre allocate an hour worth of measurements in a document
  */
-TimeSeries.preAllocateHour = function(db, id, tag, timestamp, callback) {
+TimeSeries.preAllocateHour = function(collections, id, tag, timestamp, callback) {
   var series = {};
 
   // Allocate minutes
@@ -140,13 +140,13 @@ TimeSeries.preAllocateHour = function(db, id, tag, timestamp, callback) {
     }    
   }
 
-  new TimeSeries(db, id, tag, series, timestamp, 'hour').create(callback);
+  new TimeSeries(collections, id, tag, series, timestamp, 'hour').create(callback);
 }
 
 /*
  * Pre allocate a day worth of measurements in a document
  */
-TimeSeries.preAllocateDay = function(db, id, tag, timestamp, callback) {
+TimeSeries.preAllocateDay = function(collections, id, tag, timestamp, callback) {
   var series = {};
 
   // Allocate hours
@@ -164,14 +164,14 @@ TimeSeries.preAllocateDay = function(db, id, tag, timestamp, callback) {
     }
   }
 
-  new TimeSeries(db, id, tag, series, timestamp, 'day').create(callback);
+  new TimeSeries(collections, id, tag, series, timestamp, 'day').create(callback);
 }
 
 /*
  * Create the optimal indexes for the queries
  */
-TimeSeries.createOptimalIndexes = function(db, callback) {
-  db.collection('timeseries').ensureIndex({timestamp:1}, function(err, result) {
+TimeSeries.createOptimalIndexes = function(collections, callback) {
+  collections['timeseries'].ensureIndex({timestamp:1}, function(err, result) {
     if(err) return callback(err);
     callback();
   });

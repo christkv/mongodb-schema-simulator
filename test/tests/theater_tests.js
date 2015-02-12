@@ -4,12 +4,20 @@ var setup = function(db, callback) {
   var Session = require('../../schemas/theater/session')
     , Cart = require('../../schemas/theater/cart');
 
-  db.collection('theaters').drop(function() {
-    db.collection('sessions').drop(function() {
-      db.collection('carts').drop(function() {
-        db.collection('orders').drop(function() {
-          Session.createOptimalIndexes(db, function(err) {
-            Cart.createOptimalIndexes(db, function(err) {
+  // All the collections used
+  var collections = {
+      theaters: db.collection('theaters')
+    , sessions: db.collection('sessions')
+    , carts: db.collection('carts')
+    , receipts: db.collection('receipts')
+  }
+
+  collections['theaters'].drop(function() {
+    collections['sessions'].drop(function() {
+      collections['carts'].drop(function() {
+        collections['receipts'].drop(function() {
+          Session.createOptimalIndexes(collections, function(err) {
+            Cart.createOptimalIndexes(collections, function(err) {
               callback();
             });
           });
@@ -19,8 +27,8 @@ var setup = function(db, callback) {
   });
 }
 
-var validateSeats = function(db, test, session, seats, seatsLeft, callback) {
-  db.collection('sessions').findOne({_id: session.id}, function(err, doc) {
+var validateSeats = function(collections, test, session, seats, seatsLeft, callback) {
+  collections['sessions'].findOne({_id: session.id}, function(err, doc) {
     test.equal(null, err);
     test.ok(doc != null);
     test.equal(doc.seatsAvailable, seatsLeft);
@@ -35,8 +43,8 @@ var validateSeats = function(db, test, session, seats, seatsLeft, callback) {
   });
 }
 
-var validateCart = function(db, test, cart, state, reservations, callback) {
-  db.collection('carts').findOne({_id: cart.id}, function(err, doc) {
+var validateCart = function(collections, test, cart, state, reservations, callback) {
+  collections['carts'].findOne({_id: cart.id}, function(err, doc) {
     test.equal(null, err);
     test.ok(doc != null);
     test.equal(reservations.length, doc.reservations.length);
@@ -66,11 +74,19 @@ exports['Should correctly set up theater and session and buy tickets for some ro
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          theaters: db.collection('theaters')
+        , sessions: db.collection('sessions')
+        , carts: db.collection('carts')
+        , receipts: db.collection('receipts')
+      }
+
       // Cleanup
       setup(db, function() {
 
         // Create a new Theater
-        var theater = new Theater(db, 'The Royal', [
+        var theater = new Theater(collections, 1, 'The Royal', [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -89,7 +105,7 @@ exports['Should correctly set up theater and session and buy tickets for some ro
             test.ok(session != null);
 
             // Create a cart
-            var cart = new Cart(db)
+            var cart = new Cart(collections, 1);
             cart.create(function(err, cart) {
               test.equal(null, err);
               test.ok(cart != null);
@@ -105,7 +121,7 @@ exports['Should correctly set up theater and session and buy tickets for some ro
                   test.equal(null, err);
 
                   // Validate seat reservations
-                  validateSeats(db, test
+                  validateSeats(collections, test
                     , session, seats, (session.seatsAvailable - seats.length), function(err) {
                     test.equal(null, err);
 
@@ -117,7 +133,7 @@ exports['Should correctly set up theater and session and buy tickets for some ro
                     ];
 
                     // validateCart
-                    validateCart(db, test, cart, 'done', expectedReservations, function(err) {
+                    validateCart(collections, test, cart, 'done', expectedReservations, function(err) {
                       test.equal(null, err);
 
                       db.close();
@@ -148,11 +164,19 @@ exports['Should correctly set up theater and session and book tickets but fail t
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
 
+      // All the collections used
+      var collections = {
+          theaters: db.collection('theaters')
+        , sessions: db.collection('sessions')
+        , carts: db.collection('carts')
+        , receipts: db.collection('receipts')
+      }
+
       // Cleanup
       setup(db, function() {
 
         // Create a new Theater
-        var theater = new Theater(db, 'The Royal', [
+        var theater = new Theater(collections, 1, 'The Royal', [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -171,7 +195,7 @@ exports['Should correctly set up theater and session and book tickets but fail t
             test.ok(session != null);
 
             // Create a cart
-            var cart = new Cart(db)
+            var cart = new Cart(collections, 1)
             cart.create(function(err, cart) {
               test.equal(null, err);
               test.ok(cart != null);
@@ -187,7 +211,7 @@ exports['Should correctly set up theater and session and book tickets but fail t
                   test.equal(null, err);
 
                   // Create a cart
-                  var cart = new Cart(db)
+                  var cart = new Cart(collections, 2)
                   cart.create(function(err, cart) {
                     test.equal(null, err);
                     test.ok(cart != null);
@@ -199,7 +223,7 @@ exports['Should correctly set up theater and session and book tickets but fail t
                       test.ok(err != null);
 
                       // Our expected cart reservations
-                      validateCart(db, test, cart, 'active', [], function(err) {
+                      validateCart(collections, test, cart, 'active', [], function(err) {
                         test.equal(null, err);
 
                         db.close();
@@ -234,8 +258,16 @@ exports['Should correctly set up theater and session and book tickets but fail t
       // Cleanup
       setup(db, function() {
 
+        // All the collections used
+        var collections = {
+            theaters: db.collection('theaters')
+          , sessions: db.collection('sessions')
+          , carts: db.collection('carts')
+          , receipts: db.collection('receipts')
+        }
+
         // Create a new Theater
-        var theater = new Theater(db, 'The Royal', [
+        var theater = new Theater(collections, 1, 'The Royal', [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -254,7 +286,7 @@ exports['Should correctly set up theater and session and book tickets but fail t
             test.ok(session != null);
 
             // Create a cart
-            var cart = new Cart(db)
+            var cart = new Cart(collections, 1)
             cart.create(function(err, cart) {
               test.equal(null, err);
               test.ok(cart != null);
@@ -266,7 +298,7 @@ exports['Should correctly set up theater and session and book tickets but fail t
                 test.equal(null, err);
 
                 // Destroy the cart
-                db.collection('carts').removeOne({_id: cart.id}, function(err, r) {
+                collections['carts'].removeOne({_id: cart.id}, function(err, r) {
                   test.equal(null, err);
                   test.equal(1, r.deletedCount);
 
@@ -274,7 +306,7 @@ exports['Should correctly set up theater and session and book tickets but fail t
                   cart.checkout(function(err) {
                     test.ok(err != null);
 
-                    db.collection('sessions').findOne({_id: session.id}, function(err, doc) {
+                    collections['sessions'].findOne({_id: session.id}, function(err, doc) {
                       test.equal(null, err);
 
                       // Validate that no seats are reserved after cart destroyed
@@ -315,8 +347,16 @@ exports['Should correctly find expired carts and remove any reservations in them
       // Cleanup
       setup(db, function() {
 
+        // All the collections used
+        var collections = {
+            theaters: db.collection('theaters')
+          , sessions: db.collection('sessions')
+          , carts: db.collection('carts')
+          , receipts: db.collection('receipts')
+        }
+
         // Create a new Theater
-        var theater = new Theater(db, 'The Royal', [
+        var theater = new Theater(collections, 1, 'The Royal', [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -335,7 +375,7 @@ exports['Should correctly find expired carts and remove any reservations in them
             test.ok(session != null);
 
             // Create a cart
-            var cart = new Cart(db)
+            var cart = new Cart(collections, 1)
             cart.create(function(err, cart) {
               test.equal(null, err);
               test.ok(cart != null);
@@ -347,15 +387,15 @@ exports['Should correctly find expired carts and remove any reservations in them
                 test.equal(null, err);
 
                 // Force expire the cart
-                db.collection('carts').updateOne({_id: cart.id}, {$set: {state: Cart.EXPIRED}}, function(err, r) {
+                collections['carts'].updateOne({_id: cart.id}, {$set: {state: Cart.EXPIRED}}, function(err, r) {
                   test.equal(null, err);
                   test.equal(1, r.modifiedCount);
 
                   // Release all the carts that are expired
-                  Cart.releaseExpired(db, function(err) {
+                  Cart.releaseExpired(collections, function(err) {
                     test.equal(null, err);
 
-                    db.collection('sessions').findOne({_id: session.id}, function(err, doc) {
+                    collections['sessions'].findOne({_id: session.id}, function(err, doc) {
                       test.equal(null, err);
 
                       // Validate that no seats are reserved after cart destroyed
@@ -365,7 +405,7 @@ exports['Should correctly find expired carts and remove any reservations in them
                         }
                       }
 
-                      db.collection('carts').count({state:'expired'}, function(err, c) {
+                      collections['carts'].count({state:'expired'}, function(err, c) {
                         test.equal(null, err);
                         test.equal(0, c);
 
