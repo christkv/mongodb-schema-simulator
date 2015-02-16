@@ -5,7 +5,7 @@ module.exports = {
     // Schema we are executing
     schema: {
       // Name of the schema
-      name: 'browse_specific_categories',
+      name: 'retrieve_products_by_category_subtree',
       
       // Set the collection name for the carts
       collections: {
@@ -15,26 +15,20 @@ module.exports = {
 
       // Parameters
       params: {
-          // numberOfProducts: 2048
-          numberOfProducts: 100
+          numberOfProducts: (2 * 4096 * 2)
         // Five categories at the top (level 0)
         // Five categories for each category at level 0
         // Five categories for each category at level 1
-        // , treeStructure: [{
-        //   level: 0, width: 5
-        // }, {
-        //   level: 1, width: 5
-        // }, {
-        //   level: 2, width: 5
-        // }, {
-        //   level: 3, width: 5
-        // }, {
-        //   level: 4, width: 5
-        // }]
         , treeStructure: [{
           level: 0, width: 5
         }, {
-          level: 1, width: 1
+          level: 1, width: 5
+        }, {
+          level: 2, width: 5
+        }, {
+          level: 3, width: 5
+        }, {
+          level: 4, width: 5
         }]
       }
     },
@@ -60,9 +54,9 @@ module.exports = {
         // The resolution of the incoming interactions
         , resolution: 1000
         // Number of ticks/iterations we are running
-        , iterations: 10
+        , iterations: 100
         // Number of users starting the op at every tick
-        , numberOfUsers: 5
+        , numberOfUsers: 500
         // How to execute the 20 users inside of the tick
         // slicetime/atonce
         , tickExecutionStrategy: 'slicetime'
@@ -73,5 +67,5 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:27017/browse'
+  url: 'mongodb://localhost:27017/browse?maxPoolSize=100'
 }
