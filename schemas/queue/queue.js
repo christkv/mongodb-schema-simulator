@@ -5,8 +5,8 @@ var f = require('util').format;
 /*
  * Represents a work item from the queue
  */
-var Work = function(collections, doc) {
-  this.queue = collections['queues'];
+var Work = function(collection, doc) {
+  this.queue = collection;
   this.doc = doc;
 }
 
@@ -68,6 +68,7 @@ Queue.prototype.fetchByPriority = function(callback) {
     sort: {priority: -1}
   }, function(err, r) {
     if(err) return callback(err);
+    if(r.value == null) return callback(new Error('found no message in queue'));
     callback(null, new Work(self.queue, r.value));
   });
 }
@@ -86,6 +87,7 @@ Queue.prototype.fetchFIFO = function(callback) {
     sort: { createdOn: 1 }
   }, function(err, r) {
     if(err) return callback(err);
+    if(r.value == null) return callback(new Error('found no message in queue'));
     callback(null, new Work(self.queue, r.value));
   });
 }
