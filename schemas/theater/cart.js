@@ -27,7 +27,6 @@ Cart.EXPIRED = 'expired';
  */
 Cart.prototype.create = function(callback) {
   var self = this;
-
   // Create a new cart
   this.carts.insertOne({
       _id: self.id

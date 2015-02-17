@@ -44,16 +44,24 @@ Theater.prototype.create = function(callback) {
 /*
  *  Add a new screening session to the theater
  */
-Theater.prototype.addSession = function(name, description, start, end, price, callback) {
+Theater.prototype.addSession = function(name, description, start, end, price, options, callback) {
   var self = this;
+  if(typeof options == 'function') callback = options, options = {};
   
   // Create a new session
-  var session = new Session(this.collections, new ObjectID(), this.id, name, description, start, end, price);
+  var session = new Session(this.collections, options.id == null ? new ObjectID() : options.id, this.id, name, description, start, end, price);
   session.create(function(err, session) {
     if(err) return callback(err);
     self.sessions.push(session);
     callback(null, session);
   });
+}
+
+/*
+ * Create the optimal indexes for the queries
+ */
+Theater.createOptimalIndexes = function(collections, callback) {
+  callback();
 }
 
 module.exports = Theater;

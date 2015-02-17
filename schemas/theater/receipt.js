@@ -21,4 +21,11 @@ Receipt.prototype.create = function(callback) {
   })
 }
 
+/*
+ * Create the optimal indexes for the queries
+ */
+Receipt.createOptimalIndexes = function(collections, callback) {
+  callback();
+}
+
 module.exports = Receipt;
