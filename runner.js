@@ -59,29 +59,34 @@ var bar = null;
 
 // The actual server (handles clients reporting back)
 var server = dnode({
+  
   // Registration call from the client process
   register: function(client, callback) {
     monitor.register(client)
     callback();
   },
+  
   // Error from the client process
   error: function(err, callback) {
     monitor.error(err);
     callback();
   },  
+  
   // Results from a client process
   done: function(results, callback) {
     monitor.done(results);
     callback();
   },
+  
   // Reports the number of items we are executing for all jobs
   setup: function(data, callback) {
-    // Setup the number of executions left to perform
-    totalExecutions = totalExecutions + data.totalExecutions;
-    executionsLeft = totalExecutions;
+    // // Setup the number of executions left to perform
+    // totalExecutions = totalExecutions + data.totalExecutions;
+    // executionsLeft = totalExecutions;
     // Finish
     callback();
   },
+
   // A work unit was finished
   tick: function(callback) {
     if(bar == null) bar = new ProgressBar('  executing [:bar] [:current/:total] :etas', { 
@@ -91,9 +96,9 @@ var server = dnode({
         , total: totalExecutions 
       }
     );
+
     executionsLeft = executionsLeft - 1;
     bar.tick();
-    // console.log(f('%s of %s left', executionsLeft, totalExecutions));
     callback();
   } 
 });
@@ -124,14 +129,17 @@ monitor.on('complete', function(logEntries) {
 
 // In case the scenario failed to execute
 monitor.on('error', function() {
-
+  // process.exit(0);
 });
 
 // Run the monitor listening point
 server.listen(argv.p, function() {
   // Start the monitor
-  monitor.start(function(err) {
+  monitor.start(function(err, data) {
     if(err) throw err;
+    // Set total number of executions expected
+    totalExecutions = data.totalExecutions;
+    executionsLeft = executionsLeft;
   });
 });
 

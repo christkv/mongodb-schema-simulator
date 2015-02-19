@@ -1,6 +1,7 @@
 "use strict";
 
-var f = require('util').format;
+var f = require('util').format
+  , ObjectId = require('mongodb').ObjectId;
 
 /*
  * Represents a work item from the queue
@@ -17,7 +18,7 @@ Work.prototype.done = function(callback) {
   var self = this;
   // Set end time for the work item
   this.queue.updateOne({
-    _id: this.doc._id
+    name: this.doc.name, _id: this.doc._id
   }, {
     $set: { endTime: new Date() }
   }, function(err, r) {
@@ -48,6 +49,7 @@ Queue.prototype.publish = function(priority, object, callback) {
     , createdOn: new Date()
     , priority: priority
     , payload: object
+    , jobId: null
   }, function(err, r) {
     if(err) return callback(err);
     callback(null, self);
@@ -61,15 +63,85 @@ Queue.prototype.fetchByPriority = function(callback) {
   var self = this;
   // Find one and update, returning a work item
   this.queue.findOneAndUpdate({
-    startTime: null
+    startTime: null, name: this.name
   }, {
     $set: { startTime: new Date() }
   }, {
-    sort: {priority: -1}
+    sort: {priority: -1, createdOn: 1}
   }, function(err, r) {
     if(err) return callback(err);
     if(r.value == null) return callback(new Error('found no message in queue'));
     callback(null, new Work(self.queue, r.value));
+  });
+}
+
+/*
+ * Fetch the next highest available priority item but avoiding findAndModify
+ */
+Queue.prototype.fetchByPriorityNoFindAndModify = function(options, _callback) {
+  if(typeof options == 'function') _callback = options, options = {};
+  // Number of retries
+  var retries = typeof options.retries == 'number' ? options.retries : 10;
+  var interval = typeof options.interval == 'number' ? options.interval : 100;
+  var retriesLeft = retries;
+  var self = this;
+  var jobId = new ObjectId();
+
+  // Retry the operation
+  var retry = function(callback) {
+    setTimeout(function() {
+      retriesLeft = retriesLeft - 1;
+      // Back off
+      interval = interval + interval;
+      
+      // No more retries abort
+      if(retriesLeft == 0) {
+        return callback(new Error('found no message in queue'));
+      }
+
+      // Try again
+      attemptToGrabJob(callback);
+    }, interval);    
+  }
+
+  // Attempt to grab a job
+  var attemptToGrabJob = function(callback) {
+    self.queue.findOne({
+      startTime: null, name: self.name
+    }, {
+      sort: { priority: -1, createdOn: 1 }
+    }, function(err, doc) {
+      if(err) return callback(err);
+      if(doc == null) return retry(callback);
+      // Create start time
+      var startTime = new Date();
+      // Attempt to grab the job
+      self.queue.updateOne({_id: doc._id, startTime: null, jobId: null}, {
+        $set: {
+            jobId: jobId
+          , startTime: startTime
+        }
+      }, function(err, r) {
+        if(err) return callback(err);
+
+        // No modification happened we will retry
+        if(r.modifiedCount == 0) {
+          return retry(callback);
+        }
+        
+        // Set the job id
+        doc.jobId = jobId;
+        doc.startTime = startTime;
+        // Return the document
+        callback(null, new Work(self.queue, doc));
+      });
+    });
+  }  
+
+  // Attempt to grab a job
+  attemptToGrabJob(function(err, r) {
+    if(err) return _callback(err);
+    _callback(err, r);
   });
 }
 
@@ -78,6 +150,7 @@ Queue.prototype.fetchByPriority = function(callback) {
  */
 Queue.prototype.fetchFIFO = function(callback) {  
   var self = this;
+  
   // Find one and update, returning a work item
   this.queue.findOneAndUpdate({
     startTime: null
@@ -86,9 +159,78 @@ Queue.prototype.fetchFIFO = function(callback) {
   }, {
     sort: { createdOn: 1 }
   }, function(err, r) {
-    if(err) return callback(err);
     if(r.value == null) return callback(new Error('found no message in queue'));
     callback(null, new Work(self.queue, r.value));
+  });
+}
+
+/*
+ * Fetch the next item in FIFO fashion (by createdOn timestamp) but avoiding findAndModify
+ */
+Queue.prototype.fetchFIFONoFindAndModify = function(options, _callback) {
+  if(typeof options == 'function') _callback = options, options = {};
+  // Number of retries
+  var retries = typeof options.retries == 'number' ? options.retries : 10;
+  var interval = typeof options.interval == 'number' ? options.interval : 100;
+  var retriesLeft = retries;
+  var self = this;
+  var jobId = new ObjectId();
+
+  // Retry the operation
+  var retry = function(callback) {
+    setTimeout(function() {
+      retriesLeft = retriesLeft - 1;
+      // Back off
+      interval = interval + interval;
+      
+      // No more retries abort
+      if(retriesLeft == 0) {
+        return callback(new Error('found no message in queue'));
+      }
+
+      // Try again
+      attemptToGrabJob(callback);
+    }, interval);    
+  }
+
+  // Attempt to grab a job
+  var attemptToGrabJob = function(callback) {
+    self.queue.findOne({
+      startTime: null, name: self.name
+    }, {
+      sort: { createdOn: 1 }
+    }, function(err, doc) {
+      if(err) return callback(err);
+      if(doc == null) return retry(callback);
+      // Create start time
+      var startTime = new Date();
+      // Attempt to grab the job
+      self.queue.updateOne({_id: doc._id, startTime: null, jobId: null}, {
+        $set: {
+            jobId: jobId
+          , startTime: startTime
+        }
+      }, function(err, r) {
+        if(err) return callback(err);
+
+        // No modification happened we will retry
+        if(r.modifiedCount == 0) {
+          return retry(callback);
+        }
+        
+        // Set the job id
+        doc.jobId = jobId;
+        doc.startTime = startTime;
+        // Return the document
+        callback(null, new Work(self.queue, doc));
+      });
+    });
+  }  
+
+  // Attempt to grab a job
+  attemptToGrabJob(function(err, r) {
+    if(err) return _callback(err);
+    _callback(err, r);
   });
 }
 
@@ -96,9 +238,21 @@ Queue.prototype.fetchFIFO = function(callback) {
  * Create the optimal indexes for the queries
  */
 Queue.createOptimalIndexes = function(collections, callback) {
-  collections['queues'].ensureIndex({startTime:1}, function(err, result) {
+  collections['queues'].ensureIndex({startTime:1, name: 1}, function(err, result) {
     if(err) return callback(err);
-    callback();
+    
+    collections['queues'].ensureIndex({createdOn: 1}, function(err, result) {
+      if(err) return callback(err);
+
+      collections['queues'].ensureIndex({priority:-1, createdOn: 1}, function(err, result) {
+        if(err) return callback(err);
+
+        collections['queues'].ensureIndex({jobId: 1}, function(err, result) {
+          if(err) return callback(err);
+          callback();
+        });
+      });
+    });
   });
 }
 
