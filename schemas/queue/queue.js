@@ -18,7 +18,7 @@ Work.prototype.done = function(callback) {
   var self = this;
   // Set end time for the work item
   this.queue.updateOne({
-    name: this.doc.name, _id: this.doc._id
+    _id: this.doc._id
   }, {
     $set: { endTime: new Date() }
   }, function(err, r) {
@@ -31,8 +31,7 @@ Work.prototype.done = function(callback) {
 /*
  * Represents a Queue
  */
-var Queue = function(collections, name) {
-  this.name = name;
+var Queue = function(collections) {
   this.queue = collections['queues'];
 }
 
@@ -43,13 +42,11 @@ Queue.prototype.publish = function(priority, object, callback) {
   var self = this;
   // Insert the new item into the queue
   this.queue.insertOne({
-      name: this.name
-    , startTime: null
+      startTime: null
     , endTime: null
     , createdOn: new Date()
     , priority: priority
     , payload: object
-    , jobId: null
   }, function(err, r) {
     if(err) return callback(err);
     callback(null, self);
@@ -63,7 +60,7 @@ Queue.prototype.fetchByPriority = function(callback) {
   var self = this;
   // Find one and update, returning a work item
   this.queue.findOneAndUpdate({
-    startTime: null, name: this.name
+    startTime: null
   }, {
     $set: { startTime: new Date() }
   }, {
@@ -107,7 +104,7 @@ Queue.prototype.fetchByPriorityNoFindAndModify = function(options, _callback) {
   // Attempt to grab a job
   var attemptToGrabJob = function(callback) {
     self.queue.findOne({
-      startTime: null, name: self.name
+      startTime: null
     }, {
       sort: { priority: -1, createdOn: 1 }
     }, function(err, doc) {
@@ -196,7 +193,7 @@ Queue.prototype.fetchFIFONoFindAndModify = function(options, _callback) {
   // Attempt to grab a job
   var attemptToGrabJob = function(callback) {
     self.queue.findOne({
-      startTime: null, name: self.name
+      startTime: null
     }, {
       sort: { createdOn: 1 }
     }, function(err, doc) {
@@ -238,7 +235,7 @@ Queue.prototype.fetchFIFONoFindAndModify = function(options, _callback) {
  * Create the optimal indexes for the queries
  */
 Queue.createOptimalIndexes = function(collections, callback) {
-  collections['queues'].ensureIndex({startTime:1, name: 1}, function(err, result) {
+  collections['queues'].ensureIndex({startTime:1}, function(err, result) {
     if(err) return callback(err);
     
     collections['queues'].ensureIndex({createdOn: 1}, function(err, result) {

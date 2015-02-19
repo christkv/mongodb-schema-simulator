@@ -42,7 +42,7 @@ exports['Should correctly insert job into queue'] = {
       // Cleanup
       setup(db, function() {
         // Create a queue
-        var queue = new Queue(collections, 'work');
+        var queue = new Queue(collections);
         // Add some items to queue
         var addToQueue = function(callback) {
           queue.publish(1, {work:1}, function(err) {
@@ -102,7 +102,7 @@ exports['Should correctly insert job into queue no findAndModify'] = {
       // Cleanup
       setup(db, function() {
         // Create a queue
-        var queue = new Queue(collections, 'work');
+        var queue = new Queue(collections);
         // Add some items to queue
         var addToQueue = function(callback) {
           queue.publish(1, {work:1}, function(err) {
