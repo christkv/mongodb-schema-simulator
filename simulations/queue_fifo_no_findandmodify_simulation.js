@@ -32,7 +32,7 @@ var publishToQueueScenario = {
   setup: function(db, callback) {
     // Drop the database
     db.dropDatabase(function(err, r) {
-      return callback();
+      // return callback();
       if(err) return callback(err);
 
       setTimeout(function() {
@@ -41,7 +41,7 @@ var publishToQueueScenario = {
           if(err) return callback(err);
 
           // Shard the collections we want
-          db.admin().command({shardCollection: 'queues.queue_0', key: {name:1}}, function(err, r) {
+          db.admin().command({shardCollection: 'queues.queue_0', key: {createdOn:'hashed'}}, function(err, r) {
             if(err) return callback(err);
             callback();
           });
@@ -131,5 +131,5 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:27017/queues?maxPoolSize=50'
+  url: 'mongodb://localhost:50000/queues?maxPoolSize=50'
 }

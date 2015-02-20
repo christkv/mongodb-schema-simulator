@@ -156,6 +156,7 @@ Queue.prototype.fetchFIFO = function(callback) {
   }, {
     sort: { createdOn: 1 }
   }, function(err, r) {
+    if(err) return callback(err);
     if(r.value == null) return callback(new Error('found no message in queue'));
     callback(null, new Work(self.queue, r.value));
   });

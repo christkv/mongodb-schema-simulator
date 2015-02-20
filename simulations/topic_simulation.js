@@ -14,7 +14,7 @@ var publishToTopicsScenario = {
     // Parameters
     params: {
       // The number of queues
-        numberOfTopics: 100
+        numberOfTopics: 1
       // Size of capped collection
       , sizeInBytes: 100000
       // Default work object
@@ -70,7 +70,7 @@ var listenToTopicsScenario = {
     // Parameters
     params: {
       // The number of topics
-      numberOfTopics: 100
+      numberOfTopics: 1
       // Size of capped collection
       , sizeInBytes: 100000
     }
