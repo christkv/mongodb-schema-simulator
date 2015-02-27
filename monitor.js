@@ -31,6 +31,9 @@ var yargs = require('yargs')
   // Output directory of the processes
   .describe('o', 'Results output directory')
   .default('o', './out')
+  // Generate report only
+  .describe('g', 'Only generate report')
+  .default('g', false)
 
 // Get parsed arguments
 var argv = yargs.argv
@@ -104,12 +107,6 @@ monitor.on('registrationComplete', function() {
 // Wait for the scenario to finish executing
 monitor.on('complete', function(logEntries) {
   if(argv.debug) console.log("[MONITOR] Execution finished, stopping child processes");
-  // Split out the scenario name
-  var scenarioFile = argv.s.split('/').pop();
-  var outputFile = f('%s/%s.output.json', argv.o, scenarioFile);
-  // Write out the file
-  fs.writeFileSync(outputFile, JSON.stringify(logEntries, null, 2));
-
   // Stop the monitor
   monitor.stop(function() {
     if(argv.debug) console.log("[MONITOR] Executon finished, stopping dnode server endpoint");
