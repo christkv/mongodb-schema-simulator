@@ -30,6 +30,7 @@
     , "progress": "1.1.8"
     , "mongodb-datasets": "0.1.5"
     , "event-stream": "3.1.5"
+    , "JSONStream": "0.10.0"
   },
   "devDependencies": {
       "integra": "0.1.8"

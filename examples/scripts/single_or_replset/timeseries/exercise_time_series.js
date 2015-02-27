@@ -57,5 +57,7 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:27017/timeseries'
+  // url: 'mongodb://localhost:27017/timeseries'
+  // url: 'mongodb://localhost:31000/timeseries'
+  url: 'mongodb://localhost:50000/timeseries'
 }
