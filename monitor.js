@@ -2,8 +2,8 @@ var f = require('util').format
   , fs = require('fs')
   , dnode = require('dnode')
   , mkdirp = require('mkdirp')
-  , Monitor = require('./lib/monitor/monitor')
-  , ScenarioManager = require('./lib/child/scenario_manager')
+  , Process = require('./lib/monitor/process')
+  , ScenarioManager = require('./lib/common/scenario_manager')
   , ProgressBar = require('progress');
 
 // Parse the passed in parameters
@@ -22,9 +22,6 @@ var yargs = require('yargs')
   // Local process starting port
   .describe('local-process-port', 'Local process start port')
   .default('local-process-port', 5200)
-  // // Local MongoDB process url
-  // .describe('local-process-url', 'Local process MongoDB url')
-  // .default('local-process-url', 'mongodb://localhost:27017/schema')
   // The scenario file to execute
   .describe('s', 'Path to scenario file to execute')
   .require('s')
@@ -47,11 +44,11 @@ mkdirp.sync(argv.o);
 // Scenario manager
 var manager = new ScenarioManager();
 // Load the scenarios
-manager.load('./lib/scenarios');
+manager.load('./lib/common/scenarios');
 // Var clients
 var clients = [];
 // Monitor instance
-var monitor = new Monitor(argv, manager, clients);
+var monitor = new Process(argv, manager, clients);
 // Get the total amount of work needed
 var totalExecutions = 0;
 var executionsLeft = 0;
@@ -59,48 +56,44 @@ var bar = null;
 
 // The actual server (handles clients reporting back)
 var server = dnode({
-  
+
   // Registration call from the client process
   register: function(client, callback) {
     monitor.register(client)
     callback();
   },
-  
+
   // Error from the client process
   error: function(err, callback) {
     monitor.error(err);
     callback();
-  },  
-  
+  },
+
   // Results from a client process
   done: function(results, callback) {
     monitor.done(results);
     callback();
   },
-  
+
   // Reports the number of items we are executing for all jobs
   setup: function(data, callback) {
-    // // Setup the number of executions left to perform
-    // totalExecutions = totalExecutions + data.totalExecutions;
-    // executionsLeft = totalExecutions;
-    // Finish
     callback();
   },
 
   // A work unit was finished
   tick: function(callback) {
-    if(bar == null) bar = new ProgressBar('  executing [:bar] [:current/:total] :etas', { 
+    if(bar == null) bar = new ProgressBar('  executing [:bar] [:current/:total] :etas', {
           complete: '='
         , incomplete: ' '
         , width: 60
-        , total: totalExecutions 
+        , total: totalExecutions
       }
     );
 
     executionsLeft = executionsLeft - 1;
     bar.tick();
     callback();
-  } 
+  }
 });
 
 // Wait for all children to be setup
@@ -129,7 +122,6 @@ monitor.on('complete', function(logEntries) {
 
 // In case the scenario failed to execute
 monitor.on('error', function() {
-  // process.exit(0);
 });
 
 // Run the monitor listening point
@@ -142,4 +134,3 @@ server.listen(argv.p, function() {
     executionsLeft = executionsLeft;
   });
 });
-

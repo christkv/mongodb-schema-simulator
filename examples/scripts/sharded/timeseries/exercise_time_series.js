@@ -6,7 +6,7 @@ module.exports = {
     schema: {
       // Name of the schema
       name: 'timeseries',
-      
+
       // Set the collection name for the carts
       collections: {
         timeseries: 'timeseries'
@@ -15,11 +15,11 @@ module.exports = {
       // Parameters
       params: {
         // Preallocate time series buckets
-        preAllocate: false
+        preAllocate: true
         // Resolution
         , resolution: 'minute'
         // Number of time series
-        , numberOfTimeSeries: 1000
+        , numberOfTimeSeries: 10000
       }
     },
 
@@ -30,7 +30,23 @@ module.exports = {
     // used to allow doing stuff like setting up the sharded collection
     // etc.
     setup: function(db, callback) {
-      db.dropDatabase(callback);
+      // Drop the database
+      db.dropDatabase(function(err, r) {
+        if(err) return callback(err);
+
+        setTimeout(function() {
+          // Enable the sharding of the database
+          db.admin().command({enableSharding:'timeseries'}, function(err, r) {
+            if(err) return callback(err);
+
+            // Shard the collections we want
+            db.admin().command({shardCollection: 'timeseries.timeseries', key: {tag:1, timestamp:1}}, function(err, r) {
+              if(err) return callback(err);
+              callback();
+            });
+          });
+        }, 1000);
+      });
     },
 
     //
@@ -44,7 +60,7 @@ module.exports = {
         // The resolution of the incoming interactions
         , resolution: 1000
         // Number of ticks/iterations we are running
-        , iterations: 100
+        , iterations: 1000
         // Number of users starting the op at every tick
         , numberOfUsers: 500
         // How to execute the 20 users inside of the tick
@@ -57,5 +73,5 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:27017/timeseries'
+  url: 'mongodb://localhost:50000/timeseries'
 }

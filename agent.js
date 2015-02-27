@@ -1,8 +1,8 @@
 var f = require('util').format
   , os = require('os')
   , dnode = require('dnode')
-  , Child = require('./lib/child/child')
-  , ScenarioManager = require('./lib/child/scenario_manager');
+  , Process = require('./lib/agent/process')
+  , ScenarioManager = require('./lib/common/scenario_manager');
 
 // Parse the passed in parameters
 var yargs = require('yargs')
@@ -16,8 +16,8 @@ var yargs = require('yargs')
   .default('m', 5100)
   .describe('u', 'MongoDB connection url')
   .default('u', 'mongodb://localhost:27017')
-  .describe('t', 'Child process tag')
-  .default('t', 'child')
+  .describe('t', 'Agent process tag')
+  .default('t', 'agent')
 
 // Get parsed arguments
 var argv = yargs.argv
@@ -28,29 +28,35 @@ if(argv.h) return console.log(yargs.help())
 // Create a scenario manager
 var manager = new ScenarioManager();
 // Load available scenarios
-manager.load('./lib/scenarios');
+manager.load('./lib/common/scenarios');
 
 // Create a child instance (wrapping the functionality of the process)
-var child = new Child(manager, argv);
+var child = new Process(manager, argv);
+var d = null;
 
 // Start the actual process handler
 var server = dnode({
   execute : function(scenario, options, callback) {
     if(child.isRunning()) return callback(new Error('scenario executing'));
-    console.log(f("[CHILD-%s:%s] starting execution", os.hostname(), argv.p));
+    console.log(f("[AGENT-%s:%s] starting execution", os.hostname(), argv.p));
     // Just finish callback
     callback(null, {});
     // Execute the child
-    child.execute(scenario, options);
+    child.execute(scenario, options, function() {
+      d.end();
+    });
   }
 });
 
 // Start server and attempt to connect to monitor
 server.listen(argv.p, function() {
   // Attempt to connect to the monitor
-  var d = dnode.connect(argv.m, argv.s);
+  d = dnode.connect(argv.m, argv.s);
   d.on('remote', function(remote) {
-    console.log(f("[CHILD-%s:%s] reporting for work to monitor at %s:%s", os.hostname(), argv.p, argv.s, argv.m));
+    console.log(f("[AGENT-%s:%s] reporting for work to monitor at %s:%s", os.hostname(), argv.p, argv.s, argv.m));
+    // Set the remote process on the child
+    child.setMonitor(remote);
+    // Register the process with the monitor
     remote.register({
       // Arguments passed to the child
         argv: argv

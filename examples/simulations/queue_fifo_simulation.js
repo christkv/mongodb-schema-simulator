@@ -1,22 +1,22 @@
 //
 // Publish to topics
-var publishToTopicsScenario = {
+var publishToQueueScenario = {
   // Schema we are executing
   schema: {
     // Name of the schema
-    name: 'publish_to_topics',
+    name: 'publish_to_queues',
     
     // Set the collection name for the carts
     collections: {
-      topics: 'topics'
+      queues: 'queues'
     },
 
     // Parameters
     params: {
       // The number of queues
-        numberOfTopics: 1
+        numberOfQueues: 1
       // Size of capped collection
-      , sizeInBytes: 100000
+      , priorityRange: 10
       // Default work object
       , workObject: {
       }        
@@ -24,13 +24,31 @@ var publishToTopicsScenario = {
   },
 
   // Run against specific db
-  db: 'topics',
+  db: 'queues',
 
   // Setup function (run before the scenario is executed)
   // used to allow doing stuff like setting up the sharded collection
   // etc.
   setup: function(db, callback) {
-    db.dropDatabase(callback);
+    // Drop the database
+    db.dropDatabase(function(err, r) {
+      return callback();
+      // return callback();
+      if(err) return callback(err);
+
+      setTimeout(function() {
+        // Enable the sharding of the database
+        db.admin().command({enableSharding:'queues'}, function(err, r) {
+          if(err) return callback(err);
+
+          // Shard the collections we want
+          db.admin().command({shardCollection: 'queues.queue_0', key: {createdOn:'hashed'}}, function(err, r) {
+            if(err) return callback(err);
+            callback();
+          });
+        });
+      }, 1000);
+    });
   },
 
   //
@@ -56,28 +74,28 @@ var publishToTopicsScenario = {
 
 //
 // Read from topics
-var listenToTopicsScenario = {
+var listenToQueueScenario = {
   // Schema we are executing
   schema: {
     // Name of the schema
-    name: 'fetch_from_topics',
+    name: 'fetch_from_queue_by_fifo',
     
     // Set the collection name for the carts
     collections: {
-      topics: 'topics'
+      queues: 'queues'
     },
 
     // Parameters
     params: {
       // The number of topics
-      numberOfTopics: 1
+        numberOfQueues: 1
       // Size of capped collection
-      , sizeInBytes: 100000
+      , priorityRange: 10
     }
   },
 
   // Run against specific db
-  db: 'topics',
+  db: 'queues',
 
   // Setup function (run before the scenario is executed)
   // used to allow doing stuff like setting up the sharded collection
@@ -99,7 +117,7 @@ var listenToTopicsScenario = {
       // Number of ticks/iterations we are running
       , iterations: 100
       // Number of users starting the op at every tick
-      , numberOfUsers: 500
+      , numberOfUsers: 150
       // How to execute the 20 users inside of the tick
       // slicetime/atonce
       , tickExecutionStrategy: 'slicetime'
@@ -110,9 +128,9 @@ var listenToTopicsScenario = {
 // Definition of the fields to execute
 module.exports = {
   // The schema's we plan to exercise
-  schemas: [publishToTopicsScenario, listenToTopicsScenario],
+  schemas: [publishToQueueScenario, listenToQueueScenario],
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:27017/topics'
+  url: 'mongodb://10.211.55.4:27017/queues?maxPoolSize=50'
 }
