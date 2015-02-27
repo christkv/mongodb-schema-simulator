@@ -1,7 +1,7 @@
 "use strict";
 
 var setup = function(db, callback) {
-  var SliceCache = require('../../schemas/array_slice/cache');
+  var SliceCache = require('../../lib/common/schemas/array_slice/cache');
 
   // All the collections used
   var collections = {
@@ -17,12 +17,12 @@ var setup = function(db, callback) {
 
 exports['Should correctly a 5 line cache no pre-allocation'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID
       , MongoClient = configuration.require.MongoClient
-      , SliceCache = require('../../schemas/array_slice/cache');
+      , SliceCache = require('../../lib/common/schemas/array_slice/cache');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
@@ -65,12 +65,12 @@ exports['Should correctly a 5 line cache no pre-allocation'] = {
 
 exports['Should correctly a 5 line cache with pre-allocation'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID
       , MongoClient = configuration.require.MongoClient
-      , SliceCache = require('../../schemas/array_slice/cache');
+      , SliceCache = require('../../lib/common/schemas/array_slice/cache');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
@@ -89,7 +89,7 @@ exports['Should correctly a 5 line cache with pre-allocation'] = {
 
           // Push 6 items and see the cutoff
           cache.push([
-            {a:1}, {a:2}, {a:3}            
+            {a:1}, {a:2}, {a:3}
           ], function(err, r) {
             test.equal(null, err);
 

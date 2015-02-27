@@ -1,8 +1,8 @@
 "use strict";
 
 var setup = function(db, callback) {
-  var Queue = require('../../schemas/queue/queue')
-    , Topic = require('../../schemas/queue/topic');
+  var Queue = require('../../lib/common/schemas/queue/queue')
+    , Topic = require('../../lib/common/schemas/queue/topic');
 
   // All the collections used
   var collections = {
@@ -23,10 +23,10 @@ var setup = function(db, callback) {
 
 exports['Should correctly insert job into queue'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Queue = require('../../schemas/queue/queue')
+    var Queue = require('../../lib/common/schemas/queue/queue')
       , MongoClient = require('mongodb').MongoClient;
 
     // Connect to mongodb
@@ -50,7 +50,7 @@ exports['Should correctly insert job into queue'] = {
 
             queue.publish(5, {work:2}, function(err) {
               test.equal(null, err);
-                
+
               queue.publish(3, {work:3}, function(err) {
                 test.equal(null, err);
                 callback();
@@ -83,10 +83,10 @@ exports['Should correctly insert job into queue'] = {
 
 exports['Should correctly insert job into queue no findAndModify'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Queue = require('../../schemas/queue/queue')
+    var Queue = require('../../lib/common/schemas/queue/queue')
       , MongoClient = require('mongodb').MongoClient;
 
     // Connect to mongodb
@@ -110,7 +110,7 @@ exports['Should correctly insert job into queue no findAndModify'] = {
 
             queue.publish(5, {work:2}, function(err) {
               test.equal(null, err);
-                
+
               queue.publish(3, {work:3}, function(err) {
                 test.equal(null, err);
                 callback();
@@ -143,10 +143,10 @@ exports['Should correctly insert job into queue no findAndModify'] = {
 
 exports['Should correctly insert job into topic and listen to it'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Topic = require('../../schemas/queue/topic')
+    var Topic = require('../../lib/common/schemas/queue/topic')
       , MongoClient = require('mongodb').MongoClient;
 
     // Connect to mongodb
@@ -166,7 +166,7 @@ exports['Should correctly insert job into topic and listen to it'] = {
         topic.create(function(err, topic) {
           test.equal(null, err);
           test.ok(topic != null);
-          
+
           // Add some items to queue
           var addToTopic = function(callback) {
             topic.publish({work:1}, function(err) {
@@ -174,7 +174,7 @@ exports['Should correctly insert job into topic and listen to it'] = {
 
               topic.publish({work:2}, function(err) {
                 test.equal(null, err);
-                  
+
                 topic.publish({work:3}, function(err) {
                   test.equal(null, err);
                   callback();

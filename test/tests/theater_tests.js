@@ -1,8 +1,8 @@
 "use strict";
 
 var setup = function(db, callback) {
-  var Session = require('../../schemas/theater/session')
-    , Cart = require('../../schemas/theater/cart');
+  var Session = require('../../lib/common/schemas/theater/session')
+    , Cart = require('../../lib/common/schemas/theater/cart');
 
   // All the collections used
   var collections = {
@@ -34,7 +34,7 @@ var validateSeats = function(collections, test, session, seats, seatsLeft, callb
     test.equal(doc.seatsAvailable, seatsLeft);
 
     for(var i = 0; i < seats.length; i++) {
-      var seat = seats[i];      
+      var seat = seats[i];
       test.equal(doc.seats[seat[0]][seat[1]], 1);
     }
 
@@ -62,12 +62,12 @@ var validateCart = function(collections, test, cart, state, reservations, callba
 
 exports['Should correctly set up theater and session and buy tickets for some row seats'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Theater = require('../../schemas/theater/theater')
-      , Session = require('../../schemas/theater/session')
-      , Cart = require('../../schemas/theater/cart')
+    var Theater = require('../../lib/common/schemas/theater/theater')
+      , Session = require('../../lib/common/schemas/theater/session')
+      , Cart = require('../../lib/common/schemas/theater/cart')
       , MongoClient = require('mongodb').MongoClient;
 
     // Connect to mongodb
@@ -152,12 +152,12 @@ exports['Should correctly set up theater and session and buy tickets for some ro
 
 exports['Should correctly set up theater and session and book tickets but fail to reserve the tickets'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Theater = require('../../schemas/theater/theater')
-      , Session = require('../../schemas/theater/session')
-      , Cart = require('../../schemas/theater/cart')
+    var Theater = require('../../lib/common/schemas/theater/theater')
+      , Session = require('../../lib/common/schemas/theater/session')
+      , Cart = require('../../lib/common/schemas/theater/cart')
       , MongoClient = require('mongodb').MongoClient;
 
     // Connect to mongodb
@@ -243,12 +243,12 @@ exports['Should correctly set up theater and session and book tickets but fail t
 
 exports['Should correctly set up theater and session and book tickets but fail to apply to cart as it is gone'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Theater = require('../../schemas/theater/theater')
-      , Session = require('../../schemas/theater/session')
-      , Cart = require('../../schemas/theater/cart')
+    var Theater = require('../../lib/common/schemas/theater/theater')
+      , Session = require('../../lib/common/schemas/theater/session')
+      , Cart = require('../../lib/common/schemas/theater/cart')
       , MongoClient = require('mongodb').MongoClient;
 
     // Connect to mongodb
@@ -332,12 +332,12 @@ exports['Should correctly set up theater and session and book tickets but fail t
 
 exports['Should correctly find expired carts and remove any reservations in them'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Theater = require('../../schemas/theater/theater')
-      , Session = require('../../schemas/theater/session')
-      , Cart = require('../../schemas/theater/cart')
+    var Theater = require('../../lib/common/schemas/theater/theater')
+      , Session = require('../../lib/common/schemas/theater/session')
+      , Cart = require('../../lib/common/schemas/theater/cart')
       , MongoClient = require('mongodb').MongoClient;
 
     // Connect to mongodb

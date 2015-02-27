@@ -1,7 +1,7 @@
 "use strict";
 
 var setup = function(db, callback) {
-  var TimeSeries = require('../../schemas/time_series/timeseries');
+  var TimeSeries = require('../../lib/common/schemas/time_series/timeseries');
 
   // All the collections used
   var collections = {
@@ -17,10 +17,10 @@ var setup = function(db, callback) {
 
 exports['Correctly create and execute ten increments on a timeseries object'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var TimeSeries = require('../../schemas/time_series/timeseries')
+    var TimeSeries = require('../../lib/common/schemas/time_series/timeseries')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -83,10 +83,10 @@ exports['Correctly create and execute ten increments on a timeseries object'] = 
 
 exports['Correctly create and execute ten increments on a timeseries object that is pre allocated for minute'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var TimeSeries = require('../../schemas/time_series/timeseries')
+    var TimeSeries = require('../../lib/common/schemas/time_series/timeseries')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -140,10 +140,10 @@ exports['Correctly create and execute ten increments on a timeseries object that
 
 exports['Correctly create and execute ten increments on a timeseries object that is pre allocated for hour'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var TimeSeries = require('../../schemas/time_series/timeseries')
+    var TimeSeries = require('../../lib/common/schemas/time_series/timeseries')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -198,10 +198,10 @@ exports['Correctly create and execute ten increments on a timeseries object that
 
 exports['Correctly create and execute ten increments on a timeseries object that is pre allocated for day'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var TimeSeries = require('../../schemas/time_series/timeseries')
+    var TimeSeries = require('../../lib/common/schemas/time_series/timeseries')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -258,10 +258,10 @@ exports['Correctly create and execute ten increments on a timeseries object that
 
 exports['Set up 1000 time slots and ensureIndex'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var TimeSeries = require('../../schemas/time_series/timeseries')
+    var TimeSeries = require('../../lib/common/schemas/time_series/timeseries')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 

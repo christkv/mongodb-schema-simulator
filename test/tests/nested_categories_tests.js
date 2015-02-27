@@ -1,8 +1,8 @@
 "use strict";
 
 var setup = function(db, callback) {
-  var Category = require('../../schemas/nested_categories/category')
-    , Product = require('../../schemas/nested_categories/product');
+  var Category = require('../../lib/common/schemas/nested_categories/category')
+    , Product = require('../../lib/common/schemas/nested_categories/product');
 
   // All the collections used
   var collections = {
@@ -22,7 +22,7 @@ var setup = function(db, callback) {
 }
 
 var setupCategories = function(db, categories, callback) {
-  var Category = require('../../schemas/nested_categories/category')
+  var Category = require('../../lib/common/schemas/nested_categories/category')
     , ObjectId = require('mongodb').ObjectId;
   var left = categories.length;
 
@@ -44,7 +44,7 @@ var setupCategories = function(db, categories, callback) {
 }
 
 var setupProducts = function(db, products, callback) {
-  var Product = require('../../schemas/nested_categories/product')
+  var Product = require('../../lib/common/schemas/nested_categories/product')
     , ObjectId = require('mongodb').ObjectId;
   var left = products.length;
 
@@ -67,11 +67,11 @@ var setupProducts = function(db, products, callback) {
 
 exports['Correctly category and fetch all immediate children of root node'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Category = require('../../schemas/nested_categories/category')
-      , Product = require('../../schemas/nested_categories/product')
+    var Category = require('../../lib/common/schemas/nested_categories/category')
+      , Product = require('../../lib/common/schemas/nested_categories/product')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -118,11 +118,11 @@ exports['Correctly category and fetch all immediate children of root node'] = {
 
 exports['Correctly fetch Category tree under a specific path'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Category = require('../../schemas/nested_categories/category')
-      , Product = require('../../schemas/nested_categories/product')
+    var Category = require('../../lib/common/schemas/nested_categories/category')
+      , Product = require('../../lib/common/schemas/nested_categories/product')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -169,11 +169,11 @@ exports['Correctly fetch Category tree under a specific path'] = {
 
 exports['Correctly fetch specific category'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Category = require('../../schemas/nested_categories/category')
-      , Product = require('../../schemas/nested_categories/product')
+    var Category = require('../../lib/common/schemas/nested_categories/category')
+      , Product = require('../../lib/common/schemas/nested_categories/product')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -218,10 +218,10 @@ exports['Correctly fetch specific category'] = {
 
 exports['Correctly fetch all products of a specific category'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Product = require('../../schemas/nested_categories/product')
+    var Product = require('../../lib/common/schemas/nested_categories/product')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -250,7 +250,7 @@ exports['Correctly fetch all products of a specific category'] = {
 
         // Create all the categories
         setupProducts(db, products, function() {
-          
+
           // Get all the immediate children of the root
           Product.findByCategory(collections, '/', function(err, products) {
             test.equal(null, err);
@@ -268,10 +268,10 @@ exports['Correctly fetch all products of a specific category'] = {
 
 exports['Correctly fetch all products of a specific categories direct children'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Product = require('../../schemas/nested_categories/product')
+    var Product = require('../../lib/common/schemas/nested_categories/product')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -311,7 +311,7 @@ exports['Correctly fetch all products of a specific categories direct children']
 
           // Create all the categories
           setupProducts(db, products, function() {
-            
+
             // Get all the immediate children of the root
             Product.findByDirectCategoryChildren(collections, '/', function(err, products) {
               test.equal(null, err);
@@ -332,10 +332,10 @@ exports['Correctly fetch all products of a specific categories direct children']
 
 exports['Correctly fetch all products of a specific categories tree'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Product = require('../../schemas/nested_categories/product')
+    var Product = require('../../lib/common/schemas/nested_categories/product')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -375,7 +375,7 @@ exports['Correctly fetch all products of a specific categories tree'] = {
 
           // Create all the categories
           setupProducts(db, products, function() {
-            
+
             // Get all the immediate children of the root
             Product.findByCategoryTree(collections, '/1', function(err, products) {
               test.equal(null, err);

@@ -1,8 +1,8 @@
 "use strict";
 
 var setup = function(db, callback) {
-  var Category = require('../../schemas/multilanguage/category')
-    , Product = require('../../schemas/multilanguage/product');
+  var Category = require('../../lib/common/schemas/multilanguage/category')
+    , Product = require('../../lib/common/schemas/multilanguage/product');
 
   // All the collections used
   var collections = {
@@ -22,7 +22,7 @@ var setup = function(db, callback) {
 }
 
 var setupCategories = function(db, categories, callback) {
-  var Category = require('../../schemas/multilanguage/category')
+  var Category = require('../../lib/common/schemas/multilanguage/category')
     , ObjectId = require('mongodb').ObjectId;
   var left = categories.length;
 
@@ -44,7 +44,7 @@ var setupCategories = function(db, categories, callback) {
 }
 
 var setupProducts = function(db, products, callback) {
-  var Product = require('../../schemas/multilanguage/product')
+  var Product = require('../../lib/common/schemas/multilanguage/product')
     , ObjectId = require('mongodb').ObjectId;
   var left = products.length;
 
@@ -67,11 +67,11 @@ var setupProducts = function(db, products, callback) {
 
 exports['Correctly add new local for a category and see it reflected in the products'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Category = require('../../schemas/multilanguage/category')
-      , Product = require('../../schemas/multilanguage/product')
+    var Category = require('../../lib/common/schemas/multilanguage/category')
+      , Product = require('../../lib/common/schemas/multilanguage/product')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -95,7 +95,7 @@ exports['Correctly add new local for a category and see it reflected in the prod
 
         // Create all the categories
         setupCategories(db, categories, function() {
-          
+
           // Locate the categories
           collections['categories'].find().toArray(function(err, categories) {
             test.equal(null, err);
@@ -103,7 +103,7 @@ exports['Correctly add new local for a category and see it reflected in the prod
             // Create a product
             var product = new Product(collections, 1, 'car', 100, 'usd', categories);
             product.create(function(err, product) {
-              test.equal(null, err);              
+              test.equal(null, err);
 
               // Let's attempt to add a local to the category
               var cat = new Category(collections, 1);
@@ -120,7 +120,7 @@ exports['Correctly add new local for a category and see it reflected in the prod
                     test.equal('coche', cat.names['es-es']);
 
                     db.close();
-                    test.done();                  
+                    test.done();
                   });
                 });
               });
@@ -134,11 +134,11 @@ exports['Correctly add new local for a category and see it reflected in the prod
 
 exports['Correctly remove a local for a category and see it reflected in the products'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Category = require('../../schemas/multilanguage/category')
-      , Product = require('../../schemas/multilanguage/product')
+    var Category = require('../../lib/common/schemas/multilanguage/category')
+      , Product = require('../../lib/common/schemas/multilanguage/product')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -162,7 +162,7 @@ exports['Correctly remove a local for a category and see it reflected in the pro
 
         // Create all the categories
         setupCategories(db, categories, function() {
-          
+
           // Locate the categories
           collections['categories'].find().toArray(function(err, categories) {
             test.equal(null, err);
@@ -170,7 +170,7 @@ exports['Correctly remove a local for a category and see it reflected in the pro
             // Create a product
             var product = new Product(collections, 1, 'car', 100, 'usd', categories);
             product.create(function(err, product) {
-              test.equal(null, err);              
+              test.equal(null, err);
 
               // Let's attempt to add a local to the category
               var cat = new Category(collections, 1);
@@ -187,7 +187,7 @@ exports['Correctly remove a local for a category and see it reflected in the pro
                     test.equal(null, cat.names['de-de']);
 
                     db.close();
-                    test.done();                  
+                    test.done();
                   });
                 });
               });

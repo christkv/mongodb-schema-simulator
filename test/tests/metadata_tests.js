@@ -1,7 +1,7 @@
 "use strict";
 
 var setup = function(db, callback) {
-  var Metadata = require('../../schemas/metadata/metadata');
+  var Metadata = require('../../lib/common/schemas/metadata/metadata');
 
   // All the collections used
   var collections = {
@@ -17,10 +17,10 @@ var setup = function(db, callback) {
 
 exports['Correctly random metadata and query by metadata field'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
-    var Metadata = require('../../schemas/metadata/metadata')
+    var Metadata = require('../../lib/common/schemas/metadata/metadata')
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
@@ -67,7 +67,7 @@ exports['Correctly random metadata and query by metadata field'] = {
                 test.equal(1, items.length);
 
                 db.close();
-                test.done();                  
+                test.done();
               });
             });
           });

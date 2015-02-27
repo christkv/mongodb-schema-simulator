@@ -1,7 +1,7 @@
 "use strict";
 
 var setup = function(db, callback) {
-  var Account = require('../../schemas/account/account');
+  var Account = require('../../lib/common/schemas/account/account');
 
   // All the collections used
   var collections = {
@@ -20,12 +20,12 @@ var setup = function(db, callback) {
 
 exports['Should correctly perform transfer between account A and account B of 100'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Account = require('../../schemas/account/account');
+      , Account = require('../../lib/common/schemas/account/account');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
@@ -85,17 +85,17 @@ exports['Should correctly perform transfer between account A and account B of 10
 
 exports['Should correctly roll back transfer that fails before any application of amounts to accounts'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Account = require('../../schemas/account/account');
+      , Account = require('../../lib/common/schemas/account/account');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
       test.equal(null, err);
-  
+
         // All the collections used
       var collections = {
           accounts: db.collection('accounts')
@@ -150,12 +150,12 @@ exports['Should correctly roll back transfer that fails before any application o
 
 exports['Should correctly roll back transfer that fails with only a single account being applied'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Account = require('../../schemas/account/account');
+      , Account = require('../../lib/common/schemas/account/account');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
@@ -215,12 +215,12 @@ exports['Should correctly roll back transfer that fails with only a single accou
 
 exports['Should correctly roll back transfer that fails after application to accounts'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Account = require('../../schemas/account/account');
+      , Account = require('../../lib/common/schemas/account/account');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
@@ -280,12 +280,12 @@ exports['Should correctly roll back transfer that fails after application to acc
 
 exports['Should correctly roll back transfer that fails after transaction set to commit but before clearing'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Account = require('../../schemas/account/account');
+      , Account = require('../../lib/common/schemas/account/account');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {

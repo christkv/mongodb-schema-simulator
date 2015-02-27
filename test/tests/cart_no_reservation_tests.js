@@ -37,10 +37,10 @@ var createProducts = function(collections, callback) {
 }
 
 var setup = function(db, callback) {
-  var Cart = require('../../schemas/cart_no_reservation/cart')
-    , Product = require('../../schemas/cart_no_reservation/product')
-    , Inventory = require('../../schemas/cart_no_reservation/inventory')
-    , Order = require('../../schemas/cart_no_reservation/order');
+  var Cart = require('../../lib/common/schemas/cart_no_reservation/cart')
+    , Product = require('../../lib/common/schemas/cart_no_reservation/product')
+    , Inventory = require('../../lib/common/schemas/cart_no_reservation/inventory')
+    , Order = require('../../lib/common/schemas/cart_no_reservation/order');
 
 
   // All the collections used
@@ -72,15 +72,15 @@ var setup = function(db, callback) {
 
 exports['Should correctly add an item to the cart and checkout the cart successfully'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Cart = require('../../schemas/cart_no_reservation/cart')
-      , Product = require('../../schemas/cart_no_reservation/product')
-      , Inventory = require('../../schemas/cart_no_reservation/inventory')
-      , Order = require('../../schemas/cart_no_reservation/order');
+      , Cart = require('../../lib/common/schemas/cart_no_reservation/cart')
+      , Product = require('../../lib/common/schemas/cart_no_reservation/product')
+      , Inventory = require('../../lib/common/schemas/cart_no_reservation/inventory')
+      , Order = require('../../lib/common/schemas/cart_no_reservation/order');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
@@ -144,15 +144,15 @@ exports['Should correctly add an item to the cart and checkout the cart successf
 
 exports['Should correctly add an item to the cart but fail to reserve the item in the inventory'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Cart = require('../../schemas/cart_no_reservation/cart')
-      , Product = require('../../schemas/cart_no_reservation/product')
-      , Inventory = require('../../schemas/cart_no_reservation/inventory')
-      , Order = require('../../schemas/cart_no_reservation/order');
+      , Cart = require('../../lib/common/schemas/cart_no_reservation/cart')
+      , Product = require('../../lib/common/schemas/cart_no_reservation/product')
+      , Inventory = require('../../lib/common/schemas/cart_no_reservation/inventory')
+      , Order = require('../../lib/common/schemas/cart_no_reservation/order');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
@@ -213,15 +213,15 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
 
 exports['Should correctly add multiple items to the cart but fail to reserve the item in the inventory'] = {
   metadata: { requires: { } },
-  
+
   // The actual test we wish to run
   test: function(configuration, test) {
     var ObjectID = configuration.require.ObjectID()
       , MongoClient = configuration.require.MongoClient
-      , Cart = require('../../schemas/cart_no_reservation/cart')
-      , Product = require('../../schemas/cart_no_reservation/product')
-      , Inventory = require('../../schemas/cart_no_reservation/inventory')
-      , Order = require('../../schemas/cart_no_reservation/order');
+      , Cart = require('../../lib/common/schemas/cart_no_reservation/cart')
+      , Product = require('../../lib/common/schemas/cart_no_reservation/product')
+      , Inventory = require('../../lib/common/schemas/cart_no_reservation/inventory')
+      , Order = require('../../lib/common/schemas/cart_no_reservation/order');
 
     // Connect to mongodb
     MongoClient.connect(configuration.url(), function(err, db) {
