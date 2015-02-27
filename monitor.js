@@ -32,7 +32,7 @@ var yargs = require('yargs')
   .describe('o', 'Results output directory')
   .default('o', './out')
   // Generate report only
-  .describe('g', 'Only generate report')
+  .describe('g', 'Re-generate report from data')
   .default('g', false)
 
 // Get parsed arguments
@@ -56,6 +56,9 @@ var monitor = new Process(argv, manager, clients);
 var totalExecutions = 0;
 var executionsLeft = 0;
 var bar = null;
+
+// We are not doing anything but regenerating the report
+if(argv.g) return monitor.report(function() {});
 
 // The actual server (handles clients reporting back)
 var server = dnode({
