@@ -62,7 +62,7 @@ var publishToQueueScenario = {
       // The resolution of the incoming interactions
       , resolution: 1000
       // Number of ticks/iterations we are running
-      , iterations: 100
+      , iterations: 10
       // Number of users starting the op at every tick
       , numberOfUsers: 500
       // How to execute the 20 users inside of the tick
@@ -115,7 +115,7 @@ var listenToQueueScenario = {
       // The resolution of the incoming interactions
       , resolution: 1000
       // Number of ticks/iterations we are running
-      , iterations: 100
+      , iterations: 10
       // Number of users starting the op at every tick
       , numberOfUsers: 150
       // How to execute the 20 users inside of the tick
@@ -132,5 +132,5 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://10.211.55.4:27017/queues?maxPoolSize=50'
+  url: 'mongodb://localhost:50000/queues?maxPoolSize=50'
 }
