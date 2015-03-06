@@ -27,6 +27,7 @@ if(argv.t == 'replicaset') {
     , secondaries: 2
     , tags: [{loc: "ny"}, {loc: "sf"}, {loc: "sf"}]
     , replSet: 'rs', startPort: 31000
+    , v: null
   });
 
   manager.start(function() {

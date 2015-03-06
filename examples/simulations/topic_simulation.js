@@ -52,7 +52,7 @@ var publishToTopicsScenario = {
       // Number of ticks/iterations we are running
       , iterations: 10
       // Number of users starting the op at every tick
-      , numberOfUsers: 5
+      , numberOfUsers: 500
       // How to execute the 20 users inside of the tick
       // slicetime/atonce
       , tickExecutionStrategy: 'slicetime'
@@ -105,7 +105,7 @@ var listenToTopicsScenario = {
       // Number of ticks/iterations we are running
       , iterations: 10
       // Number of users starting the op at every tick
-      , numberOfUsers: 5
+      , numberOfUsers: 500
       // How to execute the 20 users inside of the tick
       // slicetime/atonce
       , tickExecutionStrategy: 'slicetime'
@@ -120,5 +120,5 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:50000/topics'
+  url: 'mongodb://localhost:27017/topics'
 }
