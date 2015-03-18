@@ -1,14 +1,14 @@
 {
-  "name": "learnmongodbthehardway",
+  "name": "mongodb-schema-simulator",
   "version": "1.0.0",
-  "description": "learn mongodb the hardway code and examples",
+  "description": "MongoDB Schema simulator, Let's you simulate schema behavior against MongoDB",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/christkv/learnmongodbthehardway.git"
+    "url": "https://github.com/christkv/mongodb-schema-simulator.git"
   },
   "keywords": [
     "mongodb",
@@ -40,8 +40,8 @@
   "author": "Christian Kvalheim",
   "license": "Apache 2.0",
   "bugs": {
-    "url": "https://github.com/christkv/learnmongodbthehardway/issues"
+    "url": "https://github.com/christkv/mongodb-schema-simulator/issues"
   },
   "scripts": { "test" : "node test/runner.js" },
-  "homepage": "https://github.com/christkv/learnmongodbthehardway"
+  "homepage": "https://github.com/christkv/mongodb-schema-simulator"
 }
