@@ -14,10 +14,8 @@ module.exports = {
 
       // Parameters
       params: {
-        // The number of topics
-        numberOfTopics: 100
         // Size of capped collection
-        , sizeInBytes: 100000
+        sizeInBytes: 100000
       }
     },
 

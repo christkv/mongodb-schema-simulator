@@ -13,10 +13,8 @@ var publishToQueueScenario = {
 
     // Parameters
     params: {
-      // The number of queues
-        numberOfQueues: 1
       // Size of capped collection
-      , priorityRange: 10
+      priorityRange: 10
       // Default work object
       , workObject: {
       }        
@@ -62,7 +60,7 @@ var publishToQueueScenario = {
       // The resolution of the incoming interactions
       , resolution: 1000
       // Number of ticks/iterations we are running
-      , iterations: 10
+      , iterations: 100
       // Number of users starting the op at every tick
       , numberOfUsers: 500
       // How to execute the 20 users inside of the tick
@@ -87,10 +85,8 @@ var listenToQueueScenario = {
 
     // Parameters
     params: {
-      // The number of topics
-        numberOfQueues: 1
-      // Size of capped collection
-      , priorityRange: 10
+      // Priority range
+      priorityRange: 10
     }
   },
 
@@ -115,7 +111,7 @@ var listenToQueueScenario = {
       // The resolution of the incoming interactions
       , resolution: 1000
       // Number of ticks/iterations we are running
-      , iterations: 10
+      , iterations: 100
       // Number of users starting the op at every tick
       , numberOfUsers: 150
       // How to execute the 20 users inside of the tick
@@ -132,5 +128,5 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:50000/queues?maxPoolSize=50'
+  url: 'mongodb://localhost:27017/queues?maxPoolSize=50'
 }

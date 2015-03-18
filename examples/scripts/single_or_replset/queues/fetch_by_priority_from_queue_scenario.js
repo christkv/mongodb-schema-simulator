@@ -14,10 +14,8 @@ module.exports = {
 
       // Parameters
       params: {
-        // The number of queues
-          numberOfQueues: 100
         // Range of priorities 
-        , priorityRange: 10
+        priorityRange: 10
       }
     },
 
