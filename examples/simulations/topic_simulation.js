@@ -13,12 +13,10 @@ var publishToTopicsScenario = {
 
     // Parameters
     params: {
-      // The number of queues
-        numberOfTopics: 1
       // Size of capped collection
-      , sizeInBytes: 100000
+      sizeInBytes: 1000000000,
       // Default work object
-      , workObject: {
+      workObject: {
         "user_email": "{{chance.email()}}",
         "job": {
           "company": "{{chance.word()}}",
@@ -46,16 +44,16 @@ var publishToTopicsScenario = {
     // Distribution of interactions starting (per process)
     distribution: {
       // Any specific distribution used
-        type: 'linear'
-      // The resolution of the incoming interactions
-      , resolution: 1000
-      // Number of ticks/iterations we are running
-      , iterations: 10
-      // Number of users starting the op at every tick
-      , numberOfUsers: 500
-      // How to execute the 20 users inside of the tick
+      type: 'linear', // The resolution of the incoming interactions
+
+      resolution: 1000, // Number of ticks/iterations we are running
+
+      iterations: 50, // Number of users starting the op at every tick
+
+      numberOfUsers: 500, // How to execute the 20 users inside of the tick
       // slicetime/atonce
-      , tickExecutionStrategy: 'slicetime'
+
+      tickExecutionStrategy: 'slicetime'
     }
   }
 }
@@ -75,10 +73,8 @@ var listenToTopicsScenario = {
 
     // Parameters
     params: {
-      // The number of topics
-      numberOfTopics: 1
       // Size of capped collection
-      , sizeInBytes: 100000
+      sizeInBytes: 1000000000
     }
   },
 
@@ -99,16 +95,20 @@ var listenToTopicsScenario = {
     // Distribution of interactions starting (per process)
     distribution: {
       // Any specific distribution used
-        type: 'linear'
+      type: 'linear',
       // The resolution of the incoming interactions
-      , resolution: 1000
+      resolution: 1000,
       // Number of ticks/iterations we are running
-      , iterations: 10
+      iterations: 50,
       // Number of users starting the op at every tick
-      , numberOfUsers: 500
-      // How to execute the 20 users inside of the tick
-      // slicetime/atonce
-      , tickExecutionStrategy: 'slicetime'
+
+      numberOfUsers: 10,
+      
+      // How to execute the users inside of the tick
+      // slicetime/custom
+      tickExecutionStrategy: 'custom',
+      // Initial delay before executing
+      initialDelay: 1000
     }
   }
 }

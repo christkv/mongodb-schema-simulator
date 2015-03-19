@@ -15,7 +15,7 @@ module.exports = {
       // Parameters
       params: {
         // Size of capped collection
-          sizeInBytes: 100000
+          sizeInBytes: 100000000
         // Default work object
         , workObject: {
         }        
@@ -48,7 +48,7 @@ module.exports = {
         , numberOfUsers: 500
         // How to execute the 20 users inside of the tick
         // slicetime/atonce
-        , tickExecutionStrategy: 'slicetime'
+        , tickExecutionStrategy: 'custom'
       }
     }
   }],

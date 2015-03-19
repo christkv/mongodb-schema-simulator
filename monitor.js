@@ -69,6 +69,11 @@ var server = dnode({
     callback();
   },
 
+  log: function(object, callback) {
+    // console.log("------------------ log")
+    callback();
+  },
+
   // Error from the client process
   error: function(err, callback) {
     monitor.error(err);

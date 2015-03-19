@@ -45,7 +45,9 @@ module.exports = {
         , numberOfUsers: 500
         // How to execute the 20 users inside of the tick
         // slicetime/atonce
-        , tickExecutionStrategy: 'slicetime'
+        , tickExecutionStrategy: 'custom'
+        // Initial delay before executing
+        , initialDelay: 1000
       }
     }
   }],
