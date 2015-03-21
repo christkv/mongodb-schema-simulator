@@ -108,7 +108,7 @@ var server = dnode({
 });
 
 // Wait for all children to be setup
-monitor.on('registrationComplete', function() {
+monitor.on('registrationComplete', function() {  
   monitor.execute();
 });
 

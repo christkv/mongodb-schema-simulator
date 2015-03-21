@@ -128,5 +128,5 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:27017/queues?maxPoolSize=50'
+  url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=50'
 }
