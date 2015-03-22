@@ -42,7 +42,7 @@ module.exports = {
         // The resolution of the incoming interactions
         , resolution: 1000
         // Number of ticks/iterations we are running
-        , iterations: 100
+        , iterations: 25
         // Number of users starting the op at every tick
         , numberOfUsers: 500
         // How to execute the 20 users inside of the tick
@@ -55,5 +55,6 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:27017/bank'
+  // url: 'mongodb://localhost:27017/bank'
+  url: 'mongodb://192.168.0.10:27017/bank?maxPoolSize=50'
 }

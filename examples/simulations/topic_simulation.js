@@ -48,7 +48,7 @@ var publishToTopicsScenario = {
 
       resolution: 1000, // Number of ticks/iterations we are running
 
-      iterations: 50, // Number of users starting the op at every tick
+      iterations: 25, // Number of users starting the op at every tick
 
       numberOfUsers: 500, // How to execute the 20 users inside of the tick
       // slicetime/atonce
@@ -99,7 +99,7 @@ var listenToTopicsScenario = {
       // The resolution of the incoming interactions
       resolution: 1000,
       // Number of ticks/iterations we are running
-      iterations: 50,
+      iterations: 25,
       // Number of users starting the op at every tick
 
       numberOfUsers: 10,
@@ -120,5 +120,7 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
+  // url: 'mongodb://192.168.0.10:27017/topics?maxPoolSize=50'
+  // url: 'mongodb://localhost:27017/topics?maxPoolSize=50'
   url: 'mongodb://192.168.0.10:27017/topics?maxPoolSize=50'
 }

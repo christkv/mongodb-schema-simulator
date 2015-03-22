@@ -5,7 +5,7 @@ module.exports = {
     // Schema we are executing
     schema: {
       // Name of the schema
-      name: 'cache',
+      name: 'cache_no_prealloc',
       
       // Set the collection name for the carts
       collections: {
@@ -16,7 +16,6 @@ module.exports = {
       params: {
           numberOfCacheObjects: 1000
         , initialCacheSize: 64
-        , preAllocateObject: true
         , preAllocateExampleObject: {}
       }
     },
@@ -42,7 +41,7 @@ module.exports = {
         // The resolution of the incoming interactions
         , resolution: 1000
         // Number of ticks/iterations we are running
-        , iterations: 100
+        , iterations: 25
         // Number of users starting the op at every tick
         , numberOfUsers: 500
         // How to execute the 20 users inside of the tick
@@ -55,5 +54,6 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:27017/cache'
+  // url: 'mongodb://localhost:27017/cache?maxPoolSize=50'
+  url: 'mongodb://192.168.0.10:27017/cache?maxPoolSize=50'
 }

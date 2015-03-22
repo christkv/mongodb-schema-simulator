@@ -30,8 +30,8 @@ var publishToQueueScenario = {
   setup: function(db, callback) {
     // Drop the database
     db.dropDatabase(function(err, r) {
-      return callback();
-
+      // Create a capped collection
+      db.createCollection('queues', {capped:true, size: 100000000}, callback);
 
       // return callback();
       // // return callback();
@@ -133,5 +133,5 @@ module.exports = {
   // Connection url
   // url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=50'
   // url: 'mongodb://localhost:27017/queues?maxPoolSize=50'
-  url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=50'
+  url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=50'  
 }

@@ -57,5 +57,6 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  url: 'mongodb://localhost:27017/shop'
+  // url: 'mongodb://localhost:27017/shop'
+  url: 'mongodb://192.168.0.10:27017/shop?maxPoolSize=50'
 }

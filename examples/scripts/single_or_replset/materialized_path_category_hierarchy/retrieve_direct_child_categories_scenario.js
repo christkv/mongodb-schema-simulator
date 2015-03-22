@@ -68,6 +68,7 @@ module.exports = {
   // Number of processes needed to execute
   processes: 8,
   // Connection url
-  url: 'mongodb://10.211.55.4:27017/browse',
-  url: 'mongodb://192.168.0.10:27017/browse'
+  // url: 'mongodb://192.168.0.10:27017/browse'
+  // url: 'mongodb://localhost:27017/browse?maxPoolSize=50'
+  url: 'mongodb://192.168.0.10:27017/browse?maxPoolSize=50'
 }

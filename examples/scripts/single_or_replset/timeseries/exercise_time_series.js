@@ -59,5 +59,6 @@ module.exports = {
   // Connection url
   // url: 'mongodb://localhost:27017/timeseries'
   // url: 'mongodb://localhost:31000/timeseries'
-  url: 'mongodb://localhost:50000/timeseries'
+  // url: 'mongodb://localhost:50000/timeseries'
+  url: 'mongodb://192.168.0.10:27017/timeseries?maxPoolSize=50'
 }
