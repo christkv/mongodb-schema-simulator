@@ -24,7 +24,6 @@ var yargs = require('yargs')
   .default('local-process-port', 5200)
   // The scenario file to execute
   .describe('s', 'Path to scenario file to execute')
-  .require('s')
   // The scenario file to execute
   .describe('debug', 'Run with debug enables')
   .default('debug', false)
@@ -59,6 +58,7 @@ var bar = null;
 
 // We are not doing anything but regenerating the report
 if(argv.g) return monitor.report(function() {});
+if(typeof argv.s != 'string') return console.log('[MONITOR] no scenario specified');
 
 // The actual server (handles clients reporting back)
 var server = dnode({
