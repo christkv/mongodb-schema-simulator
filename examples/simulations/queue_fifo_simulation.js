@@ -100,7 +100,9 @@ var listenToQueueScenario = {
   // used to allow doing stuff like setting up the sharded collection
   // etc.
   setup: function(db, callback) {
-    db.dropDatabase(callback);
+    db.dropDatabase(function(err) {
+      return callback();      
+    });
   },
 
   //
@@ -131,7 +133,10 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  // url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=50'
-  // url: 'mongodb://localhost:27017/queues?maxPoolSize=50'
-  url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=50'
+  // url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=25'
+  // url: 'mongodb://localhost:27017/queues?maxPoolSize=25'
+  // url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=25'
+  // url: 'mongodb://10.211.55.4:27017/queues?maxPoolSize=25'  
+  // url: 'mongodb://10.211.55.4:27017/queues?maxPoolSize=25'  
+  url: 'mongodb://192.168.0.18:27017/queues_fifo?maxPoolSize=25'
 }

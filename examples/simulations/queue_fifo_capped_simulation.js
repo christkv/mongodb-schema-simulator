@@ -8,7 +8,7 @@ var publishToQueueScenario = {
     
     // Set the collection name for the carts
     collections: {
-      queues: 'queues'
+      queues: 'queues_capped'
     },
 
     // Parameters
@@ -31,7 +31,7 @@ var publishToQueueScenario = {
     // Drop the database
     db.dropDatabase(function(err, r) {
       // Create a capped collection
-      db.createCollection('queues', {capped:true, size: 100000000}, callback);
+      db.createCollection('queues_capped', {capped:true, size: 100000000}, callback);
 
       // return callback();
       // // return callback();
@@ -83,7 +83,7 @@ var listenToQueueScenario = {
     
     // Set the collection name for the carts
     collections: {
-      queues: 'queues'
+      queues: 'queues_capped'
     },
 
     // Parameters
@@ -131,7 +131,9 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  // url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=50'
-  // url: 'mongodb://localhost:27017/queues?maxPoolSize=50'
-  url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=50'  
+  // url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=25'
+  // url: 'mongodb://localhost:27017/queues?maxPoolSize=25'
+  // url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=25'  
+  // url: 'mongodb://10.211.55.4:27017/queues?maxPoolSize=25'  
+  url: 'mongodb://192.168.0.18:27017/queue_fifo_cap?maxPoolSize=25'
 }

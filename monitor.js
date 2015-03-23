@@ -2,6 +2,7 @@ var f = require('util').format
   , fs = require('fs')
   , dnode = require('dnode')
   , mkdirp = require('mkdirp')
+  , levelup = require('levelup')  
   , Process = require('./lib/monitor/process')
   , ScenarioManager = require('./lib/common/scenario_manager')
   , ProgressBar = require('progress');
@@ -42,6 +43,8 @@ if(argv.h) return console.log(yargs.help())
 
 // Create the output directory
 mkdirp.sync(argv.o);
+// Create level up db
+var db = levelup(f('%s/db', argv.o));
 
 // Scenario manager
 var manager = new ScenarioManager();
@@ -55,6 +58,8 @@ var monitor = new Process(argv, manager, clients);
 var totalExecutions = 0;
 var executionsLeft = 0;
 var bar = null;
+// Incrementing index for the level up db
+var levelUpId = 0;
 
 // We are not doing anything but regenerating the report
 if(argv.g) return monitor.report(function() {});
@@ -69,9 +74,12 @@ var server = dnode({
     callback();
   },
 
-  log: function(object, callback) {
-    // console.log("------------------ log")
-    callback();
+  log: function(measurements, callback) {
+    var ops = measurements.map(function(x) {
+      return {type: 'put', key: levelUpId++, value: x};
+    });
+
+    db.batch(ops, callback);
   },
 
   // Error from the client process
@@ -120,8 +128,11 @@ monitor.on('complete', function(logEntries) {
     if(argv.debug) console.log("[MONITOR] Executon finished, stopping dnode server endpoint");
     // Stop the dnode server
     server.end();
-    // Stop the process
-    process.exit(0);
+    // Flush levelup db
+    db.close(function() {
+      // Stop the process
+      process.exit(0);
+    });
   });
 });
 

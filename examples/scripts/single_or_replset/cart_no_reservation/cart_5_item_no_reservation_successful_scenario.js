@@ -58,5 +58,7 @@ module.exports = {
   processes: 2,
   // Connection url
   // url: 'mongodb://localhost:27017/shop'
-  url: 'mongodb://192.168.0.10:27017/shop?maxPoolSize=50'
+  // url: 'mongodb://192.168.0.10:27017/shop?maxPoolSize=25'
+  // url: 'mongodb://10.211.55.4:27017/shop?maxPoolSize=25'
+  url: 'mongodb://192.168.0.18:27017/cart_no?maxPoolSize=25'
 }
