@@ -44,9 +44,9 @@ module.exports = {
         // The resolution of the incoming interactions
         , resolution: 1000
         // Number of ticks/iterations we are running
-        , iterations: 1
+        , iterations: 25
         // Number of users starting the op at every tick
-        , numberOfUsers: 5
+        , numberOfUsers: 250
         // How to execute the 20 users inside of the tick
         // slicetime/atonce
         , tickExecutionStrategy: 'slicetime'
@@ -57,10 +57,11 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  // url: 'mongodb://localhost:27017/timeseries'
+  // url: 'mongodb://localhost:27017/timeseries?maxPoolSize=50'
   // url: 'mongodb://localhost:31000/timeseries'
   // url: 'mongodb://localhost:50000/timeseries'
-  // url: 'mongodb://192.168.0.10:27017/timeseries?maxPoolSize=25'
-  // url: 'mongodb://10.211.55.4:27017/timeseries?maxPoolSize=25'
-  url: 'mongodb://192.168.0.18:27017/timeseries?maxPoolSize=25'
+  // url: 'mongodb://192.168.0.10:27017/timeseries?maxPoolSize=50'
+  // url: 'mongodb://10.211.55.4:27017/timeseries?maxPoolSize=50'
+  // url: 'mongodb://192.168.0.18:27017/timeseries?maxPoolSize=50'
+  url: 'mongodb://192.168.0.18:27017/test?maxPoolSize=50'  
 }

@@ -40,9 +40,9 @@ module.exports = {
         // The resolution of the incoming interactions
         , resolution: 1000
         // Number of ticks/iterations we are running
-        , iterations: 100
+        , iterations: 25
         // Number of users starting the op at every tick
-        , numberOfUsers: 500
+        , numberOfUsers: 250
         // How to execute the 20 users inside of the tick
         // slicetime/atonce
         , tickExecutionStrategy: 'slicetime'

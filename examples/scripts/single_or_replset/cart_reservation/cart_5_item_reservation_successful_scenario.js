@@ -46,7 +46,7 @@ module.exports = {
         // Number of ticks/iterations we are running
         , iterations: 25
         // Number of users starting the op at every tick
-        , numberOfUsers: 500
+        , numberOfUsers: 250
         // How to execute the 20 users inside of the tick
         // slicetime/atonce
         , tickExecutionStrategy: 'slicetime'
@@ -57,8 +57,9 @@ module.exports = {
   // Number of processes needed to execute
   processes: 2,
   // Connection url
-  // url: 'mongodb://localhost:27017/shop'
-  // url: 'mongodb://192.168.0.10:27017/shop?maxPoolSize=25'
-  // url: 'mongodb://10.211.55.4:27017/shop?maxPoolSize=25'
-  url: 'mongodb://192.168.0.18:27017/cart_res?maxPoolSize=25'
+  // url: 'mongodb://localhost:27017/shop/shop?maxPoolSize=50'
+  // url: 'mongodb://192.168.0.10:27017/shop?maxPoolSize=50'
+  // url: 'mongodb://10.211.55.4:27017/shop?maxPoolSize=50'
+  // url: 'mongodb://192.168.0.18:27017/shop?maxPoolSize=50'
+  url: 'mongodb://192.168.0.18:27017/test?maxPoolSize=50'  
 }
