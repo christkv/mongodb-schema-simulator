@@ -5,39 +5,29 @@ module.exports = {
     // Schema we are executing
     schema: {
       // Name of the schema
-      name: 'retrieve_direct_child_categories',
-      
+      name: 'insert',
+
       // Set the collection name for the carts
       collections: {
-          categories: 'categories'
-        , products: 'products'
+        insert: 'insert'
       },
 
       // Parameters
       params: {
-          // numberOfProducts: 2048
-          numberOfProducts: 10000
-        // Five categories at the top (level 0)
-        // Five categories for each category at level 0
-        // Five categories for each category at level 1
-        , treeStructure: [{
-          level: 0, width: 5
-        }, {
-          level: 1, width: 5
-        }, {
-          level: 2, width: 5
-        }, {
-          level: 3, width: 5
-        }, {
-          level: 4, width: 5
-        }],
-        // Use covered index
-        coveredIndex: false
+        workObject: {
+          "user_email": "{{chance.email()}}",
+          "job": {
+            "company": "{{chance.word()}}",
+            "phone": "{{chance.phone()}}",
+            "duties": "{[chance.sentence()}}"
+          }
+        },
+        batchSize: 1
       }
     },
 
     // Run against specific db
-    db: 'browse',
+    db: 'insert',
 
     // Setup function (run before the scenario is executed)
     // used to allow doing stuff like setting up the sharded collection
@@ -59,7 +49,7 @@ module.exports = {
         // Number of ticks/iterations we are running
         , iterations: 25
         // Number of users starting the op at every tick
-        , numberOfUsers: 250
+        , numberOfUsers: 2000
         // How to execute the 20 users inside of the tick
         // slicetime/atonce
         , tickExecutionStrategy: 'slicetime'
@@ -68,12 +58,13 @@ module.exports = {
   }],
 
   // Number of processes needed to execute
-  processes: 8,
+  processes: 2,
   // Connection url
-  // url: 'mongodb://192.168.0.10:27017/browse'
-  // url: 'mongodb://localhost:27017/browse?maxPoolSize=50'
-  // url: 'mongodb://192.168.0.10:27017/browse?maxPoolSize=50'
-  // url: 'mongodb://10.211.55.4:27017/browse?maxPoolSize=50'
-  // url: 'mongodb://192.168.0.18:27017/browse?maxPoolSize=50'
-  url: 'mongodb://192.168.0.18:27017/test?maxPoolSize=50'  
+  // url: 'mongodb://localhost:27017/timeseries?maxPoolSize=50'
+  // url: 'mongodb://localhost:31000/timeseries'
+  // url: 'mongodb://localhost:50000/timeseries'
+  // url: 'mongodb://192.168.0.10:27017/timeseries?maxPoolSize=50'
+  // url: 'mongodb://10.211.55.4:27017/timeseries?maxPoolSize=50'
+  // url: 'mongodb://192.168.0.18:27017/timeseries?maxPoolSize=50'
+  url: 'mongodb://192.168.0.18:27017/test?maxPoolSize=75'  
 }

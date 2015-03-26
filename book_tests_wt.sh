@@ -1,14 +1,14 @@
 EXTRA_OPTIONS=-g
-EXTRA_OPTIONS=
+# EXTRA_OPTIONS=
 
-####################################################################################
-# Queries MMAP
-####################################################################################
-mkdir -p out/queue/wt
-mkdir -p out/capped_queue/wt
+# ####################################################################################
+# # Queries MMAP
+# ####################################################################################
+# mkdir -p out/queue/wt
+# mkdir -p out/capped_queue/wt
 
-# Execute the commands
-killall iojs;node ./monitor -s examples/simulations/queue_fifo_simulation.js -o ./out/queue/wt/ -n 4 $EXTRA_OPTIONS
+# # Execute the commands
+# killall iojs;node ./monitor -s examples/simulations/queue_fifo_simulation.js -o ./out/queue/wt/ -n 4 $EXTRA_OPTIONS
 # killall iojs;node ./monitor -s examples/simulations/queue_fifo_capped_simulation.js -o ./out/capped_queue/wt/ -n 4 $EXTRA_OPTIONS
 
 # # ####################################################################################
@@ -32,10 +32,15 @@ killall iojs;node ./monitor -s examples/simulations/queue_fifo_simulation.js -o 
 # ####################################################################################
 # mkdir -p out/categoryhierarchy_direct/wt
 # mkdir -p out/categoryhierarchy_subtree/wt
+# mkdir -p out/categoryhierarchy_direct_ci/wt
+# mkdir -p out/categoryhierarchy_subtree_ci/wt
 
-# # Execute the commands
-# killall iojs;node ./monitor -s examples/scripts/single_or_replset/materialized_path_category_hierarchy/retrieve_direct_child_categories_scenario.js -o ./out/categoryhierarchy_direct/wt/ -n 4 $EXTRA_OPTIONS
-# killall iojs;node ./monitor -s examples/scripts/single_or_replset/materialized_path_category_hierarchy/retrieve_entire_sub_tree_by_category_scenario.js -o ./out/categoryhierarchy_subtree/wt/ -n 4 $EXTRA_OPTIONS
+# # # Execute the commands
+# # killall iojs;node ./monitor -s examples/scripts/single_or_replset/materialized_path_category_hierarchy/retrieve_direct_child_categories_scenario.js -o ./out/categoryhierarchy_direct/wt/ -n 4 $EXTRA_OPTIONS
+# # killall iojs;node ./monitor -s examples/scripts/single_or_replset/materialized_path_category_hierarchy/retrieve_entire_sub_tree_by_category_scenario.js -o ./out/categoryhierarchy_subtree/wt/ -n 4 $EXTRA_OPTIONS
+# killall iojs;node ./monitor -s examples/scripts/single_or_replset/materialized_path_category_hierarchy/retrieve_direct_child_categories_ci_scenario.js -o ./out/categoryhierarchy_direct_ci/wt/ -n 4 $EXTRA_OPTIONS
+# killall iojs;node ./monitor -s examples/scripts/single_or_replset/materialized_path_category_hierarchy/retrieve_entire_sub_tree_by_cat_ci_scenario.js -o ./out/categoryhierarchy_subtree_ci/wt/ -n 4 $EXTRA_OPTIONS
+
 
 # ####################################################################################
 # # Cart No Reservation MMAP
@@ -53,13 +58,13 @@ killall iojs;node ./monitor -s examples/simulations/queue_fifo_simulation.js -o 
 # # Execute the commands
 # killall iojs;node ./monitor -s examples/scripts/single_or_replset/cart_reservation/cart_5_item_reservation_successful_scenario.js -o ./out/cart_reservation/wt/ -n 4 $EXTRA_OPTIONS
 
-# ####################################################################################
-# # Theater MMAP
-# ####################################################################################
-# mkdir -p out/theater/wt
+####################################################################################
+# Theater MMAP
+####################################################################################
+mkdir -p out/theater/wt
 
-# # Execute the commands
-# killall iojs;node ./monitor -s examples/scripts/single_or_replset/theater/theater_reserve_tickets_successfully.js -o ./out/theater/wt/ -n 4 $EXTRA_OPTIONS
+# Execute the commands
+killall iojs;node ./monitor -s examples/scripts/single_or_replset/theater/theater_reserve_tickets_successfully.js -o ./out/theater/wt/ -n 4 $EXTRA_OPTIONS
 
 # ####################################################################################
 # # Timeseries MMAP
@@ -96,3 +101,12 @@ killall iojs;node ./monitor -s examples/simulations/queue_fifo_simulation.js -o 
 
 # # Execute the commands
 # killall iojs;node ./monitor -s examples/scripts/single_or_replset/account/account_100_successful_transfer_scenario.js -o ./out/transactions/wt/ -n 4 $EXTRA_OPTIONS
+
+# ####################################################################################
+# # Write only workload
+# ####################################################################################
+# mkdir -p out/writeonly/wt
+
+# # Execute the commands
+# killall iojs;node ./monitor -s examples/scripts/single_or_replset/workloads/insert_scenario.js -o ./out/writeonly/wt/ -n 8 $EXTRA_OPTIONS
+

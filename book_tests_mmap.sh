@@ -1,7 +1,7 @@
-EXTRA_OPTIONS=-g
+# EXTRA_OPTIONS=-g
 EXTRA_OPTIONS=
 
-####################################################################################
+# ####################################################################################
 # Queries MMAP
 ####################################################################################
 mkdir -p out/queue/mmap
@@ -32,10 +32,14 @@ killall iojs;node ./monitor -s examples/simulations/queue_fifo_simulation.js -o 
 # ####################################################################################
 # mkdir -p out/categoryhierarchy_direct/mmap
 # mkdir -p out/categoryhierarchy_subtree/mmap
+# mkdir -p out/categoryhierarchy_direct_ci/mmap
+# mkdir -p out/categoryhierarchy_subtree_ci/mmap
 
 # # Execute the commands
 # killall iojs;node ./monitor -s examples/scripts/single_or_replset/materialized_path_category_hierarchy/retrieve_direct_child_categories_scenario.js -o ./out/categoryhierarchy_direct/mmap/ -n 4 $EXTRA_OPTIONS
 # killall iojs;node ./monitor -s examples/scripts/single_or_replset/materialized_path_category_hierarchy/retrieve_entire_sub_tree_by_category_scenario.js -o ./out/categoryhierarchy_subtree/mmap/ -n 4 $EXTRA_OPTIONS
+# killall iojs;node ./monitor -s examples/scripts/single_or_replset/materialized_path_category_hierarchy/retrieve_direct_child_categories_ci_scenario.js -o ./out/categoryhierarchy_direct_ci/mmap/ -n 4 $EXTRA_OPTIONS
+# killall iojs;node ./monitor -s examples/scripts/single_or_replset/materialized_path_category_hierarchy/retrieve_entire_sub_tree_by_cat_ci_scenario.js -o ./out/categoryhierarchy_subtree_ci/mmap/ -n 4 $EXTRA_OPTIONS
 
 # ####################################################################################
 # # Cart No Reservation MMAP
@@ -96,3 +100,11 @@ killall iojs;node ./monitor -s examples/simulations/queue_fifo_simulation.js -o 
 
 # # Execute the commands
 # killall iojs;node ./monitor -s examples/scripts/single_or_replset/account/account_100_successful_transfer_scenario.js -o ./out/transactions/mmap/ -n 4 $EXTRA_OPTIONS
+
+# ####################################################################################
+# # Write only workload
+# ####################################################################################
+# mkdir -p out/writeonly/mmap
+
+# # Execute the commands
+# killall iojs;node ./monitor -s examples/scripts/single_or_replset/workloads/insert_scenario.js -o ./out/writeonly/mmap/ -n 8 $EXTRA_OPTIONS

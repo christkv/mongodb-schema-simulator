@@ -43,8 +43,11 @@ if(argv.h) return console.log(yargs.help())
 
 // Create the output directory
 mkdirp.sync(argv.o);
+
 // Create level up db
-var db = levelup(f('%s/db', argv.o));
+if(argv.g == false) {
+  var db = levelup(f('%s/db', argv.o));  
+}
 
 // Scenario manager
 var manager = new ScenarioManager();
@@ -76,7 +79,7 @@ var server = dnode({
 
   log: function(measurements, callback) {
     var ops = measurements.map(function(x) {
-      return {type: 'put', key: levelUpId++, value: x};
+      return {type: 'put', key: levelUpId++, value: JSON.stringify(x)};
     });
 
     db.batch(ops, callback);
@@ -123,13 +126,13 @@ monitor.on('registrationComplete', function() {
 // Wait for the scenario to finish executing
 monitor.on('complete', function(logEntries) {
   if(argv.debug) console.log("[MONITOR] Execution finished, stopping child processes");
-  // Stop the monitor
-  monitor.stop(function() {
-    if(argv.debug) console.log("[MONITOR] Executon finished, stopping dnode server endpoint");
-    // Stop the dnode server
-    server.end();
-    // Flush levelup db
-    db.close(function() {
+  // Flush levelup db
+  db.close(function() {
+    // Stop the monitor
+    monitor.stop(function() {
+      if(argv.debug) console.log("[MONITOR] Executon finished, stopping dnode server endpoint");
+      // Stop the dnode server
+      server.end();
       // Stop the process
       process.exit(0);
     });

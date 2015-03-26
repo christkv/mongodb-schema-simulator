@@ -18,13 +18,13 @@ module.exports = {
       // Parameters
       params: {
         // Number of theaters
-          numberOfTheaters: 100
+          numberOfTheaters: 10
         // Number of theater rows
         , rows: 30
         // Number of theater seats in a row
         , seats: 30
         // Number of sessions
-        , numberOfSessions: 100
+        , numberOfSessions: 10
         // Number of tickets in each cart
         , numberOfTickets: 5
       }
@@ -53,7 +53,7 @@ module.exports = {
         // Number of ticks/iterations we are running
         , iterations: 25
         // Number of users starting the op at every tick
-        , numberOfUsers: 250
+        , numberOfUsers: 50
         // How to execute the 20 users inside of the tick
         // slicetime/atonce
         , tickExecutionStrategy: 'slicetime'
@@ -68,5 +68,5 @@ module.exports = {
   // url: 'mongodb://192.168.0.10:27017/theater?maxPoolSize=50'
   // url: 'mongodb://10.211.55.4:27017/theater?maxPoolSize=50'  
   // url: 'mongodb://192.168.0.18:27017/theater?maxPoolSize=50'
-  url: 'mongodb://192.168.0.18:27017/test?maxPoolSize=50'  
+  url: 'mongodb://localhost:27017/test?maxPoolSize=50'  
 }

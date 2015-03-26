@@ -30,7 +30,9 @@ module.exports = {
           level: 3, width: 5
         }, {
           level: 4, width: 5
-        }]
+        }],
+        // Use covered index
+        coveredIndex: false
       }
     },
 

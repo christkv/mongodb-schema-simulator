@@ -5,7 +5,7 @@ module.exports = {
     // Schema we are executing
     schema: {
       // Name of the schema
-      name: 'retrieve_direct_child_categories',
+      name: 'retrieve_entire_sub_tree_by_category',
       
       // Set the collection name for the carts
       collections: {
@@ -32,7 +32,7 @@ module.exports = {
           level: 4, width: 5
         }],
         // Use covered index
-        coveredIndex: false
+        coveredIndex: true
       }
     },
 
@@ -68,12 +68,11 @@ module.exports = {
   }],
 
   // Number of processes needed to execute
-  processes: 8,
+  processes: 2,
   // Connection url
-  // url: 'mongodb://192.168.0.10:27017/browse'
   // url: 'mongodb://localhost:27017/browse?maxPoolSize=50'
   // url: 'mongodb://192.168.0.10:27017/browse?maxPoolSize=50'
-  // url: 'mongodb://10.211.55.4:27017/browse?maxPoolSize=50'
+  // url: 'mongodb://10.211.55.4:27017/browse?maxPoolSize=50'  
   // url: 'mongodb://192.168.0.18:27017/browse?maxPoolSize=50'
   url: 'mongodb://192.168.0.18:27017/test?maxPoolSize=50'  
 }
