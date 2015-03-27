@@ -26,9 +26,7 @@ var argv = yargs.argv
 if(argv.h) return console.log(yargs.help())
 
 // Create a scenario manager
-var manager = new ScenarioManager();
-// Load available scenarios
-manager.load('./lib/common/scenarios');
+var manager = new ScenarioManager().load('./lib/common/scenarios');
 
 // Create a child instance (wrapping the functionality of the process)
 var child = new Process(manager, argv);
@@ -42,9 +40,7 @@ var server = dnode({
     // Just finish callback
     callback(null, {});
     // Execute the child
-    child.execute(scenario, options, function() {
-      d.end();
-    });
+    child.execute(scenario, options, function() {});
   }
 });
 
@@ -64,7 +60,6 @@ server.listen(argv.p, function() {
       , pid: process.pid
       // Provide the hostname
       , hostname: os.hostname()
-    }, function() {
-    })
+    }, function() {});
   });
 });

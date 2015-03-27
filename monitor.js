@@ -42,6 +42,9 @@ var yargs = require('yargs')
   // Find maximum continous throughput
   .describe('optimize', 'optimize the load so total runtime equals the number of iterations')
   .default('optimize', false)
+  // Optimize margin
+  .describe('optimize-margin', 'margin in % to optimize against (lower/upper) bound')
+  .default('optimize-margin', 20)
 
 // Get parsed arguments
 var argv = yargs.argv
