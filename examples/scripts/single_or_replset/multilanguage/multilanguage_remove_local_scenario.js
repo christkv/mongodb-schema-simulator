@@ -29,8 +29,8 @@ module.exports = [{
   // Execution plan is run using all the process.openStdin();
   execution: {
     // Number of ticks/iterations we are running
-    , iterations: 25
+      iterations: 25
     // Number of users starting the op at every tick
-    numberOfUsers: 250
+    , numberOfUsers: 250
   }
 }];

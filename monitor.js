@@ -3,6 +3,8 @@ var f = require('util').format
   , dnode = require('dnode')
   , mkdirp = require('mkdirp')
   , levelup = require('levelup')  
+  , SingleRun = require('./lib/monitor/single_run')
+  , Optimizer = require('./lib/monitor/optimizer')
   , Process = require('./lib/monitor/process')
   , ScenarioManager = require('./lib/common/scenario_manager')
   , ProgressBar = require('progress');
@@ -37,6 +39,9 @@ var yargs = require('yargs')
   // Target Topology url
   .describe('url', 'mongodb url')
   .default('url', 'mongodb://localhost:27017/test?maxPoolSize=50')
+  // Find maximum continous throughput
+  .describe('optimize', 'optimize the load so total runtime equals the number of iterations')
+  .default('optimize', false)
 
 // Get parsed arguments
 var argv = yargs.argv
@@ -44,115 +49,38 @@ var argv = yargs.argv
 // List help
 if(argv.h) return console.log(yargs.help())
 
+// Error out as no scenario has been specified
+if(typeof argv.s != 'string') 
+  return console.log('[MONITOR] no scenario specified');
+
 // Create the output directory
 mkdirp.sync(argv.o);
 
-// Create level up db
-if(argv.g == false) {
-  var db = levelup(f('%s/db', argv.o));  
-}
-
 // Scenario manager
-var manager = new ScenarioManager();
-// Load the scenarios
-manager.load('./lib/common/scenarios');
-// Var clients
-var clients = [];
-// Monitor instance
-var monitor = new Process(argv, manager, clients);
-// Get the total amount of work needed
-var totalExecutions = 0;
-var executionsLeft = 0;
-var bar = null;
-// Incrementing index for the level up db
-var levelUpId = 0;
+var manager = new ScenarioManager().load('./lib/common/scenarios');
+// Create 
+var runner = argv.optimize 
+  ? new Optimizer(argv, manager)
+  : new SingleRun(argv, manager);
 
 // We are not doing anything but regenerating the report
-if(argv.g) return monitor.report(function() {});
-if(typeof argv.s != 'string') return console.log('[MONITOR] no scenario specified');
+if(argv.g) return runner.report(function() {});
 
-// The actual server (handles clients reporting back)
-var server = dnode({
-
-  // Registration call from the client process
-  register: function(client, callback) {
-    monitor.register(client)
-    callback();
-  },
-
-  log: function(measurements, callback) {
-    var ops = measurements.map(function(x) {
-      return {type: 'put', key: levelUpId++, value: JSON.stringify(x)};
-    });
-
-    db.batch(ops, callback);
-  },
-
-  // Error from the client process
-  error: function(err, callback) {
-    monitor.error(err);
-    callback();
-  },
-
-  // Results from a client process
-  done: function(results, callback) {
-    monitor.done(results);
-    callback();
-  },
-
-  // Reports the number of items we are executing for all jobs
-  setup: function(data, callback) {
-    callback();
-  },
-
-  // A work unit was finished
-  tick: function(callback) {
-    if(bar == null) bar = new ProgressBar('  executing [:bar] [:current/:total] :etas', {
-          complete: '='
-        , incomplete: ' '
-        , width: 60
-        , total: totalExecutions
-      }
-    );
-
-    executionsLeft = executionsLeft - 1;
-    bar.tick();
-    callback();
-  }
-});
-
-// Wait for all children to be setup
-monitor.on('registrationComplete', function() {  
-  monitor.execute();
-});
-
-// Wait for the scenario to finish executing
-monitor.on('complete', function(logEntries) {
-  if(argv.debug) console.log("[MONITOR] Execution finished, stopping child processes");
-  // Flush levelup db
-  db.close(function() {
-    // Stop the monitor
-    monitor.stop(function() {
-      if(argv.debug) console.log("[MONITOR] Executon finished, stopping dnode server endpoint");
-      // Stop the dnode server
-      server.end();
-      // Stop the process
-      process.exit(0);
-    });
+// Set up listeners
+runner.on('end', function() {
+  // Execute report
+  runner.report(function() {
+    process.exit(0);
   });
 });
 
-// In case the scenario failed to execute
-monitor.on('error', function() {
+runner.on('reportDone', function() {
+  process.exit(0);
 });
 
-// Run the monitor listening point
-server.listen(argv.p, function() {
-  // Start the monitor
-  monitor.start(function(err, data) {
-    if(err) throw err;
-    // Set total number of executions expected
-    totalExecutions = data.totalExecutions;
-    executionsLeft = executionsLeft;
-  });
+runner.on('error', function() {
+  process.exit(0);
 });
+
+// Execute the process
+runner.execute();
