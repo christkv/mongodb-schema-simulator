@@ -1,24 +1,21 @@
 //
 // Publish to topics
 var publishToQueueScenario = {
-  // Schema we are executing
-  schema: {
-    // Name of the schema
-    name: 'publish_to_queues',
-    
-    // Set the collection name for the carts
-    collections: {
-      queues: 'queues'
-    },
+  // Name of the schema
+  name: 'publish_to_queues',
+  
+  // Set the collection name for the carts
+  collections: {
+    queues: 'queues'
+  },
 
-    // Parameters
-    params: {
-      // Size of capped collection
-      priorityRange: 10
-      // Default work object
-      , workObject: {
-      }        
-    }
+  // Parameters
+  params: {
+    // Size of capped collection
+    priorityRange: 10
+    // Default work object
+    , workObject: {
+    }        
   },
 
   // Run against specific db
@@ -55,42 +52,28 @@ var publishToQueueScenario = {
   //
   // Execution plan is run using all the process.openStdin();
   execution: {
-    //
-    // Distribution of interactions starting (per process)
-    distribution: {
-      // Any specific distribution used
-        type: 'linear'
-      // The resolution of the incoming interactions
-      , resolution: 1000
-      // Number of ticks/iterations we are running
-      , iterations: 25
-      // Number of users starting the op at every tick
-      , numberOfUsers: 250
-      // How to execute the 20 users inside of the tick
-      // slicetime/atonce
-      , tickExecutionStrategy: 'slicetime'
-    }
+    // Number of ticks/iterations we are running
+      iterations: 25
+    // Number of users starting the op at every tick
+    , numberOfUsers: 250
   }
 }
 
 //
 // Read from topics
 var listenToQueueScenario = {
-  // Schema we are executing
-  schema: {
-    // Name of the schema
-    name: 'fetch_from_queue_by_fifo',
-    
-    // Set the collection name for the carts
-    collections: {
-      queues: 'queues'
-    },
+  // Name of the schema
+  name: 'fetch_from_queue_by_fifo',
+  
+  // Set the collection name for the carts
+  collections: {
+    queues: 'queues'
+  },
 
-    // Parameters
-    params: {
-      // Priority range
-      priorityRange: 10
-    }
+  // Parameters
+  params: {
+    // Priority range
+    priorityRange: 10
   },
 
   // Run against specific db
@@ -108,36 +91,12 @@ var listenToQueueScenario = {
   //
   // Execution plan is run using all the process.openStdin();
   execution: {
-    //
-    // Distribution of interactions starting (per process)
-    distribution: {
-      // Any specific distribution used
-        type: 'linear'
-      // The resolution of the incoming interactions
-      , resolution: 1000
-      // Number of ticks/iterations we are running
-      , iterations: 25
-      // Number of users starting the op at every tick
-      , numberOfUsers: 75
-      // How to execute the 20 users inside of the tick
-      // slicetime/atonce
-      , tickExecutionStrategy: 'slicetime'
-    }
+    // Number of ticks/iterations we are running
+      iterations: 25
+    // Number of users starting the op at every tick
+    , numberOfUsers: 75
   }
 }
 
 // Definition of the fields to execute
-module.exports = {
-  // The schema's we plan to exercise
-  schemas: [publishToQueueScenario, listenToQueueScenario],
-  // Number of processes needed to execute
-  processes: 2,
-  // Connection url
-  // url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=50'
-  url: 'mongodb://localhost:27017/queues?maxPoolSize=50'
-  // url: 'mongodb://192.168.0.10:27017/queues?maxPoolSize=50'
-  // url: 'mongodb://10.211.55.4:27017/queues?maxPoolSize=50'  
-  // url: 'mongodb://10.211.55.4:27017/queues?maxPoolSize=50'  
-  // url: 'mongodb://192.168.0.18:27017/queues?maxPoolSize=50'
-  // url: 'mongodb://192.168.0.18:27017/test?maxPoolSize=50'  
-}
+module.exports = [publishToQueueScenario, listenToQueueScenario];

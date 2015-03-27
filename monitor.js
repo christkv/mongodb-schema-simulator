@@ -34,6 +34,9 @@ var yargs = require('yargs')
   // Generate report only
   .describe('g', 'Re-generate report from data')
   .default('g', false)
+  // Target Topology url
+  .describe('url', 'mongodb url')
+  .default('url', 'mongodb://localhost:27017/test?maxPoolSize=50')
 
 // Get parsed arguments
 var argv = yargs.argv
