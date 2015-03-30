@@ -1,5 +1,6 @@
 var f = require('util').format
   , os = require('os')
+  , path = require('path')
   , dnode = require('dnode')
   , Process = require('./lib/agent/process')
   , ScenarioManager = require('./lib/common/scenario_manager');
@@ -24,9 +25,10 @@ var argv = yargs.argv
 
 // List help
 if(argv.h) return console.log(yargs.help())
-
+// Scenarios Directory
+var scenariosDirectory = path.resolve(__dirname, f('%s', './lib/common/scenarios'));
 // Create a scenario manager
-var manager = new ScenarioManager().load('./lib/common/scenarios');
+var manager = new ScenarioManager().load(scenariosDirectory);
 
 // Create a child instance (wrapping the functionality of the process)
 var child = new Process(manager, argv);

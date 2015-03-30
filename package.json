@@ -40,6 +40,10 @@
     , "optimist": "0.6.1"
     , "mongodb-version-manager": "^0.5.0"
   },
+  "bin": {
+      "schema-agent": "bin/schema-agent"
+    , "schema-monitor": "bin/schema-monitor"
+  },
   "author": "Christian Kvalheim",
   "license": "Apache 2.0",
   "bugs": {
