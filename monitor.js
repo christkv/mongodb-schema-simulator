@@ -1,12 +1,14 @@
 var f = require('util').format
   , fs = require('fs')
   , dnode = require('dnode')
+  , path = require('path')
   , mkdirp = require('mkdirp')
   , levelup = require('levelup')  
   , SingleRun = require('./lib/monitor/single_run')
   , Optimizer = require('./lib/monitor/optimizer')
   , Process = require('./lib/monitor/process')
   , ScenarioManager = require('./lib/common/scenario_manager')
+  , Table = require('cli-table')
   , ProgressBar = require('progress');
 
 // Parse the passed in parameters
@@ -45,12 +47,51 @@ var yargs = require('yargs')
   // Optimize margin
   .describe('optimize-margin', 'margin in % to optimize against (lower/upper) bound')
   .default('optimize-margin', 20)
+  // List all available scenarios
+  .describe('scenarios', 'list all available scenarios')
+  .default('scenarios', null)
 
 // Get parsed arguments
 var argv = yargs.argv
 
+// List all scenarios
+var listScenarios = function(scenario, manager) {
+  // No paramter passed in
+  if(scenario == null) {
+    var scenarios = manager.list();
+    var table = new Table({
+        head: ['Scenario name', 'Scenario description']
+      , colWidths: [50, 75]
+    });
+
+    // Iterate over all the scenarios
+    for(var i = 0; i < scenarios.length; i++) {
+      // console.dir(scenarios[i])
+      table.push([scenarios[i].name, scenarios[i].description]);
+    }
+
+    // Print the table
+    console.log(table.toString());    
+  } else if(manager.find(scenario)) {
+    var scenario = manager.find(scenario);
+    console.log(JSON.stringify(scenario, null, 2))
+  } else {
+    console.log(f("could not locate scenario with name %s", scenario));
+  }
+}
+
 // List help
 if(argv.h) return console.log(yargs.help())
+
+// Scenarios Directory
+var scenariosDirectory = path.resolve(__dirname, f('%s', './lib/common/scenarios'));
+// Create a scenario manager
+var manager = new ScenarioManager().load(scenariosDirectory);
+
+// List all scenarios
+if(argv.scenarios) {
+  return listScenarios(argv.scenarios, manager);
+}
 
 // Error out as no scenario has been specified
 if(typeof argv.s != 'string') 
@@ -59,8 +100,6 @@ if(typeof argv.s != 'string')
 // Create the output directory
 mkdirp.sync(argv.o);
 
-// Scenario manager
-var manager = new ScenarioManager().load('./lib/common/scenarios');
 // Create 
 var runner = argv.optimize 
   ? new Optimizer(argv, manager)
