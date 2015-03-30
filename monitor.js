@@ -57,7 +57,7 @@ var argv = yargs.argv
 // List all scenarios
 var listScenarios = function(scenario, manager) {
   // No paramter passed in
-  if(scenario == null) {
+  if(scenario == true) {
     var scenarios = manager.list();
     var table = new Table({
         head: ['Scenario name', 'Scenario description']
