@@ -20,8 +20,8 @@ var yargs = require('yargs')
   .describe('n', 'Number of processes running')
   .default('n', 2)
   // Run all the processes locally
-  .describe('l', 'Run all client processes locally')
-  .default('l', true)
+  .describe('r', 'Remote agent processes, wait for enough to connect before executing')
+  .default('r', false)
   // Local process starting port
   .describe('local-process-port', 'Local process start port')
   .default('local-process-port', 5200)
