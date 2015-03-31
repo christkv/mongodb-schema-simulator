@@ -15,10 +15,6 @@ var yargs = require('yargs')
   .default('s', 'localhost')
   .describe('m', 'Port monitor is running on')
   .default('m', 5100)
-  .describe('u', 'MongoDB connection url')
-  .default('u', 'mongodb://localhost:27017')
-  .describe('t', 'Agent process tag')
-  .default('t', 'agent')
 
 // Get parsed arguments
 var argv = yargs.argv
