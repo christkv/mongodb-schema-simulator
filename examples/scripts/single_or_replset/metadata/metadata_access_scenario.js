@@ -19,7 +19,7 @@ module.exports = [{
   // readPreference settings
   readPreferences: {
     metadata: {
-        readPreference: 'secondaryPreferred'
+        mode: 'secondaryPreferred'
       , tags: {}
     }
   },
@@ -40,8 +40,8 @@ module.exports = [{
   // Execution plan is run using all the process.openStdin();
   execution: {
     // Number of ticks/iterations we are running
-      iterations: 25
+      iterations: 100
     // Number of users starting the op at every tick
-    , numberOfUsers: 50
+    , numberOfUsers: 350
   }
 }];
