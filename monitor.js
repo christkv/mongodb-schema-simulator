@@ -40,7 +40,7 @@ var yargs = require('yargs')
   .default('g', false)
   // Generation db used
   .describe('report-db-path', 'Report db to use for report')
-  .default('report-db-path', './out/db')
+  .default('report-db-path', null)
   // Target Topology url
   .describe('url', 'mongodb url')
   .default('url', 'mongodb://localhost:27017/test?maxPoolSize=50')

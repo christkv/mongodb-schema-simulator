@@ -19,6 +19,12 @@ module.exports = [{
   // Run against specific db
   db: 'bank',
 
+  // writeConcern
+  writeConcern: {
+    // transactions: { w: 'majority', wtimeout: 10000 }
+    transactions: { w: 1, wtimeout: 10000 }
+  },
+
   // Setup function (run before the scenario is executed)
   // used to allow doing stuff like setting up the sharded collection
   // etc.
