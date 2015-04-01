@@ -19,6 +19,11 @@ module.exports = [{
   // Run against specific db
   db: 'cache',
 
+  // writeConcern
+  writeConcern: {
+    cache: { w: 1, wtimeout: 10000 }
+  },
+
   // Setup function (run before the scenario is executed)
   // used to allow doing stuff like setting up the sharded collection
   // etc.
