@@ -1,0 +1,9 @@
+TODO
+- Optimize options
+  - Latency (average ops with low stand def should be equal to the resoltion).
+- Add ability to provide readPreference settings in a scenario
+- Add ability to provide writeConcern settings in a scenario
+
+
+DONE
+- Agent can be started before monitor. DONE

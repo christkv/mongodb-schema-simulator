@@ -42,10 +42,11 @@ var server = dnode({
   }
 });
 
-// Start server and attempt to connect to monitor
-server.listen(argv.p, function() {
+// Connection to monitor function
+var connectToMonitor = function(callback) {
   // Attempt to connect to the monitor
   d = dnode.connect(argv.m, argv.s);
+  // Received a remote object
   d.on('remote', function(remote) {
     console.log(f("[AGENT-%s:%s] reporting for work to monitor at %s:%s", os.hostname(), argv.p, argv.s, argv.m));
     // Set the remote process on the child
@@ -59,5 +60,21 @@ server.listen(argv.p, function() {
       // Provide the hostname
       , hostname: os.hostname()
     }, function() {});
+    // Finish up
+    callback();
   });
+
+  d.on('error', function(err) {
+    console.log(f("[AGENT-%s:%s] failed to connect to monitor at %s:%s", os.hostname(), argv.p, argv.s, argv.m));
+    // Wait and attempt to reconnect
+    setTimeout(function() {
+      console.log(f("[AGENT-%s:%s] attempting to reconnect to monitor at %s:%s", os.hostname(), argv.p, argv.s, argv.m));
+      connectToMonitor(callback);
+    }, 3000);
+  });    
+}
+
+// Start server and attempt to connect to monitor
+server.listen(argv.p, function() {
+  connectToMonitor(function() {});
 });

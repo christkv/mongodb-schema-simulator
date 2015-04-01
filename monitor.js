@@ -38,18 +38,35 @@ var yargs = require('yargs')
   // Generate report only
   .describe('g', 'Re-generate report from data')
   .default('g', false)
+  // Generation db used
+  .describe('report-db-path', 'Report db to use for report')
+  .default('report-db-path', './out/db')
   // Target Topology url
   .describe('url', 'mongodb url')
   .default('url', 'mongodb://localhost:27017/test?maxPoolSize=50')
+  // List all available scenarios
+  .describe('scenarios', 'list all available scenarios')
+  .default('scenarios', null)
+  // 
+  // Optimizer methods
   // Find maximum continous throughput
   .describe('optimize', 'optimize the load so total runtime equals the number of iterations')
   .default('optimize', false)
   // Optimize margin
   .describe('optimize-margin', 'margin in % to optimize against (lower/upper) bound')
   .default('optimize-margin', 20)
-  // List all available scenarios
-  .describe('scenarios', 'list all available scenarios')
-  .default('scenarios', null)
+  // Optimization mode
+  .describe('optimize-mode', 'mode of optimization. One of total-time or latency')
+  .default('optimize-mode', 'total-time')
+  // Optimization mode
+  .describe('optimize-percentile', 'the percentile to optimize against the timing resolution')
+  .default('optimize-percentile', 99)
+  // Optimize against latency
+  .describe('optimize-latency-target', 'The latency target for each operation')
+  .default('optimize-latency-target', 100)  
+  // Optimize 
+  .describe('optimize-for-scenario', 'Optimize for a specific scenario, picks the first one if none specified')
+  .default('optimize-for-scenario', null)  
 
 // Get parsed arguments
 var argv = yargs.argv
