@@ -6,3 +6,5 @@ DONE
 - Add ability to provide writeConcern settings in a scenario
 - Optimize options
   - Latency (average ops with low stand def should be equal to the resoltion).
+
+  
