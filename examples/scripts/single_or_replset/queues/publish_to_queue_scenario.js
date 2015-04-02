@@ -17,6 +17,11 @@ module.exports = [{
     }
   },
 
+  // writeConcern
+  writeConcern: {
+    queues: { w: 1, wtimeout: 10000 }
+  },
+
   // Run against specific db
   db: 'queue',
 
