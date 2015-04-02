@@ -146,6 +146,10 @@ var carts = {
 
   db: 'shop',
 
+  writeConcern: {
+    metadata: { w: 1, wtimeout: 10000 }
+  },
+
   setup: function(db, callback) {
     db.dropDatabase(function(err) {
       return callback();      
@@ -173,6 +177,12 @@ var browse = {
   },
 
   db: 'shop',
+
+  // readPreference settings
+  readPreferences: {
+      categories: { mode: 'secondaryPreferred' , tags: {} }
+    , products: { mode: 'secondaryPreferred' , tags: {} }
+  },  
   
   setup: function(db, callback) {
     db.dropDatabase(function(err) {
@@ -208,7 +218,7 @@ mongod
 Next let's execute the `simulation`.
 
 ```
-schema-monitor -s ./ecommerce_simulatio.js
+schema-monitor -s ./ecommerce_simulation.js
 ```
 
 The simulation will now start up and after it's finished you can find the resulting report in the `./out/index.html` file that is the default output of the tool.
@@ -222,7 +232,7 @@ We are going to run the same simulation as before but this time we are going to 
 First let's boot the monitor in `remote` agent mode.
 
 ```
-schema-monitor -s ./ecommerce_simulatio.js -r
+schema-monitor -s ./ecommerce_simulation.js -r
 ```
 
 The process will start and await the number of agents needed to execute the scenario (the default is 2 processes, this can be controlled using the `-n` flag).
@@ -240,3 +250,33 @@ schema-agent -p 5025 -s localhost -m 5100
 ```
 
 Notice that the running of the scenario will now kick off just as when we ran with the local agents.
+
+## Optimize for latency
+
+The Schema simulation tool lets you optimize against latency. F.ex you might want to know how many simultaneous users you can handle while keeping the scenario completion close to a specific amount of latency. In other words how many simultaneous users can we support while keeping the time it takes to complete a cart checkout around 100 in the 99 percentile.
+
+Let's run the scenario above and optimize it.
+
+```
+schema-monitor -s ./ecommerce_simulation.js --optimize --optimize-mode latency --optimize-percentile 99 --optimize-latency-target 100 --optimize-for-scenario cart_reservation_successful --optimize-margin 25
+```
+
+What do the following options mean.
+
+| Parameter | Description |
+|:-----------|:------------|
+| --optimize | Run an optimization against the provided scenario |
+| --optimize-mode | Mode of optimization (total run time or latency) |
+| --optimize-percentile | Optimize against the X percentile of the results |
+| --optimize-latency-target | Latency target in milliseconds |
+| --optimize-for-scenario | If multiple scenarios in a simulation pick the one to optimize for, otherwise it will pick the first available |
+| --optimize-margin | The percentage margin of error +- that is acceptable for the optimization against the latency target, hitting the latency 100% is impossible so you need to ensure that you have a margin that allows the optimization to find a stable state and finish |
+
+Once the optimization is done it will spit out a json file with the optimized parameters in the `--out` directory.
+
+
+
+
+
+
+

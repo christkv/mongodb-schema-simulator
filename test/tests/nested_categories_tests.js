@@ -103,9 +103,15 @@ exports['Correctly category and fetch all immediate children of root node'] = {
           Category.findAllDirectChildCategories(collections, '/', function(err, categories) {
             test.equal(null, err);
             test.equal(3, categories.length);
-            test.equal('/1', categories[0].category);
-            test.equal('/2', categories[1].category);
-            test.equal('/3', categories[2].category);
+            var paths = {'/1':true, '/2':true, '/3':true};
+
+            for(var i = 0; i < categories.length; i++) {
+              if(paths[categories[i].category]) {
+                delete paths[categories[i].category];
+              }
+            }
+
+            test.equal(0, Object.keys(paths).length);
 
             db.close();
             test.done();
@@ -155,8 +161,15 @@ exports['Correctly fetch Category tree under a specific path'] = {
           Category.findAllChildCategories(collections, '/1', function(err, categories) {
             test.equal(null, err);
             test.equal(2, categories.length);
-            test.equal('/1/1', categories[0].category);
-            test.equal('/1/2', categories[1].category);
+            var paths = {'/1/1':true, '/1/2':true};
+
+            for(var i = 0; i < categories.length; i++) {
+              if(paths[categories[i].category]) {
+                delete paths[categories[i].category];
+              }
+            }
+
+            test.equal(0, Object.keys(paths).length);
 
             db.close();
             test.done();
@@ -316,9 +329,15 @@ exports['Correctly fetch all products of a specific categories direct children']
             Product.findByDirectCategoryChildren(collections, '/', function(err, products) {
               test.equal(null, err);
               test.equal(3, products.length);
-              test.equal('/1', products[0].categories[0]);
-              test.equal('/2', products[1].categories[0]);
-              test.equal('/3', products[2].categories[0]);
+              var paths = {'/1':true, '/2':true, '/3':true};
+
+              for(var i = 0; i < products.length; i++) {
+                if(paths[products[i].categories[0]]) {
+                  delete paths[products[i].categories[0]];
+                }
+              }
+
+              test.equal(0, Object.keys(paths).length);
 
               db.close();
               test.done();
@@ -380,8 +399,16 @@ exports['Correctly fetch all products of a specific categories tree'] = {
             Product.findByCategoryTree(collections, '/1', function(err, products) {
               test.equal(null, err);
               test.equal(2, products.length);
-              test.equal('/1/1', products[0].categories[0]);
-              test.equal('/1/2', products[1].categories[0]);
+
+              var paths = {'/1/1':true, '/1/2':true};
+
+              for(var i = 0; i < products.length; i++) {
+                if(paths[products[i].categories[0]]) {
+                  delete paths[products[i].categories[0]];
+                }
+              }
+
+              test.equal(0, Object.keys(paths).length);
 
               db.close();
               test.done();
