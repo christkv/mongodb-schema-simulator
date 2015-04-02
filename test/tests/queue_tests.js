@@ -81,67 +81,67 @@ exports['Should correctly insert job into queue'] = {
   }
 }
 
-exports['Should correctly insert job into topic and listen to it'] = {
-  metadata: { requires: { } },
+// exports['Should correctly insert job into topic and listen to it'] = {
+//   metadata: { requires: { } },
 
-  // The actual test we wish to run
-  test: function(configuration, test) {
-    var Topic = require('../../lib/common/schemas/queue/topic')
-      , MongoClient = require('mongodb').MongoClient;
+//   // The actual test we wish to run
+//   test: function(configuration, test) {
+//     var Topic = require('../../lib/common/schemas/queue/topic')
+//       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+//     // Connect to mongodb
+//     MongoClient.connect(configuration.url(), function(err, db) {
+//       test.equal(null, err);
 
-      // All the collections used
-      var collections = {
-          queues: db.collection('queues2')
-        , topics: db.collection('topics2')
-      }
+//       // All the collections used
+//       var collections = {
+//           queues: db.collection('queues2')
+//         , topics: db.collection('topics2')
+//       }
 
-      // Cleanup
-      setup(db, function() {
-        // Create a queue
-        var topic = new Topic(collections, 10000, 10000);
-        topic.create(function(err, topic) {
-          test.equal(null, err);
-          test.ok(topic != null);
+//       // Cleanup
+//       setup(db, function() {
+//         // Create a queue
+//         var topic = new Topic(collections, 10000, 10000);
+//         topic.create(function(err, topic) {
+//           test.equal(null, err);
+//           test.ok(topic != null);
 
-          // Add some items to queue
-          var addToTopic = function(callback) {
-            topic.publish({work:1}, function(err) {
-              test.equal(null, err);
+//           // Add some items to queue
+//           var addToTopic = function(callback) {
+//             topic.publish({work:1}, function(err) {
+//               test.equal(null, err);
 
-              topic.publish({work:2}, function(err) {
-                test.equal(null, err);
+//               topic.publish({work:2}, function(err) {
+//                 test.equal(null, err);
 
-                topic.publish({work:3}, function(err) {
-                  test.equal(null, err);
-                  callback();
-                });
-              });
-            });
-          }
+//                 topic.publish({work:3}, function(err) {
+//                   test.equal(null, err);
+//                   callback();
+//                 });
+//               });
+//             });
+//           }
 
-          // Add the queues
-          addToTopic(function() {
-            setTimeout(function() {
-              var docs = [];
-              var cursor = topic.listen(null, {awaitData: false});
-              cursor.on('data', function(doc) {
-                docs.push(doc);
-              });
+//           // Add the queues
+//           addToTopic(function() {
+//             setTimeout(function() {
+//               var docs = [];
+//               var cursor = topic.listen(null, {awaitData: false});
+//               cursor.on('data', function(doc) {
+//                 docs.push(doc);
+//               });
 
-              cursor.on('end', function() {
-                test.equal(3, docs.length);
+//               cursor.on('end', function() {
+//                 test.equal(3, docs.length);
 
-                db.close();
-                test.done();
-              });
-            }, 2000);
-          });
-        });
-      });
-    });
-  }
-}
+//                 db.close();
+//                 test.done();
+//               });
+//             }, 2000);
+//           });
+//         });
+//       });
+//     });
+//   }
+// }
