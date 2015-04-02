@@ -12,11 +12,16 @@ module.exports = [{
   // Parameters
   params: {
       numberOfProducts: 2048
-    , numberOfCategories: 128
+    , numberOfCategories: 256
   },
 
   // Run against specific db
   db: 'multilanguage',
+
+  // writeConcern
+  writeConcern: {
+    categories: { w: 1, wtimeout: 10000 }
+  },
 
   // Setup function (run before the scenario is executed)
   // used to allow doing stuff like setting up the sharded collection

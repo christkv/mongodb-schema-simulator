@@ -31,6 +31,12 @@ module.exports = [{
   // Run against specific db
   db: 'browse',
 
+  // readPreference settings
+  readPreferences: {
+      categories: { mode: 'secondaryPreferred', tags: {} }
+    , products: { mode: 'secondaryPreferred', tags: {} }
+  },
+
   // Setup function (run before the scenario is executed)
   // used to allow doing stuff like setting up the sharded collection
   // etc.
