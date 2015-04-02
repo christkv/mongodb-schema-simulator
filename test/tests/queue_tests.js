@@ -125,18 +125,20 @@ exports['Should correctly insert job into topic and listen to it'] = {
 
           // Add the queues
           addToTopic(function() {
-            var docs = [];
-            var cursor = topic.listen();
-            cursor.on('data', function(doc) {
-              docs.push(doc);
-            });
+            setTimeout(function() {
+              var docs = [];
+              var cursor = topic.listen();
+              cursor.on('data', function(doc) {
+                docs.push(doc);
+              });
 
-            cursor.on('end', function() {
-              test.equal(3, docs.length);
+              cursor.on('end', function() {
+                test.equal(3, docs.length);
 
-              db.close();
-              test.done();
-            });
+                db.close();
+                test.done();
+              });
+            }, 2000);
           });
         });
       });
