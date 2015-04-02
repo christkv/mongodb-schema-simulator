@@ -127,7 +127,7 @@ exports['Should correctly insert job into topic and listen to it'] = {
           addToTopic(function() {
             setTimeout(function() {
               var docs = [];
-              var cursor = topic.listen();
+              var cursor = topic.listen(null, {awaitData: false});
               cursor.on('data', function(doc) {
                 docs.push(doc);
               });
