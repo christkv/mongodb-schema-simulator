@@ -23,7 +23,7 @@ module.exports = [{
 
   // writeConcern
   writeConcern: {
-    timeseries: { w: 'majority', wtimeout: 10000 }
+    timeseries: { w: 1, wtimeout: 10000 }
   },
 
   // Setup function (run before the scenario is executed)
