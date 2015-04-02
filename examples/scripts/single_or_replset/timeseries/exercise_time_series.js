@@ -21,6 +21,11 @@ module.exports = [{
   // Run against specific db
   db: 'timeseries',
 
+  // writeConcern
+  writeConcern: {
+    timeseries: { w: 'majority', wtimeout: 10000 }
+  },
+
   // Setup function (run before the scenario is executed)
   // used to allow doing stuff like setting up the sharded collection
   // etc.
