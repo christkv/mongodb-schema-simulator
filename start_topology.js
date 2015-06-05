@@ -23,11 +23,26 @@ if(argv.t == 'replicaset') {
   var manager = new ReplSetManager({
       dbpath: path.join(path.resolve('db'))
     , logpath: path.join(path.resolve('db'))
-    , arbiters: 0
+    , arbiters: 1
     , secondaries: 2
     , tags: [{loc: "ny"}, {loc: "sf"}, {loc: "sf"}]
     , replSet: 'rs', startPort: 31000
     , v: null
+  });
+
+  manager.start(function() {
+    process.exit(0);
+  });
+} else if(argv.t == 'replicaset_auth') {
+  // Return manager
+  var manager = new ReplSetManager({
+      dbpath: path.join(path.resolve('db'))
+    , logpath: path.join(path.resolve('db'))
+    , arbiters: 0
+    , secondaries: 2
+    , tags: [{loc: "ny"}, {loc: "sf"}, {loc: "sf"}]
+    , replSet: 'rs', startPort: 31000
+    , v: null, auth:null
   });
 
   manager.start(function() {
