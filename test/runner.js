@@ -195,7 +195,7 @@ var testFiles =[
     '/test/tests/account_tests.js'
   , '/test/tests/cache_tests.js'
   , '/test/tests/cart_no_reservation_tests.js'
-  // , '/test/tests/cart_reservation_tests.js'
+  , '/test/tests/cart_reservation_tests.js'
   // , '/test/tests/metadata_tests.js'
   // , '/test/tests/multilanguage_tests.js'
   // , '/test/tests/nested_categories_tests.js'

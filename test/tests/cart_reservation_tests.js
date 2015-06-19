@@ -1,6 +1,8 @@
 "use strict";
 
-var createProducts = function(collections, callback) {
+var co = require('co');
+
+var createProducts = function(collections) {
   var products = [
       { _id: 1, name: 'product 1', price: 100}
     , { _id: 2, name: 'product 2', price: 200}
@@ -27,12 +29,14 @@ var createProducts = function(collections, callback) {
     , inventories: collections['inventories']
   }
 
-  // Insert all the products
-  collections['products'].insertMany(products, function(err, r) {
-    // Insert all the associated product inventories
-    collections['inventories'].insertMany(inventories, function(err, r) {
-      callback();
-    });
+  return new Promise(function(resolve, reject) {
+    co(function* () {
+      // Insert all the products
+      yield collections['products'].insertMany(products);
+      // Insert all the associated product inventories
+      yield collections['inventories'].insertMany(inventories);
+      resolve();
+    }).catch(reject);
   });
 }
 
@@ -50,23 +54,25 @@ var setup = function(db, callback) {
     , inventories: db.collection('inventories')
   }
 
-  collections['products'].drop(function() {
-    collections['carts'].drop(function() {
-      collections['inventories'].drop(function() {
-        collections['orders'].drop(function() {
-          Cart.createOptimalIndexes(collections, function() {
-            Product.createOptimalIndexes(collections, function() {
-              Inventory.createOptimalIndexes(collections, function() {
-                Order.createOptimalIndexes(collections, function() {
-                  createProducts(collections, callback);
-                });
-              });
-            });
-          });
-        });
-      });
-    });
+  return new Promise(function(resolve, reject) {
+    co(function* () {
+      // Drop all the collections
+      try { collections['products'].drop(); } catch(err) {}
+      try { collections['carts'].drop(); } catch(err) {}
+      try { collections['inventories'].drop(); } catch(err) {}
+      try { collections['orders'].drop(); } catch(err) {}
+
+      // Create all indexes
+      yield Cart.createOptimalIndexes(collections);
+      yield Product.createOptimalIndexes(collections);
+      yield Inventory.createOptimalIndexes(collections);
+      yield Order.createOptimalIndexes(collections);
+      yield createProducts(collections);
+
+      resolve();
+    }).catch(reject);
   });
+
 }
 
 exports['Should correctly add an item to the cart and checkout the cart successfully'] = {
@@ -81,9 +87,9 @@ exports['Should correctly add an item to the cart and checkout the cart successf
       , Inventory = require('../../lib/common/schemas/cart_reservation/inventory')
       , Order = require('../../lib/common/schemas/cart_reservation/order');
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -94,47 +100,38 @@ exports['Should correctly add an item to the cart and checkout the cart successf
       }
 
       // Cleanup
-      setup(db, function() {
-        var cart = new Cart(collections);
-        cart.create(function(err, cart) {
-          test.equal(null, err);
+      yield setup(db);
 
-          // Fetch a product
-          var product = new Product(collections, 1);
-          product.reload(function(err, product) {
-            test.equal(null, err);
+      // Create cart
+      var cart = new Cart(collections);
+      yield cart.create();
 
-            // Add a product to the cart
-            cart.add(product, 1, function(err, r) {
-              test.equal(null, err);
-              test.equal(cart.products.length, 1);
+      // Fetch a product
+      var product = new Product(collections, 1);
+      yield product.reload();
 
-              // Checkout the cart
-              cart.checkout({
-                  shipping: {}, payment: {}
-                }, function(err, r) {
-                  test.equal(null, err);
+      // Add a product to the cart
+      yield cart.add(product, 1);
+      test.equal(cart.products.length, 1);
 
-                  // Validate the state of the cart and product
-                  collections['inventories'].findOne({_id: 1}, function(err, doc) {
-                    test.equal(null, err);
-                    test.equal(99, doc.quantity);
-                    test.equal(0, doc.reservations);
-
-                    // Validate the state of the cart
-                    collections['carts'].findOne({_id: cart.id}, function(err, doc) {
-                      test.equal(null, err);
-                      test.equal('completed', doc.state);
-
-                      db.close();
-                      test.done();
-                    });
-                  });
-              });
-            });
-          });
+      // Checkout the cart
+      yield cart.checkout({
+          shipping: {}, payment: {}
         });
-      });
+
+      // Validate the state of the cart and product
+      var doc = yield collections['inventories'].findOne({_id: 1});
+      test.equal(99, doc.quantity);
+      test.equal(0, doc.reservations);
+
+      // Validate the state of the cart
+      var doc = yield collections['carts'].findOne({_id: cart.id});
+      test.equal('completed', doc.state);
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -151,9 +148,9 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
       , Inventory = require('../../lib/common/schemas/cart_reservation/inventory')
       , Order = require('../../lib/common/schemas/cart_reservation/order');
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -164,33 +161,31 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
       }
 
       // Cleanup
-      setup(db, function() {
-        var cart = new Cart(collections);
-        cart.create(function(err, cart) {
-          test.equal(null, err);
+      yield setup(db);
 
-          // Fetch a product
-          var product = new Product(collections, 1);
-          product.reload(function(err, product) {
-            test.equal(null, err);
+      // Create cart
+      var cart = new Cart(collections);
+      yield cart.create();
 
-            // Add a product to the cart
-            cart.add(product, 1000, function(err, r) {
-              test.ok(err != null);
+      // Fetch a product
+      var product = new Product(collections, 1);
+      yield product.reload();
 
-              // Retrieve the cart
-              collections['carts'].findOne({_id: cart.id}, function(err, doc) {
-                test.equal(null, err);
-                test.equal(0, doc.products.length);
-                test.equal('active', doc.state);
+      try {
+        // Add a product to the cart
+        yield cart.add(product, 1000);
+        reject(new Error('should not reach this'));
+      } catch(err) {}
 
-                db.close();
-                test.done();
-              });
-            });
-          });
-        });
-      });
+      // Retrieve the cart
+      var doc = yield collections['carts'].findOne({_id: cart.id});
+      test.equal(0, doc.products.length);
+      test.equal('active', doc.state);
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -207,9 +202,9 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
       , Inventory = require('../../lib/common/schemas/cart_reservation/inventory')
       , Order = require('../../lib/common/schemas/cart_reservation/order');
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -220,114 +215,118 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
       }
 
       // Cleanup
-      setup(db, function() {
-        var cart = new Cart(collections);
-        cart.create(function(err, cart) {
-          test.equal(null, err);
+      yield setup(db);
 
-          // Fetch a product
-          var product = new Product(collections, 1);
-          product.reload(function(err, product) {
-            test.equal(null, err);
+      // Create cart
+      var cart = new Cart(collections);
+      yield cart.create();
 
-            // Add a product to the cart
-            var addProductAndValidate = function(callback) {
-              cart.add(product, 2, function(err, r) {
-                test.equal(null, err);
+      // Fetch a product
+      var product = new Product(collections, 1);
+      yield product.reload();
 
-                // Validate cart and inventory
-                collections['carts'].findOne({_id: cart.id}, function(err, doc) {
-                  test.equal(null, err);
-                  test.equal(1, doc.products.length);
-                  test.equal(2, doc.products[0].quantity);
+      // Add a product to the cart
+      var addProductAndValidate = function() {
+        return new Promise(function(resolve, reject) {
+          co(function* () {
+            yield cart.add(product, 2);
 
-                  collections['inventories'].findOne({_id: product.id}, function(err, doc) {
-                    test.equal(null, err);
-                    test.equal(1, doc.reservations.length);
-                    test.equal(98, doc.quantity);
-                    test.equal(cart.id.toString(), doc.reservations[0]._id.toString());
-                    updateProductAndValidate(callback);
-                  });
-                });
-              });
-            }
+            // Validate cart and inventory
+            var doc = yield collections['carts'].findOne({_id: cart.id});
+            test.equal(1, doc.products.length);
+            test.equal(2, doc.products[0].quantity);
 
-            // Update the quantity of a product
-            var updateProductAndValidate = function(callback) {
-              // Update the amount of a product
-              cart.update(product, 4, function(err, r) {
-                test.equal(null, err);
+            var doc = yield collections['inventories'].findOne({_id: product.id});
+            test.equal(1, doc.reservations.length);
+            test.equal(98, doc.quantity);
+            test.equal(cart.id.toString(), doc.reservations[0]._id.toString());
+            yield updateProductAndValidate();
+            resolve();
+          }).catch(function(err) {
+            process.nextTick(function() {throw err});
+          });
+        });
+      }
 
-                // Validate cart and inventory
-                collections['carts'].findOne({_id: cart.id}, function(err, doc) {
-                  test.equal(null, err);
-                  test.equal(1, doc.products.length);
-                  test.equal(4, doc.products[0].quantity);
+      // Update the quantity of a product
+      var updateProductAndValidate = function(callback) {
+        return new Promise(function(resolve, reject) {
+          co(function* () {
+            // Update the amount of a product
+            yield cart.update(product, 4);
 
-                  collections['inventories'].findOne({_id: product.id}, function(err, doc) {
-                    test.equal(null, err);
-                    test.equal(1, doc.reservations.length);
-                    test.equal(96, doc.quantity);
-                    test.equal(cart.id.toString(), doc.reservations[0]._id.toString());
-                    test.equal(4, doc.reservations[0].quantity);
-                    illegalQuantityAdjustment(callback);
-                  });
-                });
-              });
-            }
+            // Validate cart and inventory
+            var doc = yield collections['carts'].findOne({_id: cart.id});
+            test.equal(1, doc.products.length);
+            test.equal(4, doc.products[0].quantity);
 
-            // Illegal product quantity adjustment
-            var illegalQuantityAdjustment = function(callback) {
+            var doc = yield collections['inventories'].findOne({_id: product.id});
+            test.equal(1, doc.reservations.length);
+            test.equal(96, doc.quantity);
+            test.equal(cart.id.toString(), doc.reservations[0]._id.toString());
+            test.equal(4, doc.reservations[0].quantity);
+            yield illegalQuantityAdjustment();
+            resolve();
+          }).catch(function(err) {
+            process.nextTick(function() {throw err});
+          });
+        });
+      }
+
+      // Illegal product quantity adjustment
+      var illegalQuantityAdjustment = function(callback) {
+        return new Promise(function(resolve, reject) {
+          co(function* () {
+            try {
               // Fail to update due to not enough inventory available
-              cart.update(product, 1000, function(err, r) {
-                test.ok(err != null);
+              yield cart.update(product, 1000);
+              reject(new Error('should not reach this'));
+            } catch(err) {}
 
-                // Validate cart and inventory
-                collections['carts'].findOne({_id: cart.id}, function(err, doc) {
-                  test.equal(null, err);
-                  test.equal(1, doc.products.length);
-                  test.equal(4, doc.products[0].quantity);
+            // Validate cart and inventory
+            var doc = yield collections['carts'].findOne({_id: cart.id});
+            test.equal(1, doc.products.length);
+            test.equal(4, doc.products[0].quantity);
 
-                  collections['inventories'].findOne({_id: product.id}, function(err, doc) {
-                    test.equal(null, err);
-                    test.equal(1, doc.reservations.length);
-                    test.equal(cart.id.toString(), doc.reservations[0]._id.toString());
-                    test.equal(96, doc.quantity);
-                    test.equal(4, doc.reservations[0].quantity);
-                    removeProductAndValidate(callback);
-                  });
-                });
-              });
-            }
-
-            var removeProductAndValidate = function(callback) {
-              // Remove product from cart
-              cart.remove(product, function(err, r) {
-                test.equal(null, err);
-
-                // Validate cart and inventory
-                collections['carts'].findOne({_id: cart.id}, function(err, doc) {
-                  test.equal(null, err);
-                  test.equal(0, doc.products.length);
-
-                  collections['inventories'].findOne({_id: product.id}, function(err, doc) {
-                    test.equal(null, err);
-                    test.equal(0, doc.reservations.length);
-                    test.equal(100, doc.quantity);
-                    callback();
-                  });
-                });
-              });
-            }
-
-            // Remove product and validate
-            addProductAndValidate(function() {
-              db.close();
-              test.done();
-            });
+            var doc = yield collections['inventories'].findOne({_id: product.id});
+            test.equal(1, doc.reservations.length);
+            test.equal(cart.id.toString(), doc.reservations[0]._id.toString());
+            test.equal(96, doc.quantity);
+            test.equal(4, doc.reservations[0].quantity);
+            yield removeProductAndValidate();
+            resolve();
+          }).catch(function(err) {
+            process.nextTick(function() {throw err});
           });
         });
-      });
+      }
+
+      var removeProductAndValidate = function(callback) {
+        return new Promise(function(resolve, reject) {
+          co(function* () {
+            // Remove product from cart
+            yield cart.remove(product);
+
+            // Validate cart and inventory
+            var doc = yield collections['carts'].findOne({_id: cart.id});
+            test.equal(0, doc.products.length);
+
+            var doc = yield collections['inventories'].findOne({_id: product.id});
+            test.equal(0, doc.reservations.length);
+            test.equal(100, doc.quantity);
+            resolve();
+          }).catch(function(err) {
+            process.nextTick(function() {throw err});
+          });
+        });
+      }
+
+      // Remove product and validate
+      yield addProductAndValidate();
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -344,9 +343,9 @@ exports['Should correctly find expired carts and remove any reservations in them
       , Inventory = require('../../lib/common/schemas/cart_reservation/inventory')
       , Order = require('../../lib/common/schemas/cart_reservation/order');
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -357,69 +356,58 @@ exports['Should correctly find expired carts and remove any reservations in them
       }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        var cart = new Cart(collections);
-        cart.create(function(err, cart) {
-          test.equal(null, err);
+      // Create cart
+      var cart = new Cart(collections);
+      yield cart.create();
 
-          // Fetch a product
-          var product = new Product(collections, 1);
-          product.reload(function(err, product) {
-            test.equal(null, err);
+      // Fetch a product
+      var product = new Product(collections, 1);
+      yield product.reload();
 
-            // Add a product to the cart
-            var addProductAndValidate = function(callback) {
-              cart.add(product, 2, function(err, r) {
-                test.equal(null, err);
+      // Add a product to the cart
+      var addProductAndValidate = function(callback) {
+        return new Promise(function(resolve, reject) {
+          co(function* () {
+            yield cart.add(product, 2);
 
-                // Validate cart and inventory
-                collections['carts'].findOne({_id: cart.id}, function(err, doc) {
-                  test.equal(null, err);
-                  test.equal(1, doc.products.length);
-                  test.equal(2, doc.products[0].quantity);
+            // Validate cart and inventory
+            var doc = yield collections['carts'].findOne({_id: cart.id});
+            test.equal(1, doc.products.length);
+            test.equal(2, doc.products[0].quantity);
 
-                  collections['inventories'].findOne({_id: product.id}, function(err, doc) {
-                    test.equal(null, err);
-                    test.equal(1, doc.reservations.length);
-                    test.equal(98, doc.quantity);
-                    test.equal(cart.id.toString(), doc.reservations[0]._id.toString());
-                    callback();
-                  });
-                });
-              });
-            }
-
-            addProductAndValidate(function() {
-              // Set cart to expired
-              collections['carts'].updateOne({_id: cart.id}, {$set: {state: 'expired'}}, function(err, r) {
-                test.equal(null, err);
-                test.equal(1, r.modifiedCount);
-
-                // Expire the cart
-                Cart.releaseExpired(collections, function(err) {
-                  test.equal(null, err);
-
-                  // Validate cart and inventory
-                  db.collection('carts').findOne({_id: cart.id}, function(err, doc) {
-                    test.equal(null, err);
-                    test.equal(1, doc.products.length);
-
-                    db.collection('inventories').findOne({_id: product.id}, function(err, doc) {
-                      test.equal(null, err);
-                      test.equal(0, doc.reservations.length);
-                      test.equal(100, doc.quantity);
-
-                      db.close();
-                      test.done();
-                    });
-                  });
-                });
-              });
-            });
+            var doc = yield collections['inventories'].findOne({_id: product.id});
+            test.equal(1, doc.reservations.length);
+            test.equal(98, doc.quantity);
+            test.equal(cart.id.toString(), doc.reservations[0]._id.toString());
+            resolve();
+          }).catch(function(err) {
+            process.nextTick(function() {throw err});
           });
         });
-      });
+      }
+
+      yield addProductAndValidate();
+      // Set cart to expired
+      var r = yield collections['carts'].updateOne({_id: cart.id}, {$set: {state: 'expired'}});
+      test.equal(1, r.modifiedCount);
+
+      // Expire the cart
+      yield Cart.releaseExpired(collections);
+
+      // Validate cart and inventory
+      var doc = yield db.collection('carts').findOne({_id: cart.id});
+      test.equal(1, doc.products.length);
+
+      var doc = yield db.collection('inventories').findOne({_id: product.id});
+      test.equal(0, doc.reservations.length);
+      test.equal(100, doc.quantity);
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
