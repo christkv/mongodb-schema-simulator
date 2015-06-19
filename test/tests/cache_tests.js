@@ -1,6 +1,8 @@
 "use strict";
 
-var setup = function(db, callback) {
+var co = require('co');
+
+var setup = function(db) {
   var SliceCache = require('../../lib/common/schemas/array_slice/cache');
 
   // All the collections used
@@ -8,9 +10,13 @@ var setup = function(db, callback) {
     cache: db.collection('cache')
   }
 
-  collections['cache'].drop(function() {
-    SliceCache.createOptimalIndexes(collections, function() {
-      callback();
+  return new Promise(function(resolve, reject) {
+    co(function*() {
+      try { yield collections['cache'].drop(); } catch(err) {};
+      yield SliceCache.createOptimalIndexes(collections);
+      resolve();
+    }).catch(function(err) {
+      reject(err);
     });
   });
 }
@@ -24,9 +30,9 @@ exports['Should correctly a 5 line cache no pre-allocation'] = {
       , MongoClient = configuration.require.MongoClient
       , SliceCache = require('../../lib/common/schemas/array_slice/cache');
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function*() {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -34,31 +40,29 @@ exports['Should correctly a 5 line cache no pre-allocation'] = {
       }
 
       // Cleanup
-      setup(db, function() {
-        var cache = new SliceCache(collections, new ObjectID(), 5);
-        cache.create(function(err, cache) {
-          test.equal(null, err);
+      yield setup(db);
 
-          // Push 6 items and see the cutoff
-          cache.push([
-              {a:1}, {a:2}, {a:3}
-            , {a:4}, {a:5}, {a:6}
-          ], function(err, r) {
-            test.equal(null, err);
+      // Cache object
+      var cache = new SliceCache(collections, new ObjectID(), 5);
+      // Create the cache document on MongoDB
+      var cache = yield cache.create();
 
-            // Fetch the cache
-            collections['cache'].findOne({_id: cache.id}, function(err, doc) {
-              test.equal(null, err);
-              test.equal(5, doc.data.length);
-              test.equal(2, doc.data[0].a);
-              test.equal(6, doc.data[4].a);
+      // Push 6 items and see the cutoff
+      var r = yield cache.push([
+          {a:1}, {a:2}, {a:3}
+        , {a:4}, {a:5}, {a:6}
+      ]);
 
-              db.close();
-              test.done();
-            });
-          });
-        });
-      });
+      // Fetch the cache
+      var doc = yield collections['cache'].findOne({_id: cache.id});
+      test.equal(5, doc.data.length);
+      test.equal(2, doc.data[0].a);
+      test.equal(6, doc.data[4].a);
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -72,9 +76,9 @@ exports['Should correctly a 5 line cache with pre-allocation'] = {
       , MongoClient = configuration.require.MongoClient
       , SliceCache = require('../../lib/common/schemas/array_slice/cache');
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function*() {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -82,31 +86,30 @@ exports['Should correctly a 5 line cache with pre-allocation'] = {
       }
 
       // Cleanup
-      setup(db, function() {
-        var cache = new SliceCache(collections, new ObjectID(), 5);
-        cache.create({a:1}, function(err, cache) {
-          test.equal(null, err);
+      yield setup(db);
 
-          // Push 6 items and see the cutoff
-          cache.push([
-            {a:1}, {a:2}, {a:3}
-          ], function(err, r) {
-            test.equal(null, err);
 
-            // Fetch the cache
-            collections['cache'].findOne({_id: cache.id}, function(err, doc) {
-              test.equal(null, err);
-              test.equal(3, doc.data.length);
-              test.equal(1, doc.data[0].a);
-              test.equal(3, doc.data[2].a);
-              test.equal(null, doc.data[4]);
+      // Cache object
+      var cache = new SliceCache(collections, new ObjectID(), 5);
+      // Create the cache document on MongoDB
+      var chache = yield cache.create({a:1});
 
-              db.close();
-              test.done();
-            });
-          });
-        });
-      });
+      // Push 6 items and see the cutoff
+      var r = yield cache.push([
+        {a:1}, {a:2}, {a:3}
+      ]);
+
+      // Fetch the cache
+      var doc = yield collections['cache'].findOne({_id: cache.id});
+      test.equal(3, doc.data.length);
+      test.equal(1, doc.data[0].a);
+      test.equal(3, doc.data[2].a);
+      test.equal(null, doc.data[4]);
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
