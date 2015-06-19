@@ -1,3 +1,5 @@
+"use strict"
+
 var f = require('util').format
   , os = require('os')
   , path = require('path')
@@ -71,7 +73,7 @@ var connectToMonitor = function(callback) {
       console.log(f("[AGENT-%s:%s] attempting to reconnect to monitor at %s:%s", os.hostname(), argv.p, argv.s, argv.m));
       connectToMonitor(callback);
     }, 3000);
-  });    
+  });
 }
 
 // Start server and attempt to connect to monitor

@@ -1,9 +1,11 @@
+"use strict"
+
 var f = require('util').format
   , fs = require('fs')
   , dnode = require('dnode')
   , path = require('path')
   , mkdirp = require('mkdirp')
-  , levelup = require('levelup')  
+  , levelup = require('levelup')
   , SingleRun = require('./lib/monitor/single_run')
   , Optimizer = require('./lib/monitor/optimizer')
   , Process = require('./lib/monitor/process')
@@ -47,7 +49,7 @@ var yargs = require('yargs')
   // List all available scenarios
   .describe('scenarios', 'list all available scenarios')
   .default('scenarios', null)
-  // 
+  //
   // Optimizer methods
   // Find maximum continous throughput
   .describe('optimize', 'optimize the load so total runtime equals the number of iterations')
@@ -63,10 +65,10 @@ var yargs = require('yargs')
   .default('optimize-percentile', 99)
   // Optimize against latency
   .describe('optimize-latency-target', 'The latency target for each operation')
-  .default('optimize-latency-target', 100)  
-  // Optimize 
+  .default('optimize-latency-target', 100)
+  // Optimize
   .describe('optimize-for-scenario', 'Optimize for a specific scenario, picks the first one if none specified')
-  .default('optimize-for-scenario', null)  
+  .default('optimize-for-scenario', null)
 
 // Get parsed arguments
 var argv = yargs.argv
@@ -88,7 +90,7 @@ var listScenarios = function(scenario, manager) {
     }
 
     // Print the table
-    console.log(table.toString());    
+    console.log(table.toString());
   } else if(manager.find(scenario)) {
     var scenario = manager.find(scenario);
     console.log(JSON.stringify(scenario, null, 2))
@@ -111,14 +113,14 @@ if(argv.scenarios) {
 }
 
 // Error out as no scenario has been specified
-if(typeof argv.s != 'string') 
+if(typeof argv.s != 'string')
   return console.log('[MONITOR] no scenario specified');
 
 // Create the output directory
 mkdirp.sync(argv.o);
 
-// Create 
-var runner = argv.optimize 
+// Create
+var runner = argv.optimize
   ? new Optimizer(argv, manager)
   : new SingleRun(argv, manager);
 

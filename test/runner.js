@@ -26,10 +26,18 @@ var startupOptions = {
   , skip: false
 }
 
+// Skipping parameters
+var startupOptions = {
+    skipStartup: true
+  , skipRestart: true
+  , skipShutdown: true
+  , skip: false
+}
+
 /**
  * Standalone MongoDB Configuration
  */
-var createConfiguration = function(options) {  
+var createConfiguration = function(options) {
   options = options || {};
 
   // Create the configuration
@@ -46,7 +54,7 @@ var createConfiguration = function(options) {
     var replicasetName = options.replicasetName || 'rs';
     var writeConcern = options.writeConcern || {w:1};
     var writeConcernMax = options.writeConcernMax || {w:1};
-    
+
     Logger.setCurrentLogger(function() {});
     Logger.setLevel('debug');
 
@@ -55,7 +63,7 @@ var createConfiguration = function(options) {
     options.journal = false;
 
     // Override manager or use default
-    var manager = options.manager ? options.manager() : new ServerManager(fOptions);  
+    var manager = options.manager ? options.manager() : new ServerManager(fOptions);
 
     // clone
     var clone = function(o) {
@@ -78,7 +86,7 @@ var createConfiguration = function(options) {
 
       stop: function(callback) {
         if(startupOptions.skipShutdown) return callback();
-        manager.stop({signal: -15}, callback);        
+        manager.stop({signal: -15}, callback);
       },
 
       restart: function(options, callback) {
@@ -89,7 +97,7 @@ var createConfiguration = function(options) {
         manager.restart({purge:purge, kill:kill}, function() {
           setTimeout(function() {
             callback();
-          }, 1000);          
+          }, 1000);
         });
       },
 
@@ -185,15 +193,15 @@ var runner = new Runner({
 
 var testFiles =[
     '/test/tests/account_tests.js'
-  , '/test/tests/cache_tests.js'
-  , '/test/tests/cart_no_reservation_tests.js'
-  , '/test/tests/cart_reservation_tests.js'
-  , '/test/tests/metadata_tests.js'
-  , '/test/tests/multilanguage_tests.js'
-  , '/test/tests/nested_categories_tests.js'
-  , '/test/tests/queue_tests.js'
-  , '/test/tests/theater_tests.js'
-  , '/test/tests/timeseries_tests.js'
+  // , '/test/tests/cache_tests.js'
+  // , '/test/tests/cart_no_reservation_tests.js'
+  // , '/test/tests/cart_reservation_tests.js'
+  // , '/test/tests/metadata_tests.js'
+  // , '/test/tests/multilanguage_tests.js'
+  // , '/test/tests/nested_categories_tests.js'
+  // , '/test/tests/queue_tests.js'
+  // , '/test/tests/theater_tests.js'
+  // , '/test/tests/timeseries_tests.js'
 ]
 
 // Add all the tests to run
@@ -211,6 +219,11 @@ var config = createConfiguration();
 // If we have a test we are filtering by
 if(argv.f) runner.plugin(new FileFilter(argv.f));
 if(argv.n) runner.plugin(new TestNameFilter(argv.n));
+
+// Skip startup
+if(startupOptions.skipStartup) {
+  return runner.run(config);
+}
 
 // Kill any running MongoDB processes and
 // `install $MONGODB_VERSION` || `use existing installation` || `install stable`
