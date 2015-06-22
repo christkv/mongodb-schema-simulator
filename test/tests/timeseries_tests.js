@@ -1,5 +1,7 @@
 "use strict";
 
+var co = require('co');
+
 var setup = function(db, callback) {
   var TimeSeries = require('../../lib/common/schemas/time_series/timeseries');
 
@@ -8,10 +10,12 @@ var setup = function(db, callback) {
     timeseries: db.collection('timeseries')
   }
 
-  collections['timeseries'].drop(function() {
-    TimeSeries.createOptimalIndexes(collections, function(err) {
-      callback();
-    });
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      try { yield collections['timeseries'].drop(); } catch(err) {};
+      yield TimeSeries.createOptimalIndexes(collections);
+      resolve();
+    }).catch(reject);
   });
 }
 
@@ -24,9 +28,9 @@ exports['Correctly create and execute ten increments on a timeseries object'] = 
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -34,49 +38,41 @@ exports['Correctly create and execute ten increments on a timeseries object'] = 
       }
 
       // Cleanup
-      setup(db, function() {
-        // Create a fake range of one second
-        var timestamp = new Date();
-        timestamp.setHours(1);
-        timestamp.setMinutes(0);
-        timestamp.setSeconds(0);
+      yield setup(db);
 
-        // Create a new TimeSeries instance
-        var timeSeries = new TimeSeries(collections, new ObjectId(), 'device1', {}, timestamp, 'minute');
-        timeSeries.create(function(err, r) {
-          test.equal(null, err);
-          // Left to do
-          var left = 60;
+      // Create a fake range of one second
+      var timestamp = new Date();
+      timestamp.setHours(1);
+      timestamp.setMinutes(0);
+      timestamp.setSeconds(0);
 
-          // Increment the counters for all seconds
-          for(var i = 0; i < 60; i++) {
-            var date = new Date();
-            date.setHours(1);
-            date.setMinutes(0);
-            date.setSeconds(i);
+      // Create a new TimeSeries instance
+      var timeSeries = new TimeSeries(collections, new ObjectId(), 'device1', {}, timestamp, 'minute');
+      yield timeSeries.create();
 
-            // Increment the point
-            timeSeries.inc(date, 1, function(err, r) {
-              left = left - 1;
+      // Increment the counters for all seconds
+      for(var i = 0; i < 60; i++) {
+        var date = new Date();
+        date.setHours(1);
+        date.setMinutes(0);
+        date.setSeconds(i);
 
-              if(left == 0) {
-                // Grab the document and validate correctness
-                collections['timeseries'].findOne({_id: timeSeries.id}, function(err, doc) {
-                  test.equal(null, err);
-                  test.ok(doc != null);
+        // Increment the point
+        yield timeSeries.inc(date, 1);
 
-                  for(var n in doc.series) {
-                    test.equal(doc.series[n], 1);
-                  }
+        // Grab the document and validate correctness
+        var doc = yield collections['timeseries'].findOne({_id: timeSeries.id});
+        test.ok(doc != null);
 
-                  db.close();
-                  test.done();
-                });
-              }
-            });
-          }
-        });
-      });
+        for(var n in doc.series) {
+          test.equal(doc.series[n], 1);
+        }
+      }
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -90,9 +86,9 @@ exports['Correctly create and execute ten increments on a timeseries object that
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -100,40 +96,37 @@ exports['Correctly create and execute ten increments on a timeseries object that
       }
 
       // Cleanup
-      setup(db, function() {
-        // Create a fake range of one second
-        var timestamp = new Date();
-        timestamp.setHours(1);
-        timestamp.setMinutes(0);
-        timestamp.setSeconds(0);
+      yield setup(db);
 
-        // Create a new pre-allocated TimeSeries instance
-        TimeSeries.preAllocateMinute(collections, new ObjectId(), 'device1', timestamp, function(err, timeSeries) {
-          test.equal(null, err);
-          test.ok(timeSeries != null);
+      // Create a fake range of one second
+      var timestamp = new Date();
+      timestamp.setHours(1);
+      timestamp.setMinutes(0);
+      timestamp.setSeconds(0);
 
-          var date = new Date();
-          date.setHours(1);
-          date.setMinutes(0);
-          date.setSeconds(1);
+      // Create a new pre-allocated TimeSeries instance
+      var timeSeries = yield TimeSeries.preAllocateMinute(collections, new ObjectId(), 'device1', timestamp);
+      test.ok(timeSeries != null);
 
-          // Increment the point
-          timeSeries.inc(date, 1, function(err, r) {
-            test.equal(null, err);
+      var date = new Date();
+      date.setHours(1);
+      date.setMinutes(0);
+      date.setSeconds(1);
 
-            // Grab the document and validate correctness
-            collections['timeseries'].findOne({_id: timeSeries.id}, function(err, doc) {
-              test.equal(null, err);
-              test.ok(doc != null);
-              test.equal(1, doc.series[1]);
-              test.equal(0, doc.series[0]);
+      // Increment the point
+      yield timeSeries.inc(date, 1);
 
-              db.close();
-              test.done();
-            });
-          });
-        });
-      });
+      // Grab the document and validate correctness
+      var doc = yield collections['timeseries'].findOne({_id: timeSeries.id});
+      test.ok(doc != null);
+      test.equal(1, doc.series[1]);
+      test.equal(0, doc.series[0]);
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      console.log(err.stack)
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -147,9 +140,9 @@ exports['Correctly create and execute ten increments on a timeseries object that
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -157,41 +150,37 @@ exports['Correctly create and execute ten increments on a timeseries object that
       }
 
       // Cleanup
-      setup(db, function() {
-        // Create a fake range of one second
-        var timestamp = new Date();
-        timestamp.setHours(0);
-        timestamp.setMinutes(0);
-        timestamp.setSeconds(0);
+      yield setup(db);
 
-        // Create a new pre-allocated TimeSeries instance
-        TimeSeries.preAllocateHour(collections, new ObjectId(), 'device1', timestamp, function(err, timeSeries) {
-          test.equal(null, err);
-          test.ok(timeSeries != null);
+      // Create a fake range of one second
+      var timestamp = new Date();
+      timestamp.setHours(0);
+      timestamp.setMinutes(0);
+      timestamp.setSeconds(0);
 
-          var date = new Date();
-          date.setHours(0);
-          date.setMinutes(0);
-          date.setSeconds(1);
+      // Create a new pre-allocated TimeSeries instance
+      var timeSeries = yield TimeSeries.preAllocateHour(collections, new ObjectId(), 'device1', timestamp);
+      test.ok(timeSeries != null);
 
-          // Increment the point
-          timeSeries.inc(date, 1, function(err, r) {
-            test.equal(null, err);
+      var date = new Date();
+      date.setHours(0);
+      date.setMinutes(0);
+      date.setSeconds(1);
 
-            // Grab the document and validate correctness
-            collections['timeseries'].findOne({_id: timeSeries.id}, function(err, doc) {
-              test.equal(null, err);
-              test.ok(doc != null);
+      // Increment the point
+      yield timeSeries.inc(date, 1);
 
-              test.equal(1, doc.series[0][1]);
-              test.equal(0, doc.series[0][0]);
+      // Grab the document and validate correctness
+      var doc = yield collections['timeseries'].findOne({_id: timeSeries.id});
+      test.ok(doc != null);
 
-              db.close();
-              test.done();
-            });
-          });
-        });
-      });
+      test.equal(1, doc.series[0][1]);
+      test.equal(0, doc.series[0][0]);
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -205,9 +194,9 @@ exports['Correctly create and execute ten increments on a timeseries object that
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -215,43 +204,39 @@ exports['Correctly create and execute ten increments on a timeseries object that
       }
 
       // Cleanup
-      setup(db, function() {
-        // Create a fake range of one second
-        var timestamp = new Date();
-        timestamp.setDate(10)
-        timestamp.setHours(0);
-        timestamp.setMinutes(0);
-        timestamp.setSeconds(0);
+      yield setup(db);
 
-        // Create a new pre-allocated TimeSeries instance
-        TimeSeries.preAllocateDay(collections, new ObjectId(), 'device1', timestamp, function(err, timeSeries) {
-          test.equal(null, err);
-          test.ok(timeSeries != null);
+      // Create a fake range of one second
+      var timestamp = new Date();
+      timestamp.setDate(10)
+      timestamp.setHours(0);
+      timestamp.setMinutes(0);
+      timestamp.setSeconds(0);
 
-          var date = new Date();
-          date.setDate(10)
-          date.setHours(0);
-          date.setMinutes(0);
-          date.setSeconds(1);
+      // Create a new pre-allocated TimeSeries instance
+      var timeSeries = yield TimeSeries.preAllocateDay(collections, new ObjectId(), 'device1', timestamp);
+      test.ok(timeSeries != null);
 
-          // Increment the point
-          timeSeries.inc(date, 1, function(err, r) {
-            test.equal(null, err);
+      var date = new Date();
+      date.setDate(10)
+      date.setHours(0);
+      date.setMinutes(0);
+      date.setSeconds(1);
 
-            // Grab the document and validate correctness
-            collections['timeseries'].findOne({_id: timeSeries.id}, function(err, doc) {
-              test.equal(null, err);
-              test.ok(doc != null);
+      // Increment the point
+      yield timeSeries.inc(date, 1);
 
-              test.equal(1, doc.series[0][0][1]);
-              test.equal(0, doc.series[0][0][0]);
+      // Grab the document and validate correctness
+      var doc = yield collections['timeseries'].findOne({_id: timeSeries.id});
+      test.ok(doc != null);
 
-              db.close();
-              test.done();
-            });
-          });
-        });
-      });
+      test.equal(1, doc.series[0][0][1]);
+      test.equal(0, doc.series[0][0][0]);
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -265,9 +250,9 @@ exports['Set up 1000 time slots and ensureIndex'] = {
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -275,30 +260,25 @@ exports['Set up 1000 time slots and ensureIndex'] = {
       }
 
       // Cleanup
-      setup(db, function() {
-        var left = 1000;
+      yield setup(db);
 
-        TimeSeries.createOptimalIndexes(collections, function(err, r) {
-          test.equal(null, err);
+      var left = 1000;
 
-          for(var i = 0; i < 1000; i++) {
-            var timestamp = new Date();
-            timestamp.setMinutes(i);
-            timestamp.setSeconds(0);
+      yield TimeSeries.createOptimalIndexes(collections);
 
-            // Create a new minute allocation
-            TimeSeries.preAllocateMinute(collections, new ObjectId(), 'device1', timestamp, function(err, r) {
-              test.equal(null, err);
-              left = left - 1;
+      for(var i = 0; i < 1000; i++) {
+        var timestamp = new Date();
+        timestamp.setMinutes(i);
+        timestamp.setSeconds(0);
 
-              if(left == 0) {
-                db.close();
-                test.done();
-              }
-            });
-          }
-        });
-      });
+        // Create a new minute allocation
+        yield TimeSeries.preAllocateMinute(collections, new ObjectId(), 'device1', timestamp);
+      }
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }

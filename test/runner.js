@@ -201,7 +201,7 @@ var testFiles =[
   , '/test/tests/nested_categories_tests.js'
   , '/test/tests/queue_tests.js'
   , '/test/tests/theater_tests.js'
-  // , '/test/tests/timeseries_tests.js'
+  , '/test/tests/timeseries_tests.js'
 ]
 
 // Add all the tests to run
