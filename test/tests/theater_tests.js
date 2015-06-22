@@ -1,6 +1,8 @@
 "use strict";
 
-var setup = function(db, callback) {
+var co = require('co');
+
+var setup = function(db) {
   var Session = require('../../lib/common/schemas/theater/session')
     , Cart = require('../../lib/common/schemas/theater/cart');
 
@@ -12,51 +14,53 @@ var setup = function(db, callback) {
     , receipts: db.collection('receipts')
   }
 
-  collections['theaters'].drop(function() {
-    collections['sessions'].drop(function() {
-      collections['carts'].drop(function() {
-        collections['receipts'].drop(function() {
-          Session.createOptimalIndexes(collections, function(err) {
-            Cart.createOptimalIndexes(collections, function(err) {
-              callback();
-            });
-          });
-        });
-      });
-    });
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      try { yield collections['theaters'].drop(); } catch(err) {};
+      try { yield collections['sessions'].drop(); } catch(err) {};
+      try { yield collections['carts'].drop(); } catch(err) {};
+      try { yield collections['receipts'].drop(); } catch(err) {};
+      yield Session.createOptimalIndexes(collections);
+      yield Cart.createOptimalIndexes(collections);
+      resolve();
+    }).catch(reject);
   });
 }
 
-var validateSeats = function(collections, test, session, seats, seatsLeft, callback) {
-  collections['sessions'].findOne({_id: session.id}, function(err, doc) {
-    test.equal(null, err);
-    test.ok(doc != null);
-    test.equal(doc.seatsAvailable, seatsLeft);
+var validateSeats = function(collections, test, session, seats, seatsLeft) {
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      var doc = yield collections['sessions'].findOne({_id: session.id});
+      test.ok(doc != null);
+      test.equal(doc.seatsAvailable, seatsLeft);
 
-    for(var i = 0; i < seats.length; i++) {
-      var seat = seats[i];
-      test.equal(doc.seats[seat[0]][seat[1]], 1);
-    }
+      for(var i = 0; i < seats.length; i++) {
+        var seat = seats[i];
+        test.equal(doc.seats[seat[0]][seat[1]], 1);
+      }
 
-    test.equal(0, doc.reservations.length);
-    callback();
+      test.equal(0, doc.reservations.length);
+      resolve();
+    }).catch(reject);
   });
 }
 
-var validateCart = function(collections, test, cart, state, reservations, callback) {
-  collections['carts'].findOne({_id: cart.id}, function(err, doc) {
-    test.equal(null, err);
-    test.ok(doc != null);
-    test.equal(reservations.length, doc.reservations.length);
-    test.equal(state, doc.state);
+var validateCart = function(collections, test, cart, state, reservations) {
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      var doc = yield collections['carts'].findOne({_id: cart.id});
+      test.ok(doc != null);
+      test.equal(reservations.length, doc.reservations.length);
+      test.equal(state, doc.state);
 
-    // Validate all the reservations in the cart
-    for(var i = 0; i < reservations.length; i++) {
-      test.equal(doc.reservations[i].total, reservations[i].total);
-      test.deepEqual(doc.reservations[i].seats, reservations[i].seats);
-    }
+      // Validate all the reservations in the cart
+      for(var i = 0; i < reservations.length; i++) {
+        test.equal(doc.reservations[i].total, reservations[i].total);
+        test.deepEqual(doc.reservations[i].seats, reservations[i].seats);
+      }
 
-    callback();
+      resolve();
+    }).catch(reject);
   });
 }
 
@@ -70,9 +74,9 @@ exports['Should correctly set up theater and session and buy tickets for some ro
       , Cart = require('../../lib/common/schemas/theater/cart')
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -83,69 +87,57 @@ exports['Should correctly set up theater and session and buy tickets for some ro
       }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        // Create a new Theater
-        var theater = new Theater(collections, 1, 'The Royal', [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        ]);
+      // Create a new Theater
+      var theater = new Theater(collections, 1, 'The Royal', [
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      ]);
 
-        // Create a theater instance
-        theater.create(function(err, theater) {
-          test.equal(null, err);
-          test.ok(theater != null);
+      // Create a theater instance
+      var theater = yield theater.create();
+      test.ok(theater != null);
 
-          // Add a session to the theater
-          theater.addSession("Action Movie 5", "Another action movie", new Date(), new Date(), 10, function(err, session) {
-            test.equal(null, err);
-            test.ok(session != null);
+      // Add a session to the theater
+      var session = yield theater.addSession("Action Movie 5", "Another action movie", new Date(), new Date(), 10);
+      test.ok(session != null);
 
-            // Create a cart
-            var cart = new Cart(collections, 1);
-            cart.create(function(err, cart) {
-              test.equal(null, err);
-              test.ok(cart != null);
+      // Create a cart
+      var cart = new Cart(collections, 1);
+      yield cart.create();
+      test.ok(cart != null);
 
-              // Seats to reserve [y cord, x cord]
-              var seats = [[1, 5], [1, 6], [1, 7]]
-              // Reserve some seats at the movie
-              cart.reserve(theater, session, seats, function(err, cart) {
-                test.equal(null, err);
+      // Seats to reserve [y cord, x cord]
+      var seats = [[1, 5], [1, 6], [1, 7]];
 
-                // Reservation ok, checkout the cart
-                cart.checkout(function(err) {
-                  test.equal(null, err);
+      // Reserve some seats at the movie
+      var cart = yield cart.reserve(theater, session, seats);
 
-                  // Validate seat reservations
-                  validateSeats(collections, test
-                    , session, seats, (session.seatsAvailable - seats.length), function(err) {
-                    test.equal(null, err);
+      // Reservation ok, checkout the cart
+      yield cart.checkout();
 
-                    // Our expected cart reservations
-                    var expectedReservations = [{
-                          seats: seats
-                        , total: seats.length * session.price
-                      }
-                    ];
+      // Validate seat reservations
+      yield validateSeats(collections, test
+        , session, seats, (session.seatsAvailable - seats.length));
 
-                    // validateCart
-                    validateCart(collections, test, cart, 'done', expectedReservations, function(err) {
-                      test.equal(null, err);
+      // Our expected cart reservations
+      var expectedReservations = [{
+            seats: seats
+          , total: seats.length * session.price
+        }
+      ];
 
-                      db.close();
-                      test.done();
-                    });
-                  });
-                });
-              })
-            });
-          });
-        });
-      });
+      // validateCart
+      yield validateCart(collections, test, cart, 'done', expectedReservations);
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -160,9 +152,9 @@ exports['Should correctly set up theater and session and book tickets but fail t
       , Cart = require('../../lib/common/schemas/theater/cart')
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -173,70 +165,60 @@ exports['Should correctly set up theater and session and book tickets but fail t
       }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        // Create a new Theater
-        var theater = new Theater(collections, 1, 'The Royal', [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        ]);
+      // Create a new Theater
+      var theater = new Theater(collections, 1, 'The Royal', [
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      ]);
 
-        // Create a theater instance
-        theater.create(function(err, theater) {
-          test.equal(null, err);
-          test.ok(theater != null);
+      // Create a theater instance
+      yield theater.create();
+      test.ok(theater != null);
 
-          // Add a session to the theater
-          theater.addSession("Action Movie 5", "Another action movie", new Date(), new Date(), 10, function(err, session) {
-            test.equal(null, err);
-            test.ok(session != null);
+      // Add a session to the theater
+      var session = yield theater.addSession("Action Movie 5", "Another action movie", new Date(), new Date(), 10);
+      test.ok(session != null);
 
-            // Create a cart
-            var cart = new Cart(collections, 1)
-            cart.create(function(err, cart) {
-              test.equal(null, err);
-              test.ok(cart != null);
+      // Create a cart
+      var cart = new Cart(collections, 1)
+      yield cart.create();
+      test.ok(cart != null);
 
-              // Seats to reserve [y cord, x cord]
-              var seats = [[1, 5], [1, 6], [1, 7]]
-              // Reserve some seats at the movie
-              cart.reserve(theater, session, seats, function(err, cart) {
-                test.equal(null, err);
+      // Seats to reserve [y cord, x cord]
+      var seats = [[1, 5], [1, 6], [1, 7]]
 
-                // Reservation ok, checkout the cart
-                cart.checkout(function(err) {
-                  test.equal(null, err);
+      // Reserve some seats at the movie
+      var cart = yield cart.reserve(theater, session, seats);
 
-                  // Create a cart
-                  var cart = new Cart(collections, 2)
-                  cart.create(function(err, cart) {
-                    test.equal(null, err);
-                    test.ok(cart != null);
+      // Reservation ok, checkout the cart
+      yield cart.checkout();
 
-                    // Seats to reserve [y cord, x cord]
-                    var seats = [[1, 5], [1, 6], [1, 7]]
-                    // Reserve some seats at the movie
-                    cart.reserve(theater, session, seats, function(err) {
-                      test.ok(err != null);
+      // Create a cart
+      var cart = new Cart(collections, 2)
+      yield cart.create();
+      test.ok(cart != null);
 
-                      // Our expected cart reservations
-                      validateCart(collections, test, cart, 'active', [], function(err) {
-                        test.equal(null, err);
+      // Seats to reserve [y cord, x cord]
+      var seats = [[1, 5], [1, 6], [1, 7]]
 
-                        db.close();
-                        test.done();
-                      });
-                    });
-                  });
-                });
-              })
-            });
-          });
-        });
-      });
+      try {
+        // Reserve some seats at the movie
+        yield cart.reserve(theater, session, seats);
+        test.ok(false);
+      } catch(err) {
+      }
+
+      // Our expected cart reservations
+      yield validateCart(collections, test, cart, 'active', []);
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -251,81 +233,68 @@ exports['Should correctly set up theater and session and book tickets but fail t
       , Cart = require('../../lib/common/schemas/theater/cart')
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
+
+      // All the collections used
+      var collections = {
+          theaters: db.collection('theaters')
+        , sessions: db.collection('sessions')
+        , carts: db.collection('carts')
+        , receipts: db.collection('receipts')
+      }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        // All the collections used
-        var collections = {
-            theaters: db.collection('theaters')
-          , sessions: db.collection('sessions')
-          , carts: db.collection('carts')
-          , receipts: db.collection('receipts')
+      // Create a new Theater
+      var theater = new Theater(collections, 1, 'The Royal', [
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      ]);
+
+      // Create a theater instance
+      yield theater.create();
+      test.ok(theater != null);
+
+      // Add a session to the theater
+      var session = yield theater.addSession("Action Movie 5", "Another action movie", new Date(), new Date(), 10);
+      test.ok(session != null);
+
+      // Create a cart
+      var cart = new Cart(collections, 1)
+      yield cart.create();
+      test.ok(cart != null);
+
+      // Seats to reserve [y cord, x cord]
+      var seats = [[1, 5], [1, 6], [1, 7]]
+      // Reserve some seats at the movie
+      yield cart.reserve(theater, session, seats);
+
+      // Destroy the cart
+      var r = yield collections['carts'].removeOne({_id: cart.id});
+      test.equal(1, r.deletedCount);
+
+      // Reservation ok, checkout the cart
+      yield cart.checkout();
+
+      var doc = yield collections['sessions'].findOne({_id: session.id});
+
+      // Validate that no seats are reserved after cart destroyed
+      for(var i = 0; i < doc.seats.length; i++) {
+        for(var j = 0; j < doc.seats[i].length; j++) {
+          test.equal(0, doc.seats[i][j]);
         }
+      }
 
-        // Create a new Theater
-        var theater = new Theater(collections, 1, 'The Royal', [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        ]);
-
-        // Create a theater instance
-        theater.create(function(err, theater) {
-          test.equal(null, err);
-          test.ok(theater != null);
-
-          // Add a session to the theater
-          theater.addSession("Action Movie 5", "Another action movie", new Date(), new Date(), 10, function(err, session) {
-            test.equal(null, err);
-            test.ok(session != null);
-
-            // Create a cart
-            var cart = new Cart(collections, 1)
-            cart.create(function(err, cart) {
-              test.equal(null, err);
-              test.ok(cart != null);
-
-              // Seats to reserve [y cord, x cord]
-              var seats = [[1, 5], [1, 6], [1, 7]]
-              // Reserve some seats at the movie
-              cart.reserve(theater, session, seats, function(err, cart) {
-                test.equal(null, err);
-
-                // Destroy the cart
-                collections['carts'].removeOne({_id: cart.id}, function(err, r) {
-                  test.equal(null, err);
-                  test.equal(1, r.deletedCount);
-
-                  // Reservation ok, checkout the cart
-                  cart.checkout(function(err) {
-                    test.ok(err != null);
-
-                    collections['sessions'].findOne({_id: session.id}, function(err, doc) {
-                      test.equal(null, err);
-
-                      // Validate that no seats are reserved after cart destroyed
-                      for(var i = 0; i < doc.seats.length; i++) {
-                        for(var j = 0; j < doc.seats[i].length; j++) {
-                          test.equal(0, doc.seats[i][j]);
-                        }
-                      }
-
-                      db.close();
-                      test.done();
-                    });
-                  });
-                });
-              })
-            });
-          });
-        });
-      });
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -340,86 +309,72 @@ exports['Should correctly find expired carts and remove any reservations in them
       , Cart = require('../../lib/common/schemas/theater/cart')
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
+
+      // All the collections used
+      var collections = {
+          theaters: db.collection('theaters')
+        , sessions: db.collection('sessions')
+        , carts: db.collection('carts')
+        , receipts: db.collection('receipts')
+      }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        // All the collections used
-        var collections = {
-            theaters: db.collection('theaters')
-          , sessions: db.collection('sessions')
-          , carts: db.collection('carts')
-          , receipts: db.collection('receipts')
+      // Create a new Theater
+      var theater = new Theater(collections, 1, 'The Royal', [
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      ]);
+
+      // Create a theater instance
+      yield theater.create();
+      test.ok(theater != null);
+
+      // Add a session to the theater
+      var session = yield theater.addSession("Action Movie 5", "Another action movie", new Date(), new Date(), 10);
+      test.ok(session != null);
+
+      // Create a cart
+      var cart = new Cart(collections, 1)
+      yield cart.create();
+      test.ok(cart != null);
+
+      // Seats to reserve [y cord, x cord]
+      var seats = [[1, 5], [1, 6], [1, 7]];
+
+      // Reserve some seats at the movie
+      yield cart.reserve(theater, session, seats);
+
+      // Force expire the cart
+      var r = yield collections['carts'].updateOne({_id: cart.id}, {$set: {state: Cart.EXPIRED}});
+      test.equal(1, r.modifiedCount);
+
+      // Release all the carts that are expired
+      yield Cart.releaseExpired(collections);
+
+      var doc = yield collections['sessions'].findOne({_id: session.id});
+
+      // Validate that no seats are reserved after cart destroyed
+      for(var i = 0; i < doc.seats.length; i++) {
+        for(var j = 0; j < doc.seats[i].length; j++) {
+          test.equal(0, doc.seats[i][j]);
         }
+      }
 
-        // Create a new Theater
-        var theater = new Theater(collections, 1, 'The Royal', [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-          , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        ]);
+      var c = yield collections['carts'].count({state:'expired'});
+      test.equal(0, c);
 
-        // Create a theater instance
-        theater.create(function(err, theater) {
-          test.equal(null, err);
-          test.ok(theater != null);
-
-          // Add a session to the theater
-          theater.addSession("Action Movie 5", "Another action movie", new Date(), new Date(), 10, function(err, session) {
-            test.equal(null, err);
-            test.ok(session != null);
-
-            // Create a cart
-            var cart = new Cart(collections, 1)
-            cart.create(function(err, cart) {
-              test.equal(null, err);
-              test.ok(cart != null);
-
-              // Seats to reserve [y cord, x cord]
-              var seats = [[1, 5], [1, 6], [1, 7]]
-              // Reserve some seats at the movie
-              cart.reserve(theater, session, seats, function(err, cart) {
-                test.equal(null, err);
-
-                // Force expire the cart
-                collections['carts'].updateOne({_id: cart.id}, {$set: {state: Cart.EXPIRED}}, function(err, r) {
-                  test.equal(null, err);
-                  test.equal(1, r.modifiedCount);
-
-                  // Release all the carts that are expired
-                  Cart.releaseExpired(collections, function(err) {
-                    test.equal(null, err);
-
-                    collections['sessions'].findOne({_id: session.id}, function(err, doc) {
-                      test.equal(null, err);
-
-                      // Validate that no seats are reserved after cart destroyed
-                      for(var i = 0; i < doc.seats.length; i++) {
-                        for(var j = 0; j < doc.seats[i].length; j++) {
-                          test.equal(0, doc.seats[i][j]);
-                        }
-                      }
-
-                      collections['carts'].count({state:'expired'}, function(err, c) {
-                        test.equal(null, err);
-                        test.equal(0, c);
-
-                        db.close();
-                        test.done();
-                      });
-                    });
-                  });
-                });
-              })
-            });
-          });
-        });
-      });
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }

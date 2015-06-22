@@ -29,7 +29,7 @@ var createProducts = function(collections) {
     , inventories: collections['inventories']
   }
 
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     co(function* () {
       // Insert all the products
       yield collections['products'].insertMany(products);
@@ -57,7 +57,7 @@ var setup = function(db) {
     , inventories: db.collection('inventories')
   }
 
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     co(function* () {
       try { yield collections['products'].drop(); } catch(err) {}
       try { yield collections['carts'].drop(); } catch(err) {}

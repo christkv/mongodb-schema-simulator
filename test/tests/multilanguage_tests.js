@@ -1,6 +1,8 @@
 "use strict";
 
-var setup = function(db, callback) {
+var co = require('co');
+
+var setup = function(db) {
   var Category = require('../../lib/common/schemas/multilanguage/category')
     , Product = require('../../lib/common/schemas/multilanguage/product');
 
@@ -10,21 +12,20 @@ var setup = function(db, callback) {
     , categories: db.collection('categories')
   }
 
-  collections['products'].drop(function() {
-    collections['categories'].drop(function() {
-      Category.createOptimalIndexes(collections, function(err) {
-        Product.createOptimalIndexes(collections, function(err) {
-          callback();
-        });
-      });
-    });
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      try { yield collections['products'].drop(); } catch(err) {};
+      try { yield collections['categories'].drop(); } catch(err) {};
+      yield Category.createOptimalIndexes(collections);
+      yield Product.createOptimalIndexes(collections);
+      resolve();
+    }).catch(reject);
   });
 }
 
 var setupCategories = function(db, categories, callback) {
   var Category = require('../../lib/common/schemas/multilanguage/category')
     , ObjectId = require('mongodb').ObjectId;
-  var left = categories.length;
 
   // All the collections used
   var collections = {
@@ -32,21 +33,22 @@ var setupCategories = function(db, categories, callback) {
     , categories: db.collection('categories')
   }
 
-  // Iterate over all the categories
-  for(var i = 0; i < categories.length; i++) {
-    var category = new Category(collections, categories[i][0], categories[i][1]);
-    category.create(function() {
-      left = left - 1;
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      // Iterate over all the categories
+      for(var i = 0; i < categories.length; i++) {
+        var category = new Category(collections, categories[i][0], categories[i][1]);
+        yield category.create();
+      }
 
-      if(left == 0) callback();
-    });
-  }
+      resolve();
+    }).catch(reject);
+  });
 }
 
 var setupProducts = function(db, products, callback) {
   var Product = require('../../lib/common/schemas/multilanguage/product')
     , ObjectId = require('mongodb').ObjectId;
-  var left = products.length;
 
   // All the collections used
   var collections = {
@@ -54,15 +56,17 @@ var setupProducts = function(db, products, callback) {
     , categories: db.collection('categories')
   }
 
-  // Iterate over all the categories
-  for(var i = 0; i < products.length; i++) {
-    var product = new Product(collections, new ObjectId(), products[i][0], products[i][1], products[i][2], products[i][3]);
-    product.create(function() {
-      left = left - 1;
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      // Iterate over all the categories
+      for(var i = 0; i < products.length; i++) {
+        var product = new Product(collections, new ObjectId(), products[i][0], products[i][1], products[i][2], products[i][3]);
+        yield product.create();
+      }
 
-      if(left == 0) callback();
-    });
-  }
+      resolve();
+    }).catch(reject);
+  });
 }
 
 exports['Correctly add new local for a category and see it reflected in the products'] = {
@@ -75,9 +79,8 @@ exports['Correctly add new local for a category and see it reflected in the prod
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -86,48 +89,38 @@ exports['Correctly add new local for a category and see it reflected in the prod
       }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        // Setup a bunch of categories
-        var categories = [
-          [1, {'en-us': 'car', 'de-de': 'auto'}]
-        ];
+      // Setup a bunch of categories
+      var categories = [
+        [1, {'en-us': 'car', 'de-de': 'auto'}]
+      ];
 
-        // Create all the categories
-        setupCategories(db, categories, function() {
+      // Create all the categories
+      yield setupCategories(db, categories);
 
-          // Locate the categories
-          collections['categories'].find().toArray(function(err, categories) {
-            test.equal(null, err);
+      // Locate the categories
+      var categories = yield collections['categories'].find().toArray();
 
-            // Create a product
-            var product = new Product(collections, 1, 'car', 100, 'usd', categories);
-            product.create(function(err, product) {
-              test.equal(null, err);
+      // Create a product
+      var product = new Product(collections, 1, 'car', 100, 'usd', categories);
+      yield product.create();
 
-              // Let's attempt to add a local to the category
-              var cat = new Category(collections, 1);
-              cat.addLocal('es-es', 'coche', function(err) {
-                test.equal(null, err);
+      // Let's attempt to add a local to the category
+      var cat = new Category(collections, 1);
+      yield cat.addLocal('es-es', 'coche');
 
-                // Reload the product
-                product.reload(function(err, product) {
-                  test.equal(null, err);
-                  test.equal('coche', product.categories[0].names['es-es']);
+      // Reload the product
+      yield product.reload();
+      test.equal('coche', product.categories[0].names['es-es']);
 
-                  cat.reload(function(err, cat) {
-                    test.equal(null, err);
-                    test.equal('coche', cat.names['es-es']);
+      yield cat.reload();
+      test.equal('coche', cat.names['es-es']);
 
-                    db.close();
-                    test.done();
-                  });
-                });
-              });
-            });
-          });
-        });
-      });
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -142,59 +135,49 @@ exports['Correctly remove a local for a category and see it reflected in the pro
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      var db = yield MongoClient.connect(configuration.url());
+
+      // All the collections used
+      var collections = {
+          products: db.collection('products')
+        , categories: db.collection('categories')
+      }
+
+      // Setup a bunch of categories
+      var categories = [
+        [1, {'en-us': 'car', 'de-de': 'auto'}]
+      ];
+
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        // All the collections used
-        var collections = {
-            products: db.collection('products')
-          , categories: db.collection('categories')
-        }
+      // Create all the categories
+      yield setupCategories(db, categories);
 
-        // Setup a bunch of categories
-        var categories = [
-          [1, {'en-us': 'car', 'de-de': 'auto'}]
-        ];
+      // Locate the categories
+      var categories = yield collections['categories'].find().toArray();
 
-        // Create all the categories
-        setupCategories(db, categories, function() {
+      // Create a product
+      var product = new Product(collections, 1, 'car', 100, 'usd', categories);
+      yield product.create();
 
-          // Locate the categories
-          collections['categories'].find().toArray(function(err, categories) {
-            test.equal(null, err);
+      // Let's attempt to add a local to the category
+      var cat = new Category(collections, 1);
+      yield cat.removeLocal('de-de');
 
-            // Create a product
-            var product = new Product(collections, 1, 'car', 100, 'usd', categories);
-            product.create(function(err, product) {
-              test.equal(null, err);
+      // Reload the product
+      yield product.reload();
+      test.equal(null, product.categories[0].names['de-de']);
 
-              // Let's attempt to add a local to the category
-              var cat = new Category(collections, 1);
-              cat.removeLocal('de-de', function(err) {
-                test.equal(null, err);
+      yield cat.reload();
+      test.equal(null, cat.names['de-de']);
 
-                // Reload the product
-                product.reload(function(err, product) {
-                  test.equal(null, err);
-                  test.equal(null, product.categories[0].names['de-de']);
-
-                  cat.reload(function(err, cat) {
-                    test.equal(null, err);
-                    test.equal(null, cat.names['de-de']);
-
-                    db.close();
-                    test.done();
-                  });
-                });
-              });
-            });
-          });
-        });
-      });
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }

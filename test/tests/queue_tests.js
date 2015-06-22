@@ -1,5 +1,7 @@
 "use strict";
 
+var co = require('co');
+
 var setup = function(db, callback) {
   var Queue = require('../../lib/common/schemas/queue/queue')
     , Topic = require('../../lib/common/schemas/queue/topic');
@@ -7,17 +9,21 @@ var setup = function(db, callback) {
   // All the collections used
   var collections = {
       queues: db.collection('queues')
+    , queues2: db.collection('queues2')
     , topics: db.collection('topics')
+    , topics2: db.collection('topics2')
   }
 
-  collections['queues'].drop(function() {
-    collections['topics'].drop(function() {
-      Queue.createOptimalIndexes(collections, function(err) {
-        Topic.createOptimalIndexes(collections, function(err) {
-          callback();
-        });
-      });
-    });
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      try { yield collections['queues'].drop(); } catch(err) {};
+      try { yield collections['queues2'].drop(); } catch(err) {};
+      try { yield collections['topics'].drop(); } catch(err) {};
+      try { yield collections['topics2'].drop(); } catch(err) {};
+      yield Queue.createOptimalIndexes(collections);
+      yield Topic.createOptimalIndexes(collections);
+      resolve();
+    }).catch(reject);
   });
 }
 
@@ -29,9 +35,9 @@ exports['Should correctly insert job into queue'] = {
     var Queue = require('../../lib/common/schemas/queue/queue')
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -40,108 +46,99 @@ exports['Should correctly insert job into queue'] = {
       }
 
       // Cleanup
-      setup(db, function() {
-        // Create a queue
-        var queue = new Queue(collections);
-        // Add some items to queue
-        var addToQueue = function(callback) {
-          queue.publish(1, {work:1}, function(err) {
-            test.equal(null, err);
+      yield setup(db);
+      // Create a queue
+      var queue = new Queue(collections);
 
-            queue.publish(5, {work:2}, function(err) {
-              test.equal(null, err);
-
-              queue.publish(3, {work:3}, function(err) {
-                test.equal(null, err);
-                callback();
-              });
-            });
-          });
-        }
-
-        // Add the queues
-        addToQueue(function() {
-          queue.fetchByPriority(function(err, work) {
-            test.equal(null, err)
-            test.ok(work != null);
-            test.equal(5, work.doc.priority);
-
-            queue.fetchFIFO(function(err, work) {
-              test.equal(null, err)
-              test.ok(work != null);
-              test.equal(1, work.doc.priority);
-
-              db.close();
-              test.done();
-            });
-          });
+      // Add some items to queue
+      var addToQueue = function() {
+        return new Promise((resolve, reject) => {
+          co(function* () {
+            yield queue.publish(1, {work:1});
+            yield queue.publish(5, {work:2});
+            yield queue.publish(3, {work:3});
+            resolve();
+          }).catch(reject);
         });
-      })
+      }
+
+      // Add the queues
+      yield addToQueue();
+      var work = yield queue.fetchByPriority();
+      test.ok(work != null);
+      test.equal(5, work.doc.priority);
+
+      var work = yield queue.fetchFIFO();
+      test.ok(work != null);
+      test.equal(1, work.doc.priority);
+
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
 
-// exports['Should correctly insert job into topic and listen to it'] = {
-//   metadata: { requires: { } },
+exports['Should correctly insert job into topic and listen to it'] = {
+  metadata: { requires: { } },
 
-//   // The actual test we wish to run
-//   test: function(configuration, test) {
-//     var Topic = require('../../lib/common/schemas/queue/topic')
-//       , MongoClient = require('mongodb').MongoClient;
+  // The actual test we wish to run
+  test: function(configuration, test) {
+    var Topic = require('../../lib/common/schemas/queue/topic')
+      , MongoClient = require('mongodb').MongoClient;
 
-//     // Connect to mongodb
-//     MongoClient.connect(configuration.url(), function(err, db) {
-//       test.equal(null, err);
 
-//       // All the collections used
-//       var collections = {
-//           queues: db.collection('queues2')
-//         , topics: db.collection('topics2')
-//       }
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
-//       // Cleanup
-//       setup(db, function() {
-//         // Create a queue
-//         var topic = new Topic(collections, 10000, 10000);
-//         topic.create(function(err, topic) {
-//           test.equal(null, err);
-//           test.ok(topic != null);
+      // All the collections used
+      var collections = {
+          queues: db.collection('queues2')
+        , topics: db.collection('topics2')
+      }
 
-//           // Add some items to queue
-//           var addToTopic = function(callback) {
-//             topic.publish({work:1}, function(err) {
-//               test.equal(null, err);
+      // Cleanup
+      yield setup(db);
 
-//               topic.publish({work:2}, function(err) {
-//                 test.equal(null, err);
+      // Create a queue
+      var topic = new Topic(collections, 10000, 10000);
+      yield topic.create()
+      test.ok(topic != null);
 
-//                 topic.publish({work:3}, function(err) {
-//                   test.equal(null, err);
-//                   callback();
-//                 });
-//               });
-//             });
-//           }
+      // Add some items to queue
+      var addToTopic = function(callback) {
+        return new Promise((resolve, reject) => {
+          co(function* () {
+            yield topic.publish({work:1});
+            yield topic.publish({work:2});
+            yield topic.publish({work:3});
+            resolve();
+          }).catch(reject);
+        });
+      }
 
-//           // Add the queues
-//           addToTopic(function() {
-//             setTimeout(function() {
-//               var docs = [];
-//               var cursor = topic.listen(null, {awaitData: false});
-//               cursor.on('data', function(doc) {
-//                 docs.push(doc);
-//               });
+      // Add the queues
+      yield addToTopic();
 
-//               cursor.on('end', function() {
-//                 test.equal(3, docs.length);
+      // Set the timeout
+      setTimeout(function() {
+        var docs = [];
+        var cursor = topic.listen(null, {awaitData: false});
+        cursor.on('data', function(doc) {
+          docs.push(doc);
+        });
 
-//                 db.close();
-//                 test.done();
-//               });
-//             }, 2000);
-//           });
-//         });
-//       });
-//     });
-//   }
-// }
+        cursor.on('end', function() {
+          test.equal(3, docs.length);
+
+          db.close();
+          test.done();
+        });
+      }, 2000);
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
+    });
+  }
+}

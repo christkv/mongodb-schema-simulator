@@ -1,5 +1,7 @@
 "use strict";
 
+var co = require('co');
+
 var setup = function(db, callback) {
   var Category = require('../../lib/common/schemas/nested_categories/category')
     , Product = require('../../lib/common/schemas/nested_categories/product');
@@ -10,21 +12,20 @@ var setup = function(db, callback) {
     , categories: db.collection('categories')
   }
 
-  collections['products'].drop(function() {
-    collections['categories'].drop(function() {
-      Category.createOptimalIndexes(collections, function(err) {
-        Product.createOptimalIndexes(collections, function(err) {
-          callback();
-        });
-      });
-    });
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      try { yield collections['products'].drop(); } catch(err) {};
+      try { yield collections['categories'].drop(); } catch(err) {};
+      yield Category.createOptimalIndexes(collections);
+      yield Product.createOptimalIndexes(collections);
+      resolve();
+    }).catch(reject);
   });
 }
 
 var setupCategories = function(db, categories, callback) {
   var Category = require('../../lib/common/schemas/nested_categories/category')
     , ObjectId = require('mongodb').ObjectId;
-  var left = categories.length;
 
   // All the collections used
   var collections = {
@@ -32,21 +33,22 @@ var setupCategories = function(db, categories, callback) {
     , categories: db.collection('categories')
   }
 
-  // Iterate over all the categories
-  for(var i = 0; i < categories.length; i++) {
-    var category = new Category(collections, new ObjectId(), categories[i][0], categories[i][1]);
-    category.create(function() {
-      left = left - 1;
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      // Iterate over all the categories
+      for(var i = 0; i < categories.length; i++) {
+        var category = new Category(collections, new ObjectId(), categories[i][0], categories[i][1]);
+        yield category.create();
+      }
 
-      if(left == 0) callback();
-    });
-  }
+      resolve();
+    }).catch(reject);
+  });
 }
 
 var setupProducts = function(db, products, callback) {
   var Product = require('../../lib/common/schemas/nested_categories/product')
     , ObjectId = require('mongodb').ObjectId;
-  var left = products.length;
 
   // All the collections used
   var collections = {
@@ -54,15 +56,17 @@ var setupProducts = function(db, products, callback) {
     , categories: db.collection('categories')
   }
 
-  // Iterate over all the categories
-  for(var i = 0; i < products.length; i++) {
-    var product = new Product(collections, new ObjectId(), products[i][0], products[i][1], products[i][2], products[i][3]);
-    product.create(function() {
-      left = left - 1;
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      // Iterate over all the categories
+      for(var i = 0; i < products.length; i++) {
+        var product = new Product(collections, new ObjectId(), products[i][0], products[i][1], products[i][2], products[i][3]);
+        yield product.create();
+      }
 
-      if(left == 0) callback();
-    });
-  }
+      resolve();
+    }).catch(reject);
+  });
 }
 
 exports['Correctly category and fetch all immediate children of root node'] = {
@@ -75,9 +79,9 @@ exports['Correctly category and fetch all immediate children of root node'] = {
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -86,38 +90,36 @@ exports['Correctly category and fetch all immediate children of root node'] = {
       }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        // Setup a bunch of categories
-        var categories = [
-            ['root', '/']
-          , ['1', '/1'], ['2', '/2'], ['3', '/3']
-          , ['1-1', '/1/1'], ['1-2', '/1/2']
-          , ['2-1', '/2/1'], ['2-2', '/2/2']
-          , ['3-1', '/3/1'], ['3-2', '/3/2', '/3/3']
-        ];
+      // Setup a bunch of categories
+      var categories = [
+          ['root', '/']
+        , ['1', '/1'], ['2', '/2'], ['3', '/3']
+        , ['1-1', '/1/1'], ['1-2', '/1/2']
+        , ['2-1', '/2/1'], ['2-2', '/2/2']
+        , ['3-1', '/3/1'], ['3-2', '/3/2', '/3/3']
+      ];
 
-        // Create all the categories
-        setupCategories(db, categories, function() {
-          // Get all the immediate children of the root
-          Category.findAllDirectChildCategories(collections, '/', function(err, categories) {
-            test.equal(null, err);
-            test.equal(3, categories.length);
-            var paths = {'/1':true, '/2':true, '/3':true};
+      // Create all the categories
+      yield setupCategories(db, categories);
+      // Get all the immediate children of the root
+      var categories = yield Category.findAllDirectChildCategories(collections, '/');
+      test.equal(3, categories.length);
+      var paths = {'/1':true, '/2':true, '/3':true};
 
-            for(var i = 0; i < categories.length; i++) {
-              if(paths[categories[i].category]) {
-                delete paths[categories[i].category];
-              }
-            }
+      for(var i = 0; i < categories.length; i++) {
+        if(paths[categories[i].category]) {
+          delete paths[categories[i].category];
+        }
+      }
 
-            test.equal(0, Object.keys(paths).length);
+      test.equal(0, Object.keys(paths).length);
 
-            db.close();
-            test.done();
-          });
-        });
-      });
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -132,9 +134,9 @@ exports['Correctly fetch Category tree under a specific path'] = {
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -143,39 +145,37 @@ exports['Correctly fetch Category tree under a specific path'] = {
       }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        // Setup a bunch of categories
-        var categories = [
-            ['root', '/']
-          , ['1', '/1'], ['2', '/2'], ['3', '/3']
-          , ['1-1', '/1/1'], ['1-2', '/1/2']
-          , ['2-1', '/2/1'], ['2-2', '/2/2']
-          , ['3-1', '/3/1'], ['3-2', '/3/2', '/3/3']
-        ];
+      // Setup a bunch of categories
+      var categories = [
+          ['root', '/']
+        , ['1', '/1'], ['2', '/2'], ['3', '/3']
+        , ['1-1', '/1/1'], ['1-2', '/1/2']
+        , ['2-1', '/2/1'], ['2-2', '/2/2']
+        , ['3-1', '/3/1'], ['3-2', '/3/2', '/3/3']
+      ];
 
-        // Create all the categories
-        setupCategories(db, categories, function() {
+      // Create all the categories
+      yield setupCategories(db, categories);
 
-          // Get all the immediate children of the root
-          Category.findAllChildCategories(collections, '/1', function(err, categories) {
-            test.equal(null, err);
-            test.equal(2, categories.length);
-            var paths = {'/1/1':true, '/1/2':true};
+      // Get all the immediate children of the root
+      var categories = yield Category.findAllChildCategories(collections, '/1');
+      test.equal(2, categories.length);
+      var paths = {'/1/1':true, '/1/2':true};
 
-            for(var i = 0; i < categories.length; i++) {
-              if(paths[categories[i].category]) {
-                delete paths[categories[i].category];
-              }
-            }
+      for(var i = 0; i < categories.length; i++) {
+        if(paths[categories[i].category]) {
+          delete paths[categories[i].category];
+        }
+      }
 
-            test.equal(0, Object.keys(paths).length);
+      test.equal(0, Object.keys(paths).length);
 
-            db.close();
-            test.done();
-          });
-        });
-      });
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -190,9 +190,9 @@ exports['Correctly fetch specific category'] = {
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -201,30 +201,28 @@ exports['Correctly fetch specific category'] = {
       }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        // Setup a bunch of categories
-        var categories = [
-            ['root', '/']
-          , ['1', '/1'], ['2', '/2'], ['3', '/3']
-          , ['1-1', '/1/1'], ['1-2', '/1/2']
-          , ['2-1', '/2/1'], ['2-2', '/2/2']
-          , ['3-1', '/3/1'], ['3-2', '/3/2', '/3/3']
-        ];
+      // Setup a bunch of categories
+      var categories = [
+          ['root', '/']
+        , ['1', '/1'], ['2', '/2'], ['3', '/3']
+        , ['1-1', '/1/1'], ['1-2', '/1/2']
+        , ['2-1', '/2/1'], ['2-2', '/2/2']
+        , ['3-1', '/3/1'], ['3-2', '/3/2', '/3/3']
+      ];
 
-        // Create all the categories
-        setupCategories(db, categories, function() {
+      // Create all the categories
+      yield setupCategories(db, categories);
 
-          // Get all the immediate children of the root
-          Category.findOne(collections, '/1/1', function(err, category) {
-            test.equal(null, err);
-            test.equal('/1/1', category.category);
+      // Get all the immediate children of the root
+      var category = yield Category.findOne(collections, '/1/1');
+      test.equal('/1/1', category.category);
 
-            db.close();
-            test.done();
-          });
-        });
-      });
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -238,9 +236,9 @@ exports['Correctly fetch all products of a specific category'] = {
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -249,32 +247,30 @@ exports['Correctly fetch all products of a specific category'] = {
       }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        //name, cost, currency, categories
-        // Setup a bunch of categories
-        var products = [
-            ['prod1', 100, 'usd', ['/']]
-          , ['prod2', 200, 'usd', ['/1']], ['prod3', 300, 'usd', ['/2']], ['prod4', 400, 'usd', ['/3']]
-          , ['prod2-1', 200, 'usd', ['/1/1']], ['prod2-2', 200, 'usd', ['/1/2']]
-          , ['prod3-1', 300, 'usd', ['/2/1']], ['prod3-2', 200, 'usd', ['/2/2']]
-          , ['prod4-1', 300, 'usd', ['/3/1']], ['prod4-2', 200, 'usd', ['/3/2']], ['prod4-3', 200, 'usd', ['/3/3']]
-        ];
+      //name, cost, currency, categories
+      // Setup a bunch of categories
+      var products = [
+          ['prod1', 100, 'usd', ['/']]
+        , ['prod2', 200, 'usd', ['/1']], ['prod3', 300, 'usd', ['/2']], ['prod4', 400, 'usd', ['/3']]
+        , ['prod2-1', 200, 'usd', ['/1/1']], ['prod2-2', 200, 'usd', ['/1/2']]
+        , ['prod3-1', 300, 'usd', ['/2/1']], ['prod3-2', 200, 'usd', ['/2/2']]
+        , ['prod4-1', 300, 'usd', ['/3/1']], ['prod4-2', 200, 'usd', ['/3/2']], ['prod4-3', 200, 'usd', ['/3/3']]
+      ];
 
-        // Create all the categories
-        setupProducts(db, products, function() {
+      // Create all the categories
+      yield setupProducts(db, products);
 
-          // Get all the immediate children of the root
-          Product.findByCategory(collections, '/', function(err, products) {
-            test.equal(null, err);
-            test.equal(1, products.length);
-            test.equal('/', products[0].categories[0]);
+      // Get all the immediate children of the root
+      var products = yield Product.findByCategory(collections, '/');
+      test.equal(1, products.length);
+      test.equal('/', products[0].categories[0]);
 
-            db.close();
-            test.done();
-          });
-        });
-      });
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -288,9 +284,9 @@ exports['Correctly fetch all products of a specific categories direct children']
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -299,52 +295,49 @@ exports['Correctly fetch all products of a specific categories direct children']
       }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        // Setup a bunch of categories
-        var categories = [
-            ['root', '/']
-          , ['1', '/1'], ['2', '/2'], ['3', '/3']
-          , ['1-1', '/1/1'], ['1-2', '/1/2']
-          , ['2-1', '/2/1'], ['2-2', '/2/2']
-          , ['3-1', '/3/1'], ['3-2', '/3/2', '/3/3']
-        ];
+      // Setup a bunch of categories
+      var categories = [
+          ['root', '/']
+        , ['1', '/1'], ['2', '/2'], ['3', '/3']
+        , ['1-1', '/1/1'], ['1-2', '/1/2']
+        , ['2-1', '/2/1'], ['2-2', '/2/2']
+        , ['3-1', '/3/1'], ['3-2', '/3/2', '/3/3']
+      ];
 
-        // Create all the categories
-        setupCategories(db, categories, function() {
+      // Create all the categories
+      yield setupCategories(db, categories);
 
-          // Setup a bunch of categories
-          var products = [
-              ['prod1', 100, 'usd', ['/']]
-            , ['prod2', 200, 'usd', ['/1']], ['prod3', 300, 'usd', ['/2']], ['prod4', 400, 'usd', ['/3']]
-            , ['prod2-1', 200, 'usd', ['/1/1']], ['prod2-2', 200, 'usd', ['/1/2']]
-            , ['prod3-1', 300, 'usd', ['/2/1']], ['prod3-2', 200, 'usd', ['/2/2']]
-            , ['prod4-1', 300, 'usd', ['/3/1']], ['prod4-2', 200, 'usd', ['/3/2']], ['prod4-3', 200, 'usd', ['/3/3']]
-          ];
+      // Setup a bunch of categories
+      var products = [
+          ['prod1', 100, 'usd', ['/']]
+        , ['prod2', 200, 'usd', ['/1']], ['prod3', 300, 'usd', ['/2']], ['prod4', 400, 'usd', ['/3']]
+        , ['prod2-1', 200, 'usd', ['/1/1']], ['prod2-2', 200, 'usd', ['/1/2']]
+        , ['prod3-1', 300, 'usd', ['/2/1']], ['prod3-2', 200, 'usd', ['/2/2']]
+        , ['prod4-1', 300, 'usd', ['/3/1']], ['prod4-2', 200, 'usd', ['/3/2']], ['prod4-3', 200, 'usd', ['/3/3']]
+      ];
 
-          // Create all the categories
-          setupProducts(db, products, function() {
+      // Create all the categories
+      yield setupProducts(db, products);
 
-            // Get all the immediate children of the root
-            Product.findByDirectCategoryChildren(collections, '/', function(err, products) {
-              test.equal(null, err);
-              test.equal(3, products.length);
-              var paths = {'/1':true, '/2':true, '/3':true};
+      // Get all the immediate children of the root
+      var products = yield Product.findByDirectCategoryChildren(collections, '/');
+      test.equal(3, products.length);
+      var paths = {'/1':true, '/2':true, '/3':true};
 
-              for(var i = 0; i < products.length; i++) {
-                if(paths[products[i].categories[0]]) {
-                  delete paths[products[i].categories[0]];
-                }
-              }
+      for(var i = 0; i < products.length; i++) {
+        if(paths[products[i].categories[0]]) {
+          delete paths[products[i].categories[0]];
+        }
+      }
 
-              test.equal(0, Object.keys(paths).length);
+      test.equal(0, Object.keys(paths).length);
 
-              db.close();
-              test.done();
-            });
-          });
-        });
-      });
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }
@@ -358,9 +351,9 @@ exports['Correctly fetch all products of a specific categories tree'] = {
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      // Connect to mongodb
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -369,53 +362,50 @@ exports['Correctly fetch all products of a specific categories tree'] = {
       }
 
       // Cleanup
-      setup(db, function() {
+      yield setup(db);
 
-        // Setup a bunch of categories
-        var categories = [
-            ['root', '/']
-          , ['1', '/1'], ['2', '/2'], ['3', '/3']
-          , ['1-1', '/1/1'], ['1-2', '/1/2']
-          , ['2-1', '/2/1'], ['2-2', '/2/2']
-          , ['3-1', '/3/1'], ['3-2', '/3/2', '/3/3']
-        ];
+      // Setup a bunch of categories
+      var categories = [
+          ['root', '/']
+        , ['1', '/1'], ['2', '/2'], ['3', '/3']
+        , ['1-1', '/1/1'], ['1-2', '/1/2']
+        , ['2-1', '/2/1'], ['2-2', '/2/2']
+        , ['3-1', '/3/1'], ['3-2', '/3/2', '/3/3']
+      ];
 
-        // Create all the categories
-        setupCategories(db, categories, function() {
+      // Create all the categories
+      yield setupCategories(db, categories);
 
-          // Setup a bunch of categories
-          var products = [
-              ['prod1', 100, 'usd', ['/']]
-            , ['prod2', 200, 'usd', ['/1']], ['prod3', 300, 'usd', ['/2']], ['prod4', 400, 'usd', ['/3']]
-            , ['prod2-1', 200, 'usd', ['/1/1']], ['prod2-2', 200, 'usd', ['/1/2']]
-            , ['prod3-1', 300, 'usd', ['/2/1']], ['prod3-2', 200, 'usd', ['/2/2']]
-            , ['prod4-1', 300, 'usd', ['/3/1']], ['prod4-2', 200, 'usd', ['/3/2']], ['prod4-3', 200, 'usd', ['/3/3']]
-          ];
+      // Setup a bunch of categories
+      var products = [
+          ['prod1', 100, 'usd', ['/']]
+        , ['prod2', 200, 'usd', ['/1']], ['prod3', 300, 'usd', ['/2']], ['prod4', 400, 'usd', ['/3']]
+        , ['prod2-1', 200, 'usd', ['/1/1']], ['prod2-2', 200, 'usd', ['/1/2']]
+        , ['prod3-1', 300, 'usd', ['/2/1']], ['prod3-2', 200, 'usd', ['/2/2']]
+        , ['prod4-1', 300, 'usd', ['/3/1']], ['prod4-2', 200, 'usd', ['/3/2']], ['prod4-3', 200, 'usd', ['/3/3']]
+      ];
 
-          // Create all the categories
-          setupProducts(db, products, function() {
+      // Create all the categories
+      yield setupProducts(db, products);
 
-            // Get all the immediate children of the root
-            Product.findByCategoryTree(collections, '/1', function(err, products) {
-              test.equal(null, err);
-              test.equal(2, products.length);
+      // Get all the immediate children of the root
+      var products = yield Product.findByCategoryTree(collections, '/1');
+      test.equal(2, products.length);
 
-              var paths = {'/1/1':true, '/1/2':true};
+      var paths = {'/1/1':true, '/1/2':true};
 
-              for(var i = 0; i < products.length; i++) {
-                if(paths[products[i].categories[0]]) {
-                  delete paths[products[i].categories[0]];
-                }
-              }
+      for(var i = 0; i < products.length; i++) {
+        if(paths[products[i].categories[0]]) {
+          delete paths[products[i].categories[0]];
+        }
+      }
 
-              test.equal(0, Object.keys(paths).length);
+      test.equal(0, Object.keys(paths).length);
 
-              db.close();
-              test.done();
-            });
-          });
-        });
-      });
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }

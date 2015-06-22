@@ -4,8 +4,7 @@ var co = require('co');
 
 var setup = function(db) {
   var Account = require('../../lib/common/schemas/account/account');
-  console.dir(Account.createOptimalIndexes)
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     co(function*() {
       // All the collections used
       var collections = {

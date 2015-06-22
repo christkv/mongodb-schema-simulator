@@ -10,7 +10,7 @@ var setup = function(db) {
     cache: db.collection('cache')
   }
 
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     co(function*() {
       try { yield collections['cache'].drop(); } catch(err) {};
       yield SliceCache.createOptimalIndexes(collections);

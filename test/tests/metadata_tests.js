@@ -1,6 +1,8 @@
 "use strict";
 
-var setup = function(db, callback) {
+var co = require('co');
+
+var setup = function(db) {
   var Metadata = require('../../lib/common/schemas/metadata/metadata');
 
   // All the collections used
@@ -8,10 +10,12 @@ var setup = function(db, callback) {
     metadatas: db.collection('metadatas')
   }
 
-  collections['metadatas'].drop(function() {
-    Metadata.createOptimalIndexes(collections, function(err) {
-      callback();
-    });
+  return new Promise((resolve, reject) => {
+    co(function* () {
+      try { yield collections['metadatas'].drop(); } catch(err) {};
+      yield Metadata.createOptimalIndexes(collections);
+      resolve();
+    }).catch(reject);
   });
 }
 
@@ -24,9 +28,8 @@ exports['Correctly random metadata and query by metadata field'] = {
       , ObjectId = require('mongodb').ObjectId
       , MongoClient = require('mongodb').MongoClient;
 
-    // Connect to mongodb
-    MongoClient.connect(configuration.url(), function(err, db) {
-      test.equal(null, err);
+    co(function* () {
+      var db = yield MongoClient.connect(configuration.url());
 
       // All the collections used
       var collections = {
@@ -34,45 +37,38 @@ exports['Correctly random metadata and query by metadata field'] = {
       }
 
       // Cleanup
-      setup(db, function() {
-        // Create metadata instance
-        var metadata1 = new Metadata(collections, new ObjectId(), [
-            { key: 'name', value: 'test image' }
-          , { key: 'type', value: 'image' }
-          , { key: 'iso', value: 100 }
-        ]);
+      yield setup(db);
 
-        // Create metadata instance
-        var metadata2 = new Metadata(collections, new ObjectId(), [
-            { key: 'name', value: 'test image 2' }
-          , { key: 'type', value: 'image' }
-          , { key: 'iso', value: 200 }
-        ]);
+      // Create metadata instance
+      var metadata1 = new Metadata(collections, new ObjectId(), [
+          { key: 'name', value: 'test image' }
+        , { key: 'type', value: 'image' }
+        , { key: 'iso', value: 100 }
+      ]);
 
-        // Create metadata instance
-        metadata1.create(function(err, metadata1) {
-          test.equal(null, err);
+      // Create metadata instance
+      var metadata2 = new Metadata(collections, new ObjectId(), [
+          { key: 'name', value: 'test image 2' }
+        , { key: 'type', value: 'image' }
+        , { key: 'iso', value: 200 }
+      ]);
 
-          metadata2.create(function(err, metadata2) {
-            test.equal(null, err);
+      // Create metadata instance
+      yield metadata1.create();
+      yield metadata2.create();
 
-            // Locate by single metadata field
-            Metadata.findByFields(collections, {type: 'image'}, function(err, items) {
-              test.equal(null, err);
-              test.equal(2, items.length);
+      // Locate by single metadata field
+      var items = yield Metadata.findByFields(collections, {type: 'image'});
+      test.equal(2, items.length);
 
-              // Locate by multiple metadata fields
-              Metadata.findByFields(collections, {type: 'image', iso: 100}, function(err, items) {
-                test.equal(null, err);
-                test.equal(1, items.length);
+      // Locate by multiple metadata fields
+      var items = yield Metadata.findByFields(collections, {type: 'image', iso: 100});
+      test.equal(1, items.length);
 
-                db.close();
-                test.done();
-              });
-            });
-          });
-        });
-      });
+      db.close();
+      test.done();
+    }).catch(function(err) {
+      process.nextTick(function() {throw err});
     });
   }
 }

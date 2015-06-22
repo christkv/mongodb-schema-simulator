@@ -29,7 +29,7 @@ var createProducts = function(collections) {
     , inventories: collections['inventories']
   }
 
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     co(function* () {
       // Insert all the products
       yield collections['products'].insertMany(products);
@@ -54,7 +54,7 @@ var setup = function(db, callback) {
     , inventories: db.collection('inventories')
   }
 
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     co(function* () {
       // Drop all the collections
       try { collections['products'].drop(); } catch(err) {}
@@ -227,7 +227,7 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
 
       // Add a product to the cart
       var addProductAndValidate = function() {
-        return new Promise(function(resolve, reject) {
+        return new Promise((resolve, reject) => {
           co(function* () {
             yield cart.add(product, 2);
 
@@ -250,7 +250,7 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
 
       // Update the quantity of a product
       var updateProductAndValidate = function(callback) {
-        return new Promise(function(resolve, reject) {
+        return new Promise((resolve, reject) => {
           co(function* () {
             // Update the amount of a product
             yield cart.update(product, 4);
@@ -275,7 +275,7 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
 
       // Illegal product quantity adjustment
       var illegalQuantityAdjustment = function(callback) {
-        return new Promise(function(resolve, reject) {
+        return new Promise((resolve, reject) => {
           co(function* () {
             try {
               // Fail to update due to not enough inventory available
@@ -302,7 +302,7 @@ exports['Should correctly add an item to the cart but fail to reserve the item i
       }
 
       var removeProductAndValidate = function(callback) {
-        return new Promise(function(resolve, reject) {
+        return new Promise((resolve, reject) => {
           co(function* () {
             // Remove product from cart
             yield cart.remove(product);
@@ -368,7 +368,7 @@ exports['Should correctly find expired carts and remove any reservations in them
 
       // Add a product to the cart
       var addProductAndValidate = function(callback) {
-        return new Promise(function(resolve, reject) {
+        return new Promise((resolve, reject) => {
           co(function* () {
             yield cart.add(product, 2);
 
