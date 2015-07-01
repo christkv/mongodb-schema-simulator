@@ -1,5 +1,5 @@
 # EXTRA_OPTIONS=-g
-EXTRA_OPTIONS=--url=mongodb://192.168.0.18/benchmark?maxPoolSize=50
+# EXTRA_OPTIONS=--url=mongodb://192.168.0.18/benchmark?maxPoolSize=50
 
 # ####################################################################################
 # Queries MMAP

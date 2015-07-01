@@ -37,6 +37,7 @@ var server = dnode({
   execute : function(scenario, options, callback) {
     if(child.isRunning()) return callback(new Error('scenario executing'));
     console.log(f("[AGENT-%s:%s] starting execution", os.hostname(), argv.p));
+    console.dir(callback)
     // Just finish callback
     callback(null, {});
     // Execute the child

@@ -26,7 +26,7 @@
     , "rimraf": "2.2.6"
     , "microtime": "1.4.2"
     , "ejs": "1.0.0"
-    , "dnode": "1.2.0"
+    , "dnode": "1.2.1"
     , "progress": "1.1.8"
     , "mongodb-datasets": "0.1.5"
     , "event-stream": "3.1.5"

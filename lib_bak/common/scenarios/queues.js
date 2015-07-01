@@ -118,6 +118,7 @@ scenarios.push({
     Scenario.prototype.setup = function(options) {
       options = options || {};
       var self = this;
+
       // Return the promise
       return new Promise(function(resolve, reject) {
         co(function*() {

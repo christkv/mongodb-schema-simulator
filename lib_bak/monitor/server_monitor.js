@@ -5,6 +5,7 @@ var MongoClient = require('mongodb').MongoClient
   , Server = require('mongodb').Server
   , ReplSet = require('mongodb').ReplSet
   , Mongos = require('mongodb').Mongos
+  , co = require('co')
   , Db = require('mongodb').Db
   , inherits = require('util').inherits
   , f = require('util').format;
@@ -13,8 +14,6 @@ var MongoClient = require('mongodb').MongoClient
  * Monitor a single server
  */
 var monitorServer = function(self, db) {
-  var self = this;
-
   return new Promise(function(resolve, reject) {
     co(function*() {
       // Execute command to get calibration record
@@ -22,6 +21,7 @@ var monitorServer = function(self, db) {
       // Create second based timetamp
       var timestamp = new Date();
       timestamp.setMilliseconds(0)
+
       // Emit the data
       self.emit('data', {
           name: 'server'
@@ -245,6 +245,7 @@ var monitorShard = function(self, db) {
  */
 class ServerMonitor extends EventEmitter {
   constructor(url, resolution) {
+    super();
     // Save the parameters
     this.url = url;
     this.resolution = resolution;
@@ -259,7 +260,7 @@ class ServerMonitor extends EventEmitter {
     return new Promise(function(resolve, reject) {
       co(function*() {
         // Connect to the mongodb cluster (just supporting single server monitoring right now)
-        var db = yield MongoClient.connect(this.url, {
+        var db = yield MongoClient.connect(self.url, {
           server: {poolSize:1}
         });
 

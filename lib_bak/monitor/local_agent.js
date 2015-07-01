@@ -39,14 +39,19 @@ class LocalAgentProcess {
               // Save remote reference
               self.remote = remote;
               // Execute on agent
-              yield remote.execute(scenario, options);
-              // Running
-              resolve();
+              remote.execute(scenario, options, function(err) {
+                if(err) return reject(err);
+                // Running
+                resolve();
+              });
             }).catch(function(err) { reject(err); });
           });
         } else {
-          yield self.remote.execute(scenario, options);
-          resolve();
+          self.remote.execute(scenario, options, function(err) {
+            if(err) return reject(err);
+            // Running
+            resolve();
+          });
         }
       }).catch(function(err) { reject(err); });
     });

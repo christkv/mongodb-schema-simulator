@@ -73,7 +73,7 @@ class Queue {
         yield self.queue.insertOne({
             startTime: zeroDate
           , endTime: zeroDate
-          , jobId: new ObjectId()
+          , jobId: new ObjectId("000000000000")
           , createdOn: new Date()
           , priority: priority
           , payload: object

@@ -9,6 +9,7 @@ pids
 *.dat
 *.pg
 *.png
+*.zip
 t.js
 .DS_Store
 out
@@ -17,6 +18,7 @@ out
 lib-cov
 db
 tmp
+data
 
 # Coverage directory used by tools like istanbul
 coverage

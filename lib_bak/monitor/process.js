@@ -27,7 +27,7 @@ var timeoutPromise = function(timeout) {
  * Monitor that coordinates all the child processes
  */
 class Process extends EventEmitter {
-  constructor() {
+  constructor(argv, manager) {
     super();
 
     this.argv = argv;
@@ -358,32 +358,45 @@ var scenarioSetup = function(self, schemas) {
         return new Promise(function(resolve, reject) {
           co(function*() {
             console.log(f('[MONITOR] execute global scenarios setup for scenario %s %s', schema.name, JSON.stringify(schema.params)));
+            console.log("================================================= 0")
             // Fetch the scenario class
             var object = self.manager.find(schema.name);
             // No scenario found return an error
             if(!object) return callback(new Error(f('could not find scenario instance for %s', schema.name)));
+
+            console.log("================================================= 1")
 
             // Validate that all paramters are valid
             for(var name in schema.params) {
               if(!object.params[name]) return callback(new Error(f('scenario %s does not support the parameter %s', schema.name, name)));
             }
 
+            console.log("================================================= 2")
             // Ensure we run against the right db
             if(schema.db) db = db.db(schema.db);
 
             // Add the url to the schema
             schema.url = self.argv.url;
+            console.log("================================================= 3")
 
             // Execute setup
             if(typeof schema.setup == 'function') {
+              console.log("================================================= 4")
               yield schema.setup(db);
+              console.log("================================================= 5")
               // Initiate an instance and call it
               yield object.create(self.services, schemas, schema).globalSetup();
+            console.log("================================================= 6")
             } else {
               // Initiate an instance and call it
               yield object.create(self.services, schemas, schema).globalSetup();
             }
-          }).catch(function(err) { reject(err); });
+            console.log("================================================= 7")
+
+            resolve();
+          }).catch(function(err) {
+            console.log(err.stack)
+            reject(err); });
         });
       }
 
