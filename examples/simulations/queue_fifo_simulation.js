@@ -45,9 +45,9 @@ var publishToQueueScenario = {
   // Execution plan is run using all the process.openStdin();
   execution: {
     // Number of ticks/iterations we are running
-      iterations: 10
+      iterations: 25
     // Number of users starting the op at every tick
-    , numberOfUsers: 10
+    , numberOfUsers: 75
   }
 }
 
@@ -88,9 +88,9 @@ var listenToQueueScenario = {
   // Execution plan is run using all the process.openStdin();
   execution: {
     // Number of ticks/iterations we are running
-      iterations: 10
+      iterations: 25
     // Number of users starting the op at every tick
-    , numberOfUsers: 10
+    , numberOfUsers: 35
   }
 }
 

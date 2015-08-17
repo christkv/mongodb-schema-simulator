@@ -17,8 +17,8 @@
     "code"
   ],
   "dependencies": {
-      "mongodb": "2.1.0-alpha"
-    , "mongodb-core": "~1.1"
+      "mongodb": "2.0.41"
+    , "mongodb-core": "~1.2"
     , "mongodb-tools": "~1.0"
     , "yargs": "~1.3"
     , "cli-table": "~0.3"

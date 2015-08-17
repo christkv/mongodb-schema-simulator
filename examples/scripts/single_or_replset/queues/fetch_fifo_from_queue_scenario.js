@@ -1,3 +1,5 @@
+var co = require('co');
+
 // Definition of the fields to execute
 module.exports = [{
   // Name of the schema
@@ -26,7 +28,13 @@ module.exports = [{
   // used to allow doing stuff like setting up the sharded collection
   // etc.
   setup: function(db, callback) {
-    db.dropDatabase(callback);
+    return new Promise(function(resolve, reject) {
+      co(function*() {
+        // Drop the database
+        yield db.dropDatabase();
+        resolve();
+      }).catch(reject);
+    });
   },
 
   //

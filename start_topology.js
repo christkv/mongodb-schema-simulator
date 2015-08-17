@@ -23,8 +23,9 @@ if(argv.t == 'replicaset') {
   var manager = new ReplSetManager({
       dbpath: path.join(path.resolve('db'))
     , logpath: path.join(path.resolve('db'))
-    , arbiters: 1
+    , arbiters: 0
     , secondaries: 2
+    , passives: 0
     , tags: [{loc: "ny"}, {loc: "sf"}, {loc: "sf"}]
     , replSet: 'rs', startPort: 31000
     , v: null
@@ -61,7 +62,7 @@ if(argv.t == 'replicaset') {
 
   manager.start(function() {
     process.exit(0);
-  });  
+  });
 } else if(argv.t == 'sharded') {
   // Return manager
   var manager = new ShardingManager({
@@ -73,5 +74,5 @@ if(argv.t == 'replicaset') {
 
   manager.start(function() {
     process.exit(0);
-  });  
+  });
 }
