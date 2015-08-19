@@ -36,9 +36,14 @@ var yargs = require('yargs')
   // Target Topology url
   .describe('url', 'mongodb url')
   .default('url', 'mongodb://localhost:27017/test?maxPoolSize=50')
+  // Alias help
+  .alias('h', 'help')
 
 // Get parsed arguments
 var argv = yargs.argv
+
+// List help
+if(argv.h) return console.log(yargs.help())
 
 // Create options for the monitor process
 var options = {

@@ -128,7 +128,6 @@ var executePlan = function(self, remote, schemas, schema) {
               }
             }
 
-            // console.log("----------------------- ++++++++++++++ ------------------ 0")
             // Signal monitor that we have finished a piece of work
             remote.tick(function() {
               // Are we done ?
@@ -147,50 +146,6 @@ var executePlan = function(self, remote, schemas, schema) {
         // Execute the user
         executeUser();
       });
-
-      // // Calculate the elapsed time between each user, ensure it's not 0
-      // var timeBetweenEachUser = Math.round(resolution/numberOfUsers);
-      // var iterationsLeft = iterations;
-      // var totalLeft = iterations * numberOfUsers;
-      // var totalOpsLeft = iterations * numberOfUsers;
-      //
-      // // Start the execution
-      // if(typeof object.custom != 'function'
-      //   && tickExecutionStrategy == 'slicetime') {
-      //   // Execute the toal number of operations left to do
-      //   var executeUser = function() {
-      //     totalLeft = totalLeft - 1;
-      //
-      //     // Execute the user
-      //     object.execute(function(err) {
-      //       if(err) errors.push(err);
-      //       totalOpsLeft = totalOpsLeft - 1;
-      //
-      //       // Signal monitor that we have finished a piece of work
-      //       remote.tick(function() {
-      //         // Are we done ?
-      //         if(totalOpsLeft == 0) {
-      //           callback(errors.length > 0 ? errors : null);
-      //         }
-      //       });
-      //     });
-      //
-      //     if(totalLeft == 0) return;
-      //     setTimeout(executeUser, timeBetweenEachUser);
-      //   }
-      //
-      //   // Execute any delay
-      //   setTimeout(function() {
-      //     setTimeout(executeUser, timeBetweenEachUser);
-      //   }, delay);
-      // } else if(typeof object.custom == 'function') {
-      //   // Execute any delay
-      //   setTimeout(function() {
-      //     // We have a custom execution plan in the scenario
-      //     // useful for a case like listening to topics
-      //     object.custom(remote, totalOpsLeft, callback);
-      //   }, delay);
-      // }
     }).catch(function(err) {
       reject(err);
     });
@@ -207,10 +162,8 @@ var execute = function(self, schemas) {
   // Return the promise
   return new Promise(function(resolve, reject) {
     co(function*() {
-      console.log("-------------------------------------------- 0")
       // Execute the plans
       for(var i = 0; i < schemas.length; i++) {
-        console.log("-------------------------------------------- 1")
         try {
           yield executePlan(self, self.monitor, schemas, schemas[i]);
         } catch(err) {
@@ -218,7 +171,6 @@ var execute = function(self, schemas) {
           errors.push(err);
         }
       }
-      console.log("-------------------------------------------- 2")
 
       // Finished reset state of agent
       self.state = 'init';

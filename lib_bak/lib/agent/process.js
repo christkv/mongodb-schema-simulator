@@ -128,7 +128,6 @@ var executePlan = function(self, remote, schemas, schema) {
               }
             }
 
-            // console.log("----------------------- ++++++++++++++ ------------------ 0")
             // Signal monitor that we have finished a piece of work
             remote.tick(function() {
               // Are we done ?
@@ -207,10 +206,8 @@ var execute = function(self, schemas) {
   // Return the promise
   return new Promise(function(resolve, reject) {
     co(function*() {
-      console.log("-------------------------------------------- 0")
       // Execute the plans
       for(var i = 0; i < schemas.length; i++) {
-        console.log("-------------------------------------------- 1")
         try {
           yield executePlan(self, self.monitor, schemas, schemas[i]);
         } catch(err) {
@@ -218,7 +215,6 @@ var execute = function(self, schemas) {
           errors.push(err);
         }
       }
-      console.log("-------------------------------------------- 2")
 
       // Finished reset state of agent
       self.state = 'init';
