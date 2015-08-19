@@ -11,10 +11,10 @@ var f = require('util').format,
 // Parse the passed in parameters
 var yargs = require('yargs')
   .usage('Start a the main process.\nUsage: $0')
-  .example('$0 -p 5100', 'Run client on port 5100')
+  .example('$0 -p 51000', 'Run client on port 51000')
   // The Monitor process port
   .describe('p', 'Port process is running on')
-  .default('p', 5100)
+  .default('p', 51000)
   // Number of processes to use in the execution
   .describe('n', 'Number of processes running')
   .default('n', 2)
@@ -23,7 +23,7 @@ var yargs = require('yargs')
   .default('r', false)
   // Local process starting port
   .describe('local-process-port', 'Local process start port')
-  .default('local-process-port', 5200)
+  .default('local-process-port', 52000)
   // The scenario file to execute
   .describe('s', 'Path to scenario file to execute')
   .required('s')
