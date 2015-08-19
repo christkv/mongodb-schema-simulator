@@ -17,21 +17,21 @@
     "code"
   ],
   "dependencies": {
-      "mongodb": "2.0.41"
+      "mongodb": "2.0.42"
     , "mongodb-core": "~1.2"
     , "mongodb-tools": "~1.0"
     , "yargs": "~1.3"
     , "cli-table": "~0.3"
     , "mkdirp": "0.5.0"
     , "rimraf": "2.2.6"
-    , "microtime": "1.4.2"
+    , "microtime": "2.0.0"
     , "ejs": "1.0.0"
     , "dnode": "1.2.1"
     , "progress": "1.1.8"
     , "mongodb-datasets": "0.1.5"
     , "event-stream": "3.1.5"
     , "JSONStream": "0.10.0"
-    , "leveldown": "1.3.0"
+    , "leveldown": "1.4.1"
     , "levelup": "1.2.1"
     , "fast-stats": "0.0.2"
     , "co": "4.5.4"
@@ -50,6 +50,6 @@
   "bugs": {
     "url": "https://github.com/christkv/mongodb-schema-simulator/issues"
   },
-  "scripts": { "test" : "node test/runner.js" },
+  "scripts": { "test" : "node --harmony test/runner.js" },
   "homepage": "https://github.com/christkv/mongodb-schema-simulator"
 }
