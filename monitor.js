@@ -97,11 +97,18 @@ co(function*() {
       );      
     }
 
-    for(var i = 0; i < ticks; i++) {
-      bar.tick();
-    }
+    // Skip if we reached the total
+    if(count >= total) return;
 
-    count = count + ticks;
+    // Add the ticks
+    for(var i = 0; i < ticks; i++) {
+      // Skip if we reached the total
+      if(count == total) return;
+      // Tick
+      bar.tick();
+      // Add one to the count of ops
+      count = count + 1;
+    }
   });
 
   // Start the monitor
