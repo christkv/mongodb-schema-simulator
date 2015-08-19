@@ -33,7 +33,7 @@ class Category {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Insert a new category
         yield self.categories.insertOne({
@@ -54,7 +54,7 @@ class Category {
   reload() {
     var self = this;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         yield self.categories.findOne({_id: self.id});
         resolve(self);
@@ -69,7 +69,7 @@ class Category {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Regular expression
         var regexp = new RegExp(f('^%s$', path));
@@ -117,7 +117,7 @@ class Category {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Regular expression
         var regexp = new RegExp(f('^%s', path));
@@ -165,7 +165,7 @@ class Category {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var coveredIndex = typeof options.coveredIndex == 'boolean' ? options.coveredIndex : false;
 
@@ -203,7 +203,7 @@ class Category {
    * Create the optimal indexes for the queries
    */
   static createOptimalIndexes(collections) {
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         yield collections['categories'].ensureIndex({category:1});
         yield collections['categories'].ensureIndex({parent:1});

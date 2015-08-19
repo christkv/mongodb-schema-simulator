@@ -28,7 +28,7 @@ class Work {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Set end time for the work item
         var r = yield self.queue.updateOne({
@@ -67,7 +67,7 @@ class Queue {
     var zeroDate = new Date();
     zeroDate.setTime(0);
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Insert the new item into the queue
         yield self.queue.insertOne({
@@ -99,7 +99,7 @@ class Queue {
     var zeroDate = new Date();
     zeroDate.setTime(0);
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Find one and update, returning a work item
         var r = yield self.queue.findOneAndUpdate({
@@ -131,7 +131,7 @@ class Queue {
     options = clone(options);
     options.sort = { createdOn: 1 };
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Find one and update, returning a work item
         var r = yield self.queue.findOneAndUpdate({
@@ -152,7 +152,7 @@ class Queue {
    * Create the optimal indexes for the queries
    */
   static createOptimalIndexes(collections) {
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         yield collections['queues'].ensureIndex({startTime:1});
         yield collections['queues'].ensureIndex({createdOn: 1});

@@ -4,7 +4,7 @@ var co = require('co');
 
 var setup = function(db) {
   var Account = require('../../lib/common/schemas/account/account');
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function*() {
       // All the collections used
       var collections = {

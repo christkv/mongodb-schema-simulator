@@ -10,7 +10,7 @@ var setup = function(db) {
     metadatas: db.collection('metadatas')
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function* () {
       try { yield collections['metadatas'].drop(); } catch(err) {};
       yield Metadata.createOptimalIndexes(collections);

@@ -18,7 +18,7 @@ class Inventory {
     var self = this;
     options = options || {}
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var r = yield self.inventories.insertOne({
             _id: self.id
@@ -45,7 +45,7 @@ class Inventory {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         if(products.length == 0) return callback();
 
@@ -82,7 +82,7 @@ class Inventory {
 
         // Rollback products
         var rollback = function(inventories, id, products) {
-          return new Promise((resolve, reject) => {
+          return new Promise(function(resolve, reject) {
             co(function* () {
               // If we have no products return
               if(products.length == 0)
@@ -158,7 +158,7 @@ class Inventory {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var r = yield collections['inventories'].updateMany({
           'reservations._id': id
@@ -179,7 +179,7 @@ class Inventory {
    * Create the optimal indexes for the queries
    */
   static createOptimalIndexes(collections) {
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         yield collections['inventories'].ensureIndex({"reservations._id": 1});
         resolve();

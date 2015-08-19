@@ -14,7 +14,7 @@ var setup = function(db, callback) {
     , topics2: db.collection('topics2')
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function* () {
       try { yield collections['queues'].drop(); } catch(err) {};
       try { yield collections['queues2'].drop(); } catch(err) {};
@@ -52,7 +52,7 @@ exports['Should correctly insert job into queue'] = {
 
       // Add some items to queue
       var addToQueue = function() {
-        return new Promise((resolve, reject) => {
+        return new Promise(function(resolve, reject) {
           co(function* () {
             yield queue.publish(1, {work:1});
             yield queue.publish(5, {work:2});
@@ -109,7 +109,7 @@ exports['Should correctly insert job into topic and listen to it'] = {
 
       // Add some items to queue
       var addToTopic = function(callback) {
-        return new Promise((resolve, reject) => {
+        return new Promise(function(resolve, reject) {
           co(function* () {
             yield topic.publish({work:1});
             yield topic.publish({work:2});

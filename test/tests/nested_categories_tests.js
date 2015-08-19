@@ -12,7 +12,7 @@ var setup = function(db, callback) {
     , categories: db.collection('categories')
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function* () {
       try { yield collections['products'].drop(); } catch(err) {};
       try { yield collections['categories'].drop(); } catch(err) {};
@@ -33,7 +33,7 @@ var setupCategories = function(db, categories, callback) {
     , categories: db.collection('categories')
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function* () {
       // Iterate over all the categories
       for(var i = 0; i < categories.length; i++) {
@@ -56,7 +56,7 @@ var setupProducts = function(db, products, callback) {
     , categories: db.collection('categories')
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function* () {
       // Iterate over all the categories
       for(var i = 0; i < products.length; i++) {

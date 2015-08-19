@@ -27,7 +27,7 @@ class Session {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var doc = yield self.theaters.findOne({_id: self.theaterId});
         if(!doc)
@@ -68,7 +68,7 @@ class Session {
     var seatsQuery = [];
     var setSeatsSelection = {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Build the seats check
         for(var i = 0; i < seats.length; i++) {
@@ -121,7 +121,7 @@ class Session {
       setSeatsSelection[f('seats.%s.%s', seats[i][0], seats[i][1])] = 0;
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Remove the reservation
         var r = yield self.sessions.updateOne({
@@ -145,7 +145,7 @@ class Session {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var docs = yield collections['sessions'].find({
           'reservations._id': id
@@ -198,7 +198,7 @@ class Session {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Apply the cart by removing the cart from all sessions
         var r = yield collections['sessions'].updateMany({
@@ -220,7 +220,7 @@ class Session {
   static createOptimalIndexes(collections) {
     var self = this;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         yield collections['sessions'].ensureIndex({'reservations._id':1});
         resolve();

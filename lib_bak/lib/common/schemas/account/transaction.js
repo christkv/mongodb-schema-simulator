@@ -22,7 +22,7 @@ class Transaction {
     options = options || {};
     var self = this;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function*() {
         // Insert the initial transaction
         var r = yield self.transactions.insertOne({
@@ -49,7 +49,7 @@ class Transaction {
     options = options || {};
     var self = this;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function*() {
         // Advance the state of the transaction to pending
         yield self.advance(options)
@@ -110,7 +110,7 @@ class Transaction {
     options = options || {};
     var self = this;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function*() {
         if(self.state == Transaction.INITIAL) {
           var r = yield self.transactions.updateOne({_id: self.id, state: Transaction.INITIAL}, {$set : {state: Transaction.PENDING}}, options);
@@ -155,7 +155,7 @@ class Transaction {
     options = options || {};
     var self = this;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function*() {
         var r = yield self.transactions.updateOne({_id: self.id}, {$set : {state: 'canceled'}}, options);
         if(r.result.writeConcernError)
@@ -175,7 +175,7 @@ class Transaction {
    * Create the optimal indexes for the queries
    */
   static createOptimalIndexes(transactionCollection) {
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       resolve();
     });
   }
@@ -193,7 +193,7 @@ Transaction.CANCELED = 'canceled';
 var reverse = function(self, options) {
   options = options || {};
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function*() {
       // Reverse the debit
       var r = yield self.accounts.updateOne(

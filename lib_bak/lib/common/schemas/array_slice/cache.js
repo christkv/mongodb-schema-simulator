@@ -37,7 +37,7 @@ class SliceCache {
   create(object) {
     var self = this;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function*() {
         // Pre-allocated array
         var data = [];
@@ -83,7 +83,7 @@ class SliceCache {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function*() {
         // Treat this as an array operation
         if(!Array.isArray(items)) {
@@ -127,7 +127,7 @@ class SliceCache {
     options = options || {};
     var self = this;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function*() {
         resolve();
       }).catch(function(err) {

@@ -27,7 +27,7 @@ class Order {
       total = total + (this.products[i].quantity * this.products[i].price);
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Create a new order
         var r = yield self.orders.insertOne({
@@ -55,7 +55,7 @@ class Order {
    * Create the optimal indexes for the queries
    */
   static createOptimalIndexes(collections) {
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       resolve();
     });
   }

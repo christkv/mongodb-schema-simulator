@@ -26,7 +26,7 @@ class Category {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Build set statement
         var setStatement = {}
@@ -77,7 +77,7 @@ class Category {
     // UnSet the new local
     setStatement[f('names.%s', local)] = '';
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Update the category with the new local for the name
         var r = yield self.categories.updateOne({
@@ -118,7 +118,7 @@ class Category {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Insert a new category
         var r = yield self.categories.insertOne({
@@ -140,7 +140,7 @@ class Category {
   reload() {
     var self = this;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var doc = yield self.categories.findOne({_id: self.id});
         self.names = doc.names;
@@ -153,7 +153,7 @@ class Category {
    * Create the optimal indexes for the queries
    */
   static createOptimalIndexes(collections) {
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         resolve();
       }).catch(reject);

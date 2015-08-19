@@ -29,7 +29,7 @@ class Cart {
     options = clone(options);
     options.upsert = true;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var r = yield self.carts.updateOne({
             _id: self.id,
@@ -56,7 +56,7 @@ class Cart {
     options = clone(options);
     options.upsert = true;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Add product to cart, and create cart with upsert
         // if it does not already exist
@@ -112,7 +112,7 @@ class Cart {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var inventory = new Inventory(self.collections, product.id);
         // Remove from inventory reservation
@@ -145,7 +145,7 @@ class Cart {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Get the latest cart view
         var doc = yield self.carts.findOne({_id: self.id})
@@ -220,7 +220,7 @@ class Cart {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var cart = yield self.carts.findOne({_id: self.id});
         if(!cart)
@@ -262,7 +262,7 @@ class Cart {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var carts = yield collections['carts'].find({state: Cart.EXPIRED}).toArray();
         if(carts.length == 0)
@@ -270,7 +270,7 @@ class Cart {
 
         // Process each cart
         var processCart = function(cart) {
-          return new Promise((resolve, reject) => {
+          return new Promise(function(resolve, reject) {
             co(function* () {
               // Release all reservations for this cart
               yield Inventory.releaseAll(collections, cart._id, options);
@@ -300,7 +300,7 @@ class Cart {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         yield collections['carts'].ensureIndex({state: 1});
         resolve();
@@ -317,7 +317,7 @@ Cart.CANCELED = 'canceled';
 var rollback = function(cart, product, quantity, options) {
   options = options || {};
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function* () {
       var r = yield cart.carts.updateOne({
         _id: cart.id, state: Cart.ACTIVE, 'products._id': product.id

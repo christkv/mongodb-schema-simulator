@@ -19,7 +19,7 @@ class MetaData {
   create() {
     var self = this;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Insert the metadata
         yield self.metadatas.insertOne({
@@ -55,7 +55,7 @@ class MetaData {
       cursor.setReadPreference(options.readPreference);
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Execute the query
         var docs = yield cursor.toArray();
@@ -72,7 +72,7 @@ class MetaData {
    * Create the optimal indexes for the queries
    */
   static createOptimalIndexes(collections) {
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         yield collections['metadatas'].ensureIndex({"metadata.key": 1, "metadata.value": 1});
         resolve();

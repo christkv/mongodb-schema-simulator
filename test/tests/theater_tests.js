@@ -14,7 +14,7 @@ var setup = function(db) {
     , receipts: db.collection('receipts')
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function* () {
       try { yield collections['theaters'].drop(); } catch(err) {};
       try { yield collections['sessions'].drop(); } catch(err) {};
@@ -28,7 +28,7 @@ var setup = function(db) {
 }
 
 var validateSeats = function(collections, test, session, seats, seatsLeft) {
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function* () {
       var doc = yield collections['sessions'].findOne({_id: session.id});
       test.ok(doc != null);
@@ -46,7 +46,7 @@ var validateSeats = function(collections, test, session, seats, seatsLeft) {
 }
 
 var validateCart = function(collections, test, cart, state, reservations) {
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function* () {
       var doc = yield collections['carts'].findOne({_id: cart.id});
       test.ok(doc != null);

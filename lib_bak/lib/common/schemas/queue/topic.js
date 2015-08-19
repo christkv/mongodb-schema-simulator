@@ -20,7 +20,7 @@ class Topic {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Insert a document into topic
         yield self.topic.insertOne({
@@ -66,7 +66,7 @@ class Topic {
     // Get the db object associated with the collection
     var db = self.topic.s.db;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Create the capped collection
         var collection = yield db.createCollection(collectionName, options);
@@ -80,7 +80,7 @@ class Topic {
    * Create the optimal indexes for the queries
    */
   static createOptimalIndexes(collections) {
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         resolve();
       }).catch(reject);

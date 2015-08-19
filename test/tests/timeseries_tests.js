@@ -10,7 +10,7 @@ var setup = function(db, callback) {
     timeseries: db.collection('timeseries')
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     co(function* () {
       try { yield collections['timeseries'].drop(); } catch(err) {};
       yield TimeSeries.createOptimalIndexes(collections);

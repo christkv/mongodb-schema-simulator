@@ -30,7 +30,7 @@ class TimeSeries {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Insert the metadata
         yield self.timeseries.insertOne({
@@ -53,7 +53,7 @@ class TimeSeries {
     var self = this;
     options = options || {};
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         // Update statement for time series
         var updateStatement = {
@@ -106,7 +106,7 @@ class TimeSeries {
       series[i] = 0
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var timeSeries = new TimeSeries(collections, id, tag, series, timestamp, 'minute');
         yield timeSeries.create();
@@ -131,7 +131,7 @@ class TimeSeries {
       }
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var timeSeries = new TimeSeries(collections, id, tag, series, timestamp, 'hour');
         yield timeSeries.create();
@@ -161,7 +161,7 @@ class TimeSeries {
       }
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         var timeSeries = new TimeSeries(collections, id, tag, series, timestamp, 'day');
         yield timeSeries.create();
@@ -174,7 +174,7 @@ class TimeSeries {
    * Create the optimal indexes for the queries
    */
   static createOptimalIndexes(collections) {
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       co(function* () {
         yield collections['timeseries'].ensureIndex({tag: 1, timestamp:1});
         resolve();
