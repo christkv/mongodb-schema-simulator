@@ -26,13 +26,13 @@ var startupOptions = {
   , skip: false
 }
 
-// Skipping parameters
-var startupOptions = {
-    skipStartup: true
-  , skipRestart: true
-  , skipShutdown: true
-  , skip: false
-}
+// // Skipping parameters
+// var startupOptions = {
+//     skipStartup: true
+//   , skipRestart: true
+//   , skipShutdown: true
+//   , skip: false
+// }
 
 /**
  * Standalone MongoDB Configuration
