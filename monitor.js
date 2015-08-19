@@ -79,26 +79,29 @@ co(function*() {
   });
 
   // Total operations
-  monitor.on('setup', function(totalOps) {
-    total = totalOps;
-    bar = new ProgressBar('  executing [:bar] [:current/:total] :etas', {
-          complete: '='
-        , incomplete: ' '
-        , width: 60
-        , total: totalOps
-      }
-    );
+  monitor.on('status', function(ops) {
+    total = total + ops.ops;
   });
 
-  // Get the count of measurements done
-  monitor.on('log', function(measurements) {
-    measurements.forEach(function(x) {
-      if(count < total) {
-        bar.tick();       
-      }
+  monitor.on('execute', function() {});
 
-      count = count + 1;
-    });     
+  // Get the count of measurements done
+  monitor.on('tick', function(ticks) {
+    if(count == 0) {
+      bar = new ProgressBar('  executing [:bar] [:current/:total] :etas', {
+            complete: '='
+          , incomplete: ' '
+          , width: 60
+          , total: total
+        }
+      );      
+    }
+
+    for(var i = 0; i < ticks; i++) {
+      bar.tick();
+    }
+
+    count = count + ticks;
   });
 
   // Start the monitor

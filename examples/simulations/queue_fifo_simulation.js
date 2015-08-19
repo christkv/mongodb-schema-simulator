@@ -37,7 +37,10 @@ var publishToQueueScenario = {
         // Drop the database
         yield db.dropDatabase();
         resolve();
-      }).catch(reject);
+      }).catch(function(err) {
+        console.log(err.stack);
+        reject(err);
+      });
     });
   },
 
@@ -80,7 +83,10 @@ var listenToQueueScenario = {
         // Drop the database
         yield db.dropDatabase();
         resolve();
-      }).catch(reject);
+      }).catch(function(err) {
+        console.log(err.stack);
+        reject(err);
+      });
     });
   },
 

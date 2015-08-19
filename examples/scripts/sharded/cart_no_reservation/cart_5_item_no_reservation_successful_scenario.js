@@ -1,3 +1,5 @@
+var co = require('co');
+
 // Definition of the fields to execute
 module.exports = [{
   // Name of the schema
@@ -25,19 +27,18 @@ module.exports = [{
   // used to allow doing stuff like setting up the sharded collection
   // etc.
   setup: function(db, callback) {
-    // Drop the database
-    db.dropDatabase(function(err, r) {
-      if(err) return callback(err);
-
-      // Enable the sharding of the database
-      db.admin().command({enableSharding:'shop'}, function(err, r) {
-        if(err) return callback(err);
-
+    return new Promise(function(resolve, reject) {
+      co(function*() {
+        // Drop the database
+        yield db.dropDatabase();
+        // Enable the sharding of the database
+        yield db.admin().command({enableSharding:'shop'});
         // Shard the collections we want
-        db.admin().command({shardCollection: 'shop.carts', key: {_id:'hashed'}}, function(err, r) {
-          if(err) return callback(err);
-          callback();
-        });
+        yield db.admin().command({shardCollection: 'shop.carts', key: {_id:'hashed'}});
+        resolve();
+      }).catch(function(err) {
+        console.log(err.stack);
+        reject(err);
       });
     });
   },

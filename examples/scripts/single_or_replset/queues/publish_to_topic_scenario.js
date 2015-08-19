@@ -30,7 +30,7 @@ module.exports = [{
   // Setup function (run before the scenario is executed)
   // used to allow doing stuff like setting up the sharded collection
   // etc.
-  setup: function(db, callback) {
+  setup: function(db) {
     return new Promise(function(resolve, reject) {
       co(function*() {
         // Drop the database

@@ -1,3 +1,5 @@
+var co = require('co');
+
 //
 // Publish to topics
 var publishToQueueScenario = {
@@ -30,27 +32,34 @@ var publishToQueueScenario = {
   // used to allow doing stuff like setting up the sharded collection
   // etc.
   setup: function(db, callback) {
-    // Drop the database
-    db.dropDatabase(function(err, r) {
-      // Create a capped collection
-      db.createCollection('queues_capped', {capped:true, size: 100000000}, callback);
+    return new Promise(function(resolve, reject) {
+      co(function*() {
+        // return callback();
+        // // return callback();
+        // if(err) return callback(err);
 
-      // return callback();
-      // // return callback();
-      // if(err) return callback(err);
+        // setTimeout(function() {
+        //   // Enable the sharding of the database
+        //   db.admin().command({enableSharding:'queues'}, function(err, r) {
+        //     if(err) return callback(err);
 
-      // setTimeout(function() {
-      //   // Enable the sharding of the database
-      //   db.admin().command({enableSharding:'queues'}, function(err, r) {
-      //     if(err) return callback(err);
+        //     // Shard the collections we want
+        //     db.admin().command({shardCollection: 'queues.queue_0', key: {createdOn:'hashed'}}, function(err, r) {
+        //       if(err) return callback(err);
+        //       callback();
+        //     });
+        //   });
+        // }, 1000);
 
-      //     // Shard the collections we want
-      //     db.admin().command({shardCollection: 'queues.queue_0', key: {createdOn:'hashed'}}, function(err, r) {
-      //       if(err) return callback(err);
-      //       callback();
-      //     });
-      //   });
-      // }, 1000);
+        // Drop the database
+        yield db.dropDatabase();
+        // Create a capped collection
+        yield db.createCollection('queues_capped', {capped:true, size: 100000000});
+        resolve();
+      }).catch(function(err) {
+        console.log(err.stack);
+        reject(err);
+      });
     });
   },
 
@@ -88,7 +97,16 @@ var listenToQueueScenario = {
   // used to allow doing stuff like setting up the sharded collection
   // etc.
   setup: function(db, callback) {
-    db.dropDatabase(callback);
+    return new Promise(function(resolve, reject) {
+      co(function*() {
+        // Drop the database
+        yield db.dropDatabase();
+        resolve();
+      }).catch(function(err) {
+        console.log(err.stack);
+        reject(err);
+      });
+    });
   },
 
   //

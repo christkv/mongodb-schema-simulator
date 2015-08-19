@@ -41,7 +41,7 @@ module.exports = [{
   // Execution plan is run using all the process.openStdin();
   execution: {
     // Number of ticks/iterations we are running
-      iterations: 100
+      iterations: 10
     // Number of users starting the op at every tick
     , numberOfUsers: 500
     // How to execute the 20 users inside of the tick

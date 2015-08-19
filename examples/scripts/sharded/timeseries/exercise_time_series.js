@@ -1,3 +1,5 @@
+var co = require('co');
+
 // Definition of the fields to execute
 module.exports = [{
   // Name of the schema
@@ -25,22 +27,20 @@ module.exports = [{
   // used to allow doing stuff like setting up the sharded collection
   // etc.
   setup: function(db, callback) {
-    // Drop the database
-    db.dropDatabase(function(err, r) {
-      if(err) return callback(err);
+    co(function*() {
+      // Drop the database
+      yield db.dropDatabase();
 
       setTimeout(function() {
         // Enable the sharding of the database
-        db.admin().command({enableSharding:'timeseries'}, function(err, r) {
-          if(err) return callback(err);
-
-          // Shard the collections we want
-          db.admin().command({shardCollection: 'timeseries.timeseries', key: {tag:1, timestamp:1}}, function(err, r) {
-            if(err) return callback(err);
-            callback();
-          });
-        });
+        yield db.admin().command({enableSharding:'timeseries'});
+        // Shard the collections we want
+        yield db.admin().command({shardCollection: 'timeseries.timeseries', key: {tag:1, timestamp:1}});
+        resolve();
       }, 1000);
+    }).catch(function(err) {
+      console.log(err.stack);
+      reject(err);
     });
   },
 

@@ -1,3 +1,5 @@
+var co = require('co');
+
 //
 // Publish to topics
 var publishToTopicsScenario = {
@@ -30,8 +32,18 @@ var publishToTopicsScenario = {
   // Setup function (run before the scenario is executed)
   // used to allow doing stuff like setting up the sharded collection
   // etc.
-  setup: function(db, callback) {
-    db.dropDatabase(callback);
+  setup: function(db) {
+    return new Promise(function(resolve, reject) {  
+      co(function*() {
+        //huh
+        // Drop the database
+        yield db.dropDatabase();
+        resolve();
+      }).catch(function(err) {
+        console.log(err.stack);
+        reject(err);
+      });
+    });
   },
 
   //
@@ -68,7 +80,16 @@ var listenToTopicsScenario = {
   // used to allow doing stuff like setting up the sharded collection
   // etc.
   setup: function(db, callback) {
-    db.dropDatabase(callback);
+    return new Promise(function(resolve, reject) {  
+      co(function*() {
+        // Drop the database
+        yield db.dropDatabase();
+        resolve();
+      }).catch(function(err) {
+        console.log(err.stack);
+        reject(err);
+      });
+    });
   },
 
   //
@@ -85,3 +106,5 @@ var listenToTopicsScenario = {
 
 // Definition of the fields to execute
 module.exports = [publishToTopicsScenario, listenToTopicsScenario];
+// module.exports = [publishToTopicsScenario];
+// module.exports = [publishToTopicsScenario, publishToTopicsScenario];
