@@ -1,5 +1,5 @@
-# EXTRA_OPTIONS=-g
-# EXTRA_OPTIONS=--url=mongodb://192.168.0.18/benchmark?maxPoolSize=50
+# EXTRA_OPTIONS=
+EXTRA_OPTIONS=--url=mongodb://192.168.0.12/benchmark?maxPoolSize=50
 
 # ####################################################################################
 # Queries MMAP
@@ -108,3 +108,26 @@ mkdir -p out/writeonly/mmap
 
 # Execute the commands
 killall iojs;node ./monitor -s examples/scripts/single_or_replset/workloads/insert_scenario.js -o ./out/writeonly/mmap/ -n 8 $EXTRA_OPTIONS
+
+####################################################################################
+# Generate all the reports
+####################################################################################
+node $NODE_OPTIONS report.js --db-path ./out/array_slice/mmap/db --output-path=./out --report-file=./out/array_slice/mmap/report.json --report-output-filename=array_slice_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/array_slice_pre_allocated/mmap/db --output-path=./out --report-file=./out/array_slice_pre_allocated/mmap/report.json --report-output-filename=array_slice_pre_allocated_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/capped_queue/mmap/db --output-path=./out --report-file=./out/capped_queue/mmap/report.json --report-output-filename=capped_queue_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/cart_no_reservation/mmap/db --output-path=./out --report-file=./out/cart_no_reservation/mmap/report.json --report-output-filename=cart_no_reservation_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/cart_reservation/mmap/db --output-path=./out --report-file=./out/cart_reservation/mmap/report.json --report-output-filename=cart_reservation_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/categoryhierarchy_direct/mmap/db --output-path=./out --report-file=./out/categoryhierarchy_direct/mmap/report.json --report-output-filename=categoryhierarchy_direct_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/categoryhierarchy_subtree_ci/mmap/db --output-path=./out --report-file=./out/categoryhierarchy_subtree_ci/mmap/report.json --report-output-filename=categoryhierarchy_subtree_ci_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/categoryhierarchy_subtree/mmap/db --output-path=./out --report-file=./out/categoryhierarchy_subtree/mmap/report.json --report-output-filename=categoryhierarchy_subtree_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/categoryhierarchy_subtree_ci/mmap/db --output-path=./out --report-file=./out/categoryhierarchy_subtree_ci/mmap/report.json --report-output-filename=categoryhierarchy_subtree_ci_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/metadata/mmap/db --output-path=./out --report-file=./out/metadata/mmap/report.json --report-output-filename=metadata_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/multilanguage_add_local/mmap/db --output-path=./out --report-file=./out/multilanguage_add_local/mmap/report.json --report-output-filename=multilanguage_add_local_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/multilanguage_remove_local/mmap/db --output-path=./out --report-file=./out/multilanguage_remove_local/mmap/report.json --report-output-filename=multilanguage_remove_local_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/queue/mmap/db --output-path=./out --report-file=./out/queue/mmap/report.json --report-output-filename=queue_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/theater/mmap/db --output-path=./out --report-file=./out/theater/mmap/report.json --report-output-filename=theater_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/timeseries/mmap/db --output-path=./out --report-file=./out/timeseries/mmap/report.json --report-output-filename=timeseries_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/topics/mmap/db --output-path=./out --report-file=./out/topics/mmap/report.json --report-output-filename=topics_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/transactions/mmap/db --output-path=./out --report-file=./out/transactions/mmap/report.json --report-output-filename=transactions_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/writeonly/mmap/db --output-path=./out --report-file=./out/writeonly/mmap/report.json --report-output-filename=writeonly_mmap.html
+

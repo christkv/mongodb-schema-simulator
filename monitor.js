@@ -88,20 +88,19 @@ co(function*() {
     total = total + ops.ops;
   });
 
-  monitor.on('execute', function() {});
+  monitor.on('execute', function() {
+    bar = new ProgressBar('  executing [:bar] [:current/:total] :etas', {
+          complete: '='
+        , incomplete: ' '
+        , width: 60
+        , total: total
+      }
+    );      
+  });
 
   // Get the count of measurements done
   monitor.on('tick', function(ticks) {
-    if(count == 0) {
-      bar = new ProgressBar('  executing [:bar] [:current/:total] :etas', {
-            complete: '='
-          , incomplete: ' '
-          , width: 60
-          , total: total
-        }
-      );      
-    }
-
+    if(ticks.length == 0) return;
     // Skip if we reached the total
     if(count >= total) return;
 
