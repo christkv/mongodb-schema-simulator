@@ -1,5 +1,5 @@
 #EXTRA_OPTIONS=-g
-EXTRA_OPTIONS=--url=mongodb://192.168.0.12/benchmark?maxPoolSize=50
+EXTRA_OPTIONS=--url=mongodb://192.168.0.12/benchmark?maxPoolSize=100
 
 ####################################################################################
 # Queries RocksDB
@@ -111,6 +111,14 @@ mkdir -p out/writeonly/rocksdb
 killall iojs;node ./monitor -s examples/scripts/single_or_replset/workloads/insert_scenario.js -o ./out/writeonly/rocksdb/ -n 8 $EXTRA_OPTIONS
 
 ####################################################################################
+# Concurrent collection writes
+####################################################################################
+mkdir -p out/concurrent_insert/rocksdb
+
+# Execute the commands
+killall iojs;node ./monitor -s examples/scripts/concurrent/concurrent_insert_scenario.js -o ./out/concurrent_insert/rocksdb/ -n 2 $EXTRA_OPTIONS
+
+####################################################################################
 # Generate all the reports
 ####################################################################################
 node $NODE_OPTIONS report.js --db-path ./out/array_slice/rocksdb/db --output-path=./out --report-file=./out/array_slice/rocksdb/report.json --report-output-filename=array_slice_rocksdb.html
@@ -131,3 +139,4 @@ node $NODE_OPTIONS report.js --db-path ./out/timeseries/rocksdb/db --output-path
 node $NODE_OPTIONS report.js --db-path ./out/topics/rocksdb/db --output-path=./out --report-file=./out/topics/rocksdb/report.json --report-output-filename=topics_rocksdb.html
 node $NODE_OPTIONS report.js --db-path ./out/transactions/rocksdb/db --output-path=./out --report-file=./out/transactions/rocksdb/report.json --report-output-filename=transactions_rocksdb.html
 node $NODE_OPTIONS report.js --db-path ./out/writeonly/rocksdb/db --output-path=./out --report-file=./out/writeonly/rocksdb/report.json --report-output-filename=writeonly_rocksdb.html
+node $NODE_OPTIONS report.js --db-path ./out/concurrent_insert/rocksdb/db --output-path=./out --report-file=./out/concurrent_insert/rocksdb/report.json --report-output-filename=concurrent_insert.html

@@ -110,6 +110,14 @@ mkdir -p out/writeonly/mmap
 killall iojs;node ./monitor -s examples/scripts/single_or_replset/workloads/insert_scenario.js -o ./out/writeonly/mmap/ -n 8 $EXTRA_OPTIONS
 
 ####################################################################################
+# Concurrent collection writes
+####################################################################################
+mkdir -p out/concurrent_insert/mmap
+
+# Execute the commands
+killall iojs;node ./monitor -s examples/scripts/concurrent/concurrent_insert_scenario.js -o ./out/concurrent_insert/mmap/ -n 2 $EXTRA_OPTIONS
+
+####################################################################################
 # Generate all the reports
 ####################################################################################
 node $NODE_OPTIONS report.js --db-path ./out/array_slice/mmap/db --output-path=./out --report-file=./out/array_slice/mmap/report.json --report-output-filename=array_slice_mmap.html
@@ -130,4 +138,5 @@ node $NODE_OPTIONS report.js --db-path ./out/timeseries/mmap/db --output-path=./
 node $NODE_OPTIONS report.js --db-path ./out/topics/mmap/db --output-path=./out --report-file=./out/topics/mmap/report.json --report-output-filename=topics_mmap.html
 node $NODE_OPTIONS report.js --db-path ./out/transactions/mmap/db --output-path=./out --report-file=./out/transactions/mmap/report.json --report-output-filename=transactions_mmap.html
 node $NODE_OPTIONS report.js --db-path ./out/writeonly/mmap/db --output-path=./out --report-file=./out/writeonly/mmap/report.json --report-output-filename=writeonly_mmap.html
+node $NODE_OPTIONS report.js --db-path ./out/concurrent_insert/mmap/db --output-path=./out --report-file=./out/concurrent_insert/mmap/report.json --report-output-filename=concurrent_insert_mmap.html
 

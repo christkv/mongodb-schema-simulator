@@ -113,6 +113,14 @@ mkdir -p out/writeonly/wt
 killall iojs;node $NODE_OPTIONS ./monitor -s examples/scripts/single_or_replset/workloads/insert_scenario.js -o ./out/writeonly/wt/ -n 8 $EXTRA_OPTIONS
 
 ####################################################################################
+# Concurrent collection writes
+####################################################################################
+mkdir -p out/concurrent_insert/wt
+
+# Execute the commands
+killall iojs;node ./monitor -s examples/scripts/concurrent/concurrent_insert_scenario.js -o ./out/concurrent_insert/wt/ -n 2 $EXTRA_OPTIONS
+
+####################################################################################
 # Generate all the reports
 ####################################################################################
 node $NODE_OPTIONS report.js --db-path ./out/array_slice/wt/db --output-path=./out --report-file=./out/array_slice/wt/report.json --report-output-filename=array_slice_wt.html
@@ -133,3 +141,6 @@ node $NODE_OPTIONS report.js --db-path ./out/timeseries/wt/db --output-path=./ou
 node $NODE_OPTIONS report.js --db-path ./out/topics/wt/db --output-path=./out --report-file=./out/topics/wt/report.json --report-output-filename=topics_wt.html
 node $NODE_OPTIONS report.js --db-path ./out/transactions/wt/db --output-path=./out --report-file=./out/transactions/wt/report.json --report-output-filename=transactions_wt.html
 node $NODE_OPTIONS report.js --db-path ./out/writeonly/wt/db --output-path=./out --report-file=./out/writeonly/wt/report.json --report-output-filename=writeonly_wt.html
+node $NODE_OPTIONS report.js --db-path ./out/concurrent_insert/wt/db --output-path=./out --report-file=./out/concurrent_insert/wt/report.json --report-output-filename=concurrent_insert_wt.html
+
+
